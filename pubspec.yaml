@@ -1,0 +1,32 @@
+name: stroop_overload
+description: StroopOverload — cognitive speed game
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.7.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flame: ^1.20.0
+  flame_audio: ^2.12.0
+  firebase_core: ^3.8.0
+  firebase_auth: ^5.4.0
+  cloud_firestore: ^5.5.0
+  share_plus: ^10.3.0
+  path_provider: ^2.1.4
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flame_test: ^1.20.0
+  flutter_lints: ^5.0.0
+  mockito: ^5.4.4
+  build_runner: ^2.4.13
+  fake_cloud_firestore: ^3.0.0
+  firebase_auth_mocks: ^0.14.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/audio/
