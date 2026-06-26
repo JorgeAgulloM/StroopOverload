@@ -1,5 +1,6 @@
-﻿package com.softyorch.stroopoverload.ui.screen
+package com.softyorch.stroopoverload.ui.screen
 
+import android.content.Intent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -16,6 +17,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.softyorch.stroopoverload.domain.GameResult
 import com.softyorch.stroopoverload.ui.theme.Muted
@@ -26,9 +28,10 @@ import com.softyorch.stroopoverload.ui.theme.NeonYellow
 @Composable
 fun GameOverScreen(
     result: GameResult,
-    onShare: () -> Unit,
     onMenu: () -> Unit,
 ) {
+    val context = LocalContext.current
+
     Column(
         modifier = Modifier.fillMaxSize().padding(horizontal = 40.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -60,7 +63,17 @@ fun GameOverScreen(
         Spacer(Modifier.weight(1f))
 
         OutlinedButton(
-            onClick = onShare,
+            onClick = {
+                val intent = Intent(Intent.ACTION_SEND).apply {
+                    type = "text/plain"
+                    putExtra(
+                        Intent.EXTRA_TEXT,
+                        "I scored ${result.finalScore} on Stroop Overload! " +
+                            "Accuracy: ${result.accuracy}% — Can you beat me? 🧠⚡"
+                    )
+                }
+                context.startActivity(Intent.createChooser(intent, null))
+            },
             modifier = Modifier.width(240.dp).height(56.dp),
         ) {
             Text(

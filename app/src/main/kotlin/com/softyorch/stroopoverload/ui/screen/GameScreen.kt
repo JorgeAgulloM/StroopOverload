@@ -1,4 +1,4 @@
-﻿package com.softyorch.stroopoverload.ui.screen
+package com.softyorch.stroopoverload.ui.screen
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -13,15 +13,20 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.softyorch.stroopoverload.audio.AudioPlayer
 import com.softyorch.stroopoverload.core.StroopColor
 import com.softyorch.stroopoverload.domain.GameResult
 import com.softyorch.stroopoverload.game.GameState
@@ -34,9 +39,17 @@ fun GameScreen(
     viewModel: GameViewModel,
     onGameOver: (GameResult) -> Unit,
 ) {
+    val context = LocalContext.current
+    val audioPlayer = remember { AudioPlayer(context) }
+    DisposableEffect(Unit) { onDispose { audioPlayer.release() } }
+
     val state by viewModel.state.collectAsState()
     val stimulus by viewModel.stimulus.collectAsState()
     val timerProgress by viewModel.timerProgress.collectAsState()
+
+    LaunchedEffect(stimulus) {
+        stimulus?.audioColor?.let { audioPlayer.play(it) }
+    }
 
     when (val s = state) {
         is GameState.GameOver -> onGameOver(s.result)
@@ -49,7 +62,6 @@ fun GameScreen(
             modifier = Modifier.fillMaxWidth().height(8.dp),
         )
         Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
-            // 4-quadrant tap targets
             Column(modifier = Modifier.fillMaxSize()) {
                 Row(modifier = Modifier.weight(1f).fillMaxWidth()) {
                     QuadrantBox(color = StroopColor.RED, modifier = Modifier.weight(1f).fillMaxHeight()) {
@@ -68,7 +80,6 @@ fun GameScreen(
                     }
                 }
             }
-            // Centered stimulus word
             stimulus?.let { s ->
                 Text(
                     text = s.wordLabel.displayName,

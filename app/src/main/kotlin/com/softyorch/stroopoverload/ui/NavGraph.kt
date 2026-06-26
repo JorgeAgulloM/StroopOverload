@@ -72,7 +72,6 @@ fun StroopNavGraph() {
             lastResult?.let { result ->
                 GameOverScreen(
                     result = result,
-                    onShare = { /* TODO: share intent */ },
                     onMenu = {
                         navController.navigate(ROUTE_HOME) {
                             popUpTo(ROUTE_HOME) { inclusive = true }
