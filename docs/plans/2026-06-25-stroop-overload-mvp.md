@@ -1,4 +1,4 @@
-# StroopOverload MVP Implementation Plan
+﻿# StroopOverload MVP Implementation Plan
 
 > **For agentic workers:** Use `mobiai-mobile-executing-plans-with-subagents` (recommended) or `mobiai-mobile-executing-plans` to implement this plan task-by-task. Steps use checkbox syntax for tracking.
 
@@ -42,7 +42,7 @@ Tasks 8 and 9 (Firebase) can run in parallel with Tasks 4–7 (game engine).
 - [ ] **Step 1: Scaffold Flutter project at repo root**
 
 ```bash
-flutter create . --org com.stroopoverload --project-name stroop_overload --platforms android,ios
+flutter create . --org com.softyorch.stroopoverload --project-name stroop_overload --platforms android,ios
 ```
 
 Expected: Flutter project files created in current directory. `.gitignore`, `android/`, `ios/`, `lib/`, `test/` appear.
@@ -1175,7 +1175,7 @@ git commit -m "feat: quadrant, stimulus, timer bar components with TapCallbacks 
 
 - [ ] **Step 1: Configure Firebase Android**
 
-In Firebase console: add Android app with package `com.stroopoverload.stroop_overload`, download `google-services.json`, copy to `android/app/google-services.json`.
+In Firebase console: add Android app with package `com.softyorch.stroopoverload.stroop_overload`, download `google-services.json`, copy to `android/app/google-services.json`.
 
 Add to `android/build.gradle` inside `buildscript > dependencies`:
 ```groovy

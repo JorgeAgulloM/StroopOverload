@@ -1,4 +1,4 @@
-# StroopOverload MVP — Task Progress
+﻿# StroopOverload MVP — Task Progress
 
 **Stack:** Android (Kotlin + Jetpack Compose + Firebase)
 **Previous stack (deleted):** Flutter + Flame — wrong platform, scrapped
@@ -38,7 +38,7 @@ Working directory: `C:\Users\Jorge\Proyectos\StroopOverload`
 
 ## Blockers / Manual Steps
 
-- **CRITICAL — Task 10**: `app/google-services.json` must be downloaded from Firebase console (package: `com.stroopoverload`) and placed at `app/google-services.json`.
+- **CRITICAL — Task 10**: `app/google-services.json` must be downloaded from Firebase console (package: `com.softyorch.stroopoverload`) and placed at `app/google-services.json`.
 - **Task 9**: Need `gradle/wrapper/gradle-wrapper.jar` to run gradlew. Either download Android Studio project or `./gradlew wrapper` from a machine with Gradle installed.
 - **Audio placeholders**: `app/src/main/res/raw/*.mp3` are placeholder files — real voice recordings needed before ship.
 
