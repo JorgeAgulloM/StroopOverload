@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "993471828747",
+    "project_id": "stroopoverload",
+    "storage_bucket": "stroopoverload.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:993471828747:android:fcfcfe6a262a67faf8880e",
+        "android_client_info": {
+          "package_name": "com.softyorch.stroopoverload"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBEt0Gg8i4lFLZfLHQJjs7LiYo6k7xTzrg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
