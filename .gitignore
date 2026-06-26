@@ -1,47 +1,15 @@
-# Miscellaneous
+# Android
+*.iml
 *.class
 *.log
-*.pyc
-*.swp
 .DS_Store
-.atom/
-.buildlog/
-.history
-.svn/
-.swp
-migrate_working_dir/
-
-# IntelliJ related
-*.iml
-*.ipr
-*.iws
 .idea/
+.gradle/
+build/
+/local.properties
 
-# The .vscode folder contains launch configuration and tasks you configure in
-# VS Code which you may wish to commit, so this is commented out by default.
-#.vscode/
+# Gradle wrapper jar (binary)
+gradle/wrapper/gradle-wrapper.jar
 
-# Flutter/Dart/Pub related
-**/doc/api/
-**/ios/Flutter/.last_build_id
-.dart_tool/
-.flutter-plugins
-.flutter-plugins-dependencies
-.pub-cache/
-.pub/
-/build/
-
-# Symbolication related
-app.*.symbols
-
-# Obfuscation related
-app.*.map.json
-
-# Android Studio will place build artifacts here
-/android/app/debug
-/android/app/profile
-/android/app/release
-
-# google-services.json must be added manually from Firebase console
-android/app/google-services.json
-ios/Runner/GoogleService-Info.plist
+# Firebase — must be added manually from Firebase console
+app/google-services.json

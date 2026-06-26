@@ -1,0 +1,15 @@
+package com.stroopoverload.game
+
+import com.stroopoverload.domain.GameResult
+
+sealed interface GameState {
+    data object Menu : GameState
+    data class Playing(
+        val score: Int = 0,
+        val level: Int = 1,
+        val correctHits: Int = 0,
+        val totalRounds: Int = 0,
+        val survivalMs: Long = 0L,
+    ) : GameState
+    data class GameOver(val result: GameResult) : GameState
+}
