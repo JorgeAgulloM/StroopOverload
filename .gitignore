@@ -17,3 +17,10 @@ app/google-services.json
 # Firebase Cloud Functions
 functions/node_modules/
 functions/lib/
+
+# Firebase emulator debug logs
+firebase-debug.log
+firestore-debug.log
+database-debug.log
+ui-debug.log
+.firebase/
