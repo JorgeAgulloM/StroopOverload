@@ -32,9 +32,23 @@ describe("nextAliveIndex", () => {
     expect(nextAliveIndex(turnOrder, players, 3)).toBe(0);
   });
 
-  test("falls back to fromIndex when no other player is alive", () => {
+  test("wraps back to fromIndex when it is the only player alive", () => {
     const players = { a: { alive: true }, b: { alive: false }, c: { alive: false }, d: { alive: false } };
     expect(nextAliveIndex(turnOrder, players, 0)).toBe(0);
+  });
+
+  test("returns fromIndex unchanged when every player is dead", () => {
+    const players = { a: { alive: false }, b: { alive: false }, c: { alive: false }, d: { alive: false } };
+    expect(nextAliveIndex(turnOrder, players, 2)).toBe(2);
+  });
+
+  test("returns 0 without throwing when turnOrder is empty", () => {
+    expect(nextAliveIndex([], {}, 0)).toBe(0);
+  });
+
+  test("wraps back to itself when there is only a single alive player", () => {
+    const singlePlayers = { a: { alive: true } };
+    expect(nextAliveIndex(["a"], singlePlayers, 0)).toBe(0);
   });
 });
 

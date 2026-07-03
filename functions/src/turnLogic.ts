@@ -17,8 +17,9 @@ export function nextAliveIndex(
   fromIndex: number
 ): number {
   const n = turnOrder.length;
+  if (n === 0) return fromIndex;
   for (let step = 1; step <= n; step++) {
-    const idx = (fromIndex + step) % n;
+    const idx = (((fromIndex + step) % n) + n) % n;
     if (players[turnOrder[idx]]?.alive) return idx;
   }
   return fromIndex;
