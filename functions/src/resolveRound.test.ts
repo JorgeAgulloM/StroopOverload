@@ -3,6 +3,7 @@ import { readFileSync } from "fs";
 import * as path from "path";
 import * as admin from "firebase-admin";
 import { resolveRound } from "./resolveRound";
+import { scheduleTimeoutCheck } from "./taskQueue";
 
 // resolveRound() schedules a Cloud Tasks check via scheduleTimeoutCheck()
 // whenever the round advances without finishing the game. There is no Cloud
@@ -42,6 +43,7 @@ afterAll(async () => {
 
 afterEach(async () => {
   await testEnv.clearFirestore();
+  jest.clearAllMocks();
 });
 
 // Seeding and read-back both go through withSecurityRulesDisabled(): the
@@ -138,4 +140,65 @@ test("a correct answer never eliminates the acting player", async () => {
   const after = await getRoom();
   expect(after.players.a.alive).toBe(true);
   expect(after.round).toBe(2);
+});
+
+test("an unknown actingUid is a safe no-op, doesn't corrupt anyone's record", async () => {
+  await seedRoom();
+  await resolveRound("room-1", "not-a-real-player", "wrong", 1);
+
+  const after = await getRoom();
+  // "not-a-real-player" isn't in room.turnOrder, so it can never be the
+  // current turn-holder -- this falls into the bystander (no-advance) path,
+  // but since it's also not a key in players, the elimination guard (Bug 1)
+  // means the players map is left completely untouched.
+  expect(after.players.a.alive).toBe(true);
+  expect(after.players.b.alive).toBe(true);
+  expect(after.players.c.alive).toBe(true);
+  expect(after.round).toBe(1);
+  expect(after.turnIndex).toBe(0);
+});
+
+test("a bystander's disconnect does NOT advance the active player's turn", async () => {
+  const seededDeadlineAtMs = Date.now() + 3000;
+  await seedRoom({ deadlineAtMs: seededDeadlineAtMs });
+  await resolveRound("room-1", "c", "disconnect", 1); // c is not the turn-holder (a is, at turnIndex 0)
+
+  const after = await getRoom();
+  expect(after.players.c.alive).toBe(false);
+  expect(after.turnIndex).toBe(0); // unchanged, still a's turn
+  expect(after.round).toBe(1); // unchanged
+  expect(after.stimulus).toEqual({
+    wordLabel: "RED",
+    inkColor: "BLUE",
+    options: ["RED", "GREEN", "BLUE", "YELLOW"],
+  });
+  expect(after.deadlineAtMs).toBe(seededDeadlineAtMs); // untouched from seeded value
+  expect(scheduleTimeoutCheck).not.toHaveBeenCalled();
+});
+
+test("the actual turn-holder's own disconnect DOES advance the turn", async () => {
+  await seedRoom();
+  await resolveRound("room-1", "a", "disconnect", 1); // a IS the turn-holder at turnIndex 0
+
+  const after = await getRoom();
+  expect(after.players.a.alive).toBe(false);
+  expect(after.turnIndex).toBe(1); // moved to "b"
+  expect(after.round).toBe(2);
+  expect(scheduleTimeoutCheck).toHaveBeenCalledWith("room-1", 2, expect.any(Number));
+});
+
+test("scheduleTimeoutCheck is not called when the win-condition finishes the game", async () => {
+  await seedRoom({
+    players: {
+      a: { uid: "a", displayName: "A", avatarIndex: 0, alive: false, order: 0, joinedAtMs: 0 },
+      b: { uid: "b", displayName: "B", avatarIndex: 0, alive: true, order: 1, joinedAtMs: 0 },
+      c: { uid: "c", displayName: "C", avatarIndex: 0, alive: true, order: 2, joinedAtMs: 0 },
+    },
+    turnIndex: 1,
+  });
+  await resolveRound("room-1", "b", "timeout", 1);
+
+  const after = await getRoom();
+  expect(after.status).toBe("finished");
+  expect(scheduleTimeoutCheck).not.toHaveBeenCalled();
 });

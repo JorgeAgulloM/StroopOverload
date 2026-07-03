@@ -24,7 +24,7 @@ export async function resolveRound(
     if (room.status !== "playing" || room.round !== roundExpected) return null;
 
     const players = { ...room.players };
-    if (reason !== "correct" && actingUid) {
+    if (reason !== "correct" && actingUid && players[actingUid]) {
       players[actingUid] = { ...players[actingUid], alive: false };
     }
 
@@ -37,6 +37,17 @@ export async function resolveRound(
         stimulus: null,
         deadlineAtMs: null,
       });
+      return null;
+    }
+
+    const wasCurrentTurnPlayer = actingUid === null || room.turnOrder[room.turnIndex] === actingUid;
+    if (!wasCurrentTurnPlayer) {
+      // A bystander (not the current turn-holder) was eliminated, but the
+      // active player's round is still in progress: only persist the
+      // updated players map. Do not touch turnIndex/round/stimulus/deadline,
+      // and do not schedule a new timeout -- the current round's
+      // already-scheduled timeout task still governs the active player.
+      tx.update(roomRef, { players });
       return null;
     }
 
@@ -56,6 +67,10 @@ export async function resolveRound(
   });
 
   if (scheduled) {
-    await scheduleTimeoutCheck(roomId, scheduled.round, scheduled.deadlineAtMs - Date.now());
+    try {
+      await scheduleTimeoutCheck(roomId, scheduled.round, scheduled.deadlineAtMs - Date.now());
+    } catch (err) {
+      console.error(`resolveRound: failed to schedule timeout for room ${roomId} round ${scheduled.round}`, err);
+    }
   }
 }
