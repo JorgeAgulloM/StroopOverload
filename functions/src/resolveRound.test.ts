@@ -142,20 +142,22 @@ test("a correct answer never eliminates the acting player", async () => {
   expect(after.round).toBe(2);
 });
 
-test("an unknown actingUid is a safe no-op, doesn't corrupt anyone's record", async () => {
+test("an unknown actingUid does not corrupt the players map", async () => {
   await seedRoom();
   await resolveRound("room-1", "not-a-real-player", "wrong", 1);
 
   const after = await getRoom();
   // "not-a-real-player" isn't in room.turnOrder, so it can never be the
-  // current turn-holder -- this falls into the bystander (no-advance) path,
-  // but since it's also not a key in players, the elimination guard (Bug 1)
-  // means the players map is left completely untouched.
+  // current turn-holder -- this falls into the bystander (no-advance) path.
+  // It's also not a key in players, so the elimination guard must skip it
+  // entirely -- not just leave a/b/c untouched, but also not spread a stray
+  // "not-a-real-player" entry into the players map.
+  expect(Object.keys(after.players).sort()).toEqual(["a", "b", "c"]);
   expect(after.players.a.alive).toBe(true);
   expect(after.players.b.alive).toBe(true);
   expect(after.players.c.alive).toBe(true);
-  expect(after.round).toBe(1);
   expect(after.turnIndex).toBe(0);
+  expect(after.round).toBe(1);
 });
 
 test("a bystander's disconnect does NOT advance the active player's turn", async () => {
