@@ -1,8 +1,14 @@
 import { initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
+import { onTaskDispatched } from "firebase-functions/v2/tasks";
+import { onValueWritten } from "firebase-functions/v2/database";
 import { generateUniqueRoomCode, findJoinableRoomByCode, roomsCol } from "./roomRepo";
-import { RoomDoc, RoomPlayerDoc } from "./types";
+import { ResolutionReason, RoomDoc, RoomPlayerDoc } from "./types";
+import { generateStimulus } from "./stimulus";
+import { timeLimitMsForRound } from "./turnLogic";
+import { resolveRound } from "./resolveRound";
+import { scheduleTimeoutCheck } from "./taskQueue";
 
 initializeApp();
 
@@ -97,4 +103,101 @@ export const joinRoom = onCall(async (request) => {
     console.error(`joinRoom failed for uid ${uid}, code ${code}`, err);
     throw new HttpsError("internal", "No se pudo unir a la sala.");
   }
+});
+
+export const startGame = onCall(async (request) => {
+  const uid = request.auth?.uid;
+  if (!uid) throw new HttpsError("unauthenticated", "Debes iniciar sesión.");
+  const roomId = String(request.data?.roomId ?? "").trim();
+  if (!roomId) throw new HttpsError("invalid-argument", "roomId inválido.");
+
+  try {
+    const roomRef = roomsCol().doc(roomId);
+    await getFirestore().runTransaction(async (tx) => {
+      const doc = await tx.get(roomRef);
+      if (!doc.exists) throw new HttpsError("not-found", "Sala no existe.");
+      const room = doc.data() as RoomDoc;
+      if (room.hostUid !== uid) throw new HttpsError("permission-denied", "Solo el host puede empezar.");
+      if (room.status !== "waiting") throw new HttpsError("failed-precondition", "La partida ya empezó.");
+      if (room.turnOrder.length < 2) throw new HttpsError("failed-precondition", "Se necesitan al menos 2 jugadores.");
+
+      const stimulus = generateStimulus();
+      const deadlineAtMs = Date.now() + timeLimitMsForRound(1);
+      tx.update(roomRef, { status: "playing", round: 1, turnIndex: 0, stimulus, deadlineAtMs });
+    });
+
+    await scheduleTimeoutCheck(roomId, 1, timeLimitMsForRound(1));
+    return { started: true };
+  } catch (err) {
+    if (err instanceof HttpsError) throw err;
+    console.error(`startGame failed for uid ${uid}, room ${roomId}`, err);
+    throw new HttpsError("internal", "No se pudo iniciar la partida.");
+  }
+});
+
+export const submitAnswer = onCall(async (request) => {
+  const uid = request.auth?.uid;
+  if (!uid) throw new HttpsError("unauthenticated", "Debes iniciar sesión.");
+  const roomId = String(request.data?.roomId ?? "").trim();
+  if (!roomId) throw new HttpsError("invalid-argument", "roomId inválido.");
+  const selected = String(request.data?.selectedColor ?? "");
+
+  try {
+    const roomRef = roomsCol().doc(roomId);
+    const doc = await roomRef.get();
+    if (!doc.exists) throw new HttpsError("not-found", "Sala no existe.");
+    const room = doc.data() as RoomDoc;
+
+    const currentTurnUid = room.turnOrder[room.turnIndex];
+    if (currentTurnUid !== uid) throw new HttpsError("permission-denied", "No es tu turno.");
+    if (!room.stimulus || !room.deadlineAtMs) throw new HttpsError("failed-precondition", "No hay ronda activa.");
+    if (Date.now() > room.deadlineAtMs) throw new HttpsError("deadline-exceeded", "Se acabó el tiempo.");
+
+    // `selected` is compared against the stimulus's ink color as a plain
+    // string equality check. Any value that isn't an exact match --
+    // including empty, missing, or otherwise malformed input -- naturally
+    // falls through to "wrong", which is already the correct, safe
+    // semantics for an invalid answer. No separate allow-list validation
+    // against StroopColorId is needed here.
+    const reason: ResolutionReason = selected === room.stimulus.inkColor ? "correct" : "wrong";
+    await resolveRound(roomId, uid, reason, room.round);
+    return { accepted: true, reason };
+  } catch (err) {
+    if (err instanceof HttpsError) throw err;
+    console.error(`submitAnswer failed for uid ${uid}, room ${roomId}`, err);
+    throw new HttpsError("internal", "No se pudo registrar la respuesta.");
+  }
+});
+
+interface ResolveTimeoutTaskData {
+  roomId: string;
+  round: number;
+}
+
+export const resolveTimeout = onTaskDispatched<ResolveTimeoutTaskData>(async (req) => {
+  const { roomId, round } = req.data;
+  const roomRef = roomsCol().doc(roomId);
+  const doc = await roomRef.get();
+  if (!doc.exists) return;
+  const room = doc.data() as RoomDoc;
+  if (room.status !== "playing" || room.round !== round) return; // ya se resolvió
+  if (!room.deadlineAtMs || Date.now() < room.deadlineAtMs) return; // aún no vence
+
+  const timedOutUid = room.turnOrder[room.turnIndex];
+  await resolveRound(roomId, timedOutUid, "timeout", round);
+});
+
+export const onPresenceChanged = onValueWritten("presence/{roomId}/{uid}", async (event) => {
+  const roomId = event.params.roomId;
+  const uid = event.params.uid;
+  const after = event.data.after.val() as { state: string } | null;
+  if (!after || after.state !== "offline") return;
+
+  const roomRef = roomsCol().doc(roomId);
+  const doc = await roomRef.get();
+  if (!doc.exists) return;
+  const room = doc.data() as RoomDoc;
+  if (room.status !== "playing" || !room.players[uid]?.alive) return;
+
+  await resolveRound(roomId, uid, "disconnect", room.round);
 });
