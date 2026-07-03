@@ -1,4 +1,4 @@
-import { StroopColorId } from "./stimulus";
+import { Stimulus } from "./stimulus";
 
 export type RoomStatus = "waiting" | "playing" | "finished";
 
@@ -8,21 +8,17 @@ export interface RoomPlayerDoc {
   avatarIndex: number;
   alive: boolean;
   order: number;
-  joinedAt: number;
+  joinedAtMs: number;
 }
 
-export interface StimulusDoc {
-  wordLabel: StroopColorId;
-  inkColor: StroopColorId;
-  options: StroopColorId[];
-}
+export type StimulusDoc = Stimulus;
 
 export interface RoomDoc {
   code: string;
   status: RoomStatus;
   hostUid: string;
-  players: Record<string, RoomPlayerDoc>;
-  turnOrder: string[];
+  players: Readonly<Record<string, RoomPlayerDoc>>;
+  turnOrder: readonly string[];
   turnIndex: number;
   round: number;
   stimulus: StimulusDoc | null;

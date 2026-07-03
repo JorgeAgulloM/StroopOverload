@@ -1,10 +1,13 @@
+import { CollectionReference } from "firebase-admin/firestore";
 import { getFirestore } from "firebase-admin/firestore";
+import { RoomDoc } from "./types";
 
 export const ROOMS_COLLECTION = "rooms";
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+const MAX_CODE_GENERATION_ATTEMPTS = 5;
 
-export function roomsCol() {
-  return getFirestore().collection(ROOMS_COLLECTION);
+export function roomsCol(): CollectionReference<RoomDoc> {
+  return getFirestore().collection(ROOMS_COLLECTION) as CollectionReference<RoomDoc>;
 }
 
 export function generateRoomCode(): string {
@@ -13,4 +16,30 @@ export function generateRoomCode(): string {
     code += CODE_CHARS[Math.floor(Math.random() * CODE_CHARS.length)];
   }
   return code;
+}
+
+/**
+ * Looks up a room that is still joinable by its short code.
+ * Filters to status "waiting" so a stale/finished room reusing an old
+ * code (codes are never deleted) can never be matched by mistake.
+ */
+export async function findJoinableRoomByCode(code: string) {
+  const snap = await roomsCol().where("code", "==", code).where("status", "==", "waiting").limit(1).get();
+  return snap.empty ? null : snap.docs[0];
+}
+
+/**
+ * Generates a room code that isn't currently in use by another joinable
+ * ("waiting") room. Retries a bounded number of times on collision rather
+ * than trusting generateRoomCode()'s output blindly -- codes are short
+ * (5 chars from a 32-char alphabet) so collisions against the small set
+ * of concurrently-open rooms are rare but not impossible.
+ */
+export async function generateUniqueRoomCode(): Promise<string> {
+  for (let attempt = 0; attempt < MAX_CODE_GENERATION_ATTEMPTS; attempt++) {
+    const candidate = generateRoomCode();
+    const existing = await findJoinableRoomByCode(candidate);
+    if (!existing) return candidate;
+  }
+  throw new Error("Could not generate a unique room code after multiple attempts");
 }
