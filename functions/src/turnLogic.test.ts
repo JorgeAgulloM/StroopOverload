@@ -31,6 +31,11 @@ describe("nextAliveIndex", () => {
     const players = { a: { alive: true }, b: { alive: false }, c: { alive: false }, d: { alive: true } };
     expect(nextAliveIndex(turnOrder, players, 3)).toBe(0);
   });
+
+  test("falls back to fromIndex when no other player is alive", () => {
+    const players = { a: { alive: true }, b: { alive: false }, c: { alive: false }, d: { alive: false } };
+    expect(nextAliveIndex(turnOrder, players, 0)).toBe(0);
+  });
 });
 
 describe("aliveCount / soleSurvivor", () => {
