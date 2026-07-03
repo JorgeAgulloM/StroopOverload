@@ -7,7 +7,7 @@
   "main": "lib/index.js",
   "scripts": {
     "build": "tsc",
-    "test": "jest",
+    "test": "firebase emulators:exec --only firestore \"jest\"",
     "serve": "npm run build && firebase emulators:start --only functions,firestore,database"
   },
   "dependencies": {
