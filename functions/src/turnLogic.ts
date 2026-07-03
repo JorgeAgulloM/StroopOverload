@@ -12,7 +12,7 @@ export function timeLimitMsForRound(round: number): number {
 }
 
 export function nextAliveIndex(
-  turnOrder: string[],
+  turnOrder: readonly string[],
   players: Record<string, AliveState>,
   fromIndex: number
 ): number {
