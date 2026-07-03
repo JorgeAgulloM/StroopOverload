@@ -16,8 +16,10 @@ export function generateStimulus(rng: () => number = Math.random): Stimulus {
 
 function pick(pool: readonly StroopColorId[], exclude: StroopColorId[], rng: () => number): StroopColorId {
   const filtered = pool.filter((c) => !exclude.includes(c));
-  const source = filtered.length > 0 ? filtered : pool;
-  return source[Math.floor(rng() * source.length)];
+  if (filtered.length === 0) {
+    throw new Error("pick() has no candidates left after applying the exclude list");
+  }
+  return filtered[Math.floor(rng() * filtered.length)];
 }
 
 function shuffle<T>(arr: T[], rng: () => number): T[] {

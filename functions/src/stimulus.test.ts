@@ -24,6 +24,17 @@ describe("generateStimulus", () => {
       expect(stimulus.wordLabel).not.toBe(stimulus.inkColor);
     }
   });
+
+  test("identical rng sequence produces an identical stimulus (required for broadcasting the same round to every device)", () => {
+    const makeSeededRng = () => {
+      const values = [0.2, 0.6, 0.1, 0.9, 0.4, 0.05];
+      let i = 0;
+      return () => values[i++ % values.length];
+    };
+    const first = generateStimulus(makeSeededRng());
+    const second = generateStimulus(makeSeededRng());
+    expect(second).toEqual(first);
+  });
 });
 
 function sequence(values: number[]): () => number {
