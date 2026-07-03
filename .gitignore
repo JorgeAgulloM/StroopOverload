@@ -13,3 +13,7 @@ gradle/wrapper/gradle-wrapper.jar
 
 # Firebase — must be added manually from Firebase console
 app/google-services.json
+
+# Firebase Cloud Functions
+functions/node_modules/
+functions/lib/
