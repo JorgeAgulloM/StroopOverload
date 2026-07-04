@@ -10,18 +10,28 @@ export async function resolveRound(
   actingUid: string | null,
   reason: ResolutionReason,
   roundExpected: number
-): Promise<void> {
+): Promise<boolean> {
   const roomRef = roomsCol().doc(roomId);
 
   type ScheduledTimeout = { round: number; deadlineAtMs: number } | null;
+  interface ResolveRoundTxResult {
+    // Whether this call actually changed the room's state (advanced the
+    // round, finished the game, or updated a bystander's alive status), as
+    // opposed to being a no-op because the room was missing, not playing, or
+    // the round had already moved on. Distinct from `scheduled` below: a
+    // no-advance bystander update or a game-finishing update both count as
+    // "applied" even though neither schedules a next-round timeout.
+    applied: boolean;
+    scheduled: ScheduledTimeout;
+  }
 
-  const scheduled = await getFirestore().runTransaction<ScheduledTimeout>(async (tx) => {
+  const { applied, scheduled } = await getFirestore().runTransaction<ResolveRoundTxResult>(async (tx) => {
     const doc = await tx.get(roomRef);
-    if (!doc.exists) return null;
+    if (!doc.exists) return { applied: false, scheduled: null };
     const room = doc.data() as RoomDoc;
 
     // Stale call: the round already moved on (a race between timeout/answer/disconnect).
-    if (room.status !== "playing" || room.round !== roundExpected) return null;
+    if (room.status !== "playing" || room.round !== roundExpected) return { applied: false, scheduled: null };
 
     const players = { ...room.players };
     if (reason !== "correct" && actingUid && players[actingUid]) {
@@ -37,7 +47,7 @@ export async function resolveRound(
         stimulus: null,
         deadlineAtMs: null,
       });
-      return null;
+      return { applied: true, scheduled: null };
     }
 
     const wasCurrentTurnPlayer = actingUid === null || room.turnOrder[room.turnIndex] === actingUid;
@@ -48,7 +58,7 @@ export async function resolveRound(
       // and do not schedule a new timeout -- the current round's
       // already-scheduled timeout task still governs the active player.
       tx.update(roomRef, { players });
-      return null;
+      return { applied: true, scheduled: null };
     }
 
     const nextIndex = nextAliveIndex(room.turnOrder, players, room.turnIndex);
@@ -63,7 +73,7 @@ export async function resolveRound(
       stimulus,
       deadlineAtMs,
     });
-    return { round: nextRound, deadlineAtMs };
+    return { applied: true, scheduled: { round: nextRound, deadlineAtMs } };
   });
 
   if (scheduled) {
@@ -73,4 +83,6 @@ export async function resolveRound(
       console.error(`resolveRound: failed to schedule timeout for room ${roomId} round ${scheduled.round}`, err);
     }
   }
+
+  return applied;
 }

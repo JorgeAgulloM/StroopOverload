@@ -86,8 +86,9 @@ async function getRoom(): Promise<admin.firestore.DocumentData> {
 
 test("wrong answer eliminates the acting player and advances the turn", async () => {
   await seedRoom();
-  await resolveRound("room-1", "a", "wrong", 1);
+  const applied = await resolveRound("room-1", "a", "wrong", 1);
 
+  expect(applied).toBe(true);
   const after = await getRoom();
   expect(after.players.a.alive).toBe(false);
   expect(after.turnIndex).toBe(1); // moved to "b"
@@ -113,8 +114,9 @@ test("eliminating the second-to-last player finishes the game with a winner", as
 
 test("stale round numbers are ignored (already resolved by a racing trigger)", async () => {
   await seedRoom({ round: 2 });
-  await resolveRound("room-1", "a", "wrong", 1); // roundExpected=1, but room is already at round 2
+  const applied = await resolveRound("room-1", "a", "wrong", 1); // roundExpected=1, but room is already at round 2
 
+  expect(applied).toBe(false);
   const after = await getRoom();
   expect(after.players.a.alive).toBe(true); // untouched
   expect(after.round).toBe(2);

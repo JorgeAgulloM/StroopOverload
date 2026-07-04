@@ -140,7 +140,7 @@ export const submitAnswer = onCall(async (request) => {
   if (!uid) throw new HttpsError("unauthenticated", "Debes iniciar sesión.");
   const roomId = String(request.data?.roomId ?? "").trim();
   if (!roomId) throw new HttpsError("invalid-argument", "roomId inválido.");
-  const selected = String(request.data?.selectedColor ?? "");
+  const selectedColor = String(request.data?.selectedColor ?? "");
 
   try {
     const roomRef = roomsCol().doc(roomId);
@@ -153,14 +153,15 @@ export const submitAnswer = onCall(async (request) => {
     if (!room.stimulus || !room.deadlineAtMs) throw new HttpsError("failed-precondition", "No hay ronda activa.");
     if (Date.now() > room.deadlineAtMs) throw new HttpsError("deadline-exceeded", "Se acabó el tiempo.");
 
-    // `selected` is compared against the stimulus's ink color as a plain
+    // `selectedColor` is compared against the stimulus's ink color as a plain
     // string equality check. Any value that isn't an exact match --
     // including empty, missing, or otherwise malformed input -- naturally
     // falls through to "wrong", which is already the correct, safe
     // semantics for an invalid answer. No separate allow-list validation
     // against StroopColorId is needed here.
-    const reason: ResolutionReason = selected === room.stimulus.inkColor ? "correct" : "wrong";
-    await resolveRound(roomId, uid, reason, room.round);
+    const reason: ResolutionReason = selectedColor === room.stimulus.inkColor ? "correct" : "wrong";
+    const applied = await resolveRound(roomId, uid, reason, room.round);
+    if (!applied) throw new HttpsError("deadline-exceeded", "La ronda ya se resolvió (probablemente por timeout).");
     return { accepted: true, reason };
   } catch (err) {
     if (err instanceof HttpsError) throw err;
@@ -174,30 +175,42 @@ interface ResolveTimeoutTaskData {
   round: number;
 }
 
-export const resolveTimeout = onTaskDispatched<ResolveTimeoutTaskData>(async (req) => {
-  const { roomId, round } = req.data;
-  const roomRef = roomsCol().doc(roomId);
-  const doc = await roomRef.get();
-  if (!doc.exists) return;
-  const room = doc.data() as RoomDoc;
-  if (room.status !== "playing" || room.round !== round) return; // ya se resolvió
-  if (!room.deadlineAtMs || Date.now() < room.deadlineAtMs) return; // aún no vence
+export const resolveTimeout = onTaskDispatched<ResolveTimeoutTaskData>(
+  { retryConfig: { maxAttempts: 5, minBackoffSeconds: 1 } },
+  async (req) => {
+    const { roomId, round } = req.data;
+    try {
+      const roomRef = roomsCol().doc(roomId);
+      const doc = await roomRef.get();
+      if (!doc.exists) return;
+      const room = doc.data() as RoomDoc;
+      if (room.status !== "playing" || room.round !== round) return; // stale/already-resolved round
+      if (!room.deadlineAtMs || Date.now() < room.deadlineAtMs) return; // hasn't reached its deadline yet
 
-  const timedOutUid = room.turnOrder[room.turnIndex];
-  await resolveRound(roomId, timedOutUid, "timeout", round);
-});
+      const timedOutUid = room.turnOrder[room.turnIndex];
+      await resolveRound(roomId, timedOutUid, "timeout", round);
+    } catch (err) {
+      console.error(`resolveTimeout failed for room ${roomId}, round ${round}`, err);
+      throw err;
+    }
+  }
+);
 
 export const onPresenceChanged = onValueWritten("presence/{roomId}/{uid}", async (event) => {
   const roomId = event.params.roomId;
   const uid = event.params.uid;
-  const after = event.data.after.val() as { state: string } | null;
-  if (!after || after.state !== "offline") return;
+  try {
+    const after = event.data.after.val() as { state: string } | null;
+    if (!after || after.state !== "offline") return;
 
-  const roomRef = roomsCol().doc(roomId);
-  const doc = await roomRef.get();
-  if (!doc.exists) return;
-  const room = doc.data() as RoomDoc;
-  if (room.status !== "playing" || !room.players[uid]?.alive) return;
+    const roomRef = roomsCol().doc(roomId);
+    const doc = await roomRef.get();
+    if (!doc.exists) return;
+    const room = doc.data() as RoomDoc;
+    if (room.status !== "playing" || !room.players[uid]?.alive) return;
 
-  await resolveRound(roomId, uid, "disconnect", room.round);
+    await resolveRound(roomId, uid, "disconnect", room.round);
+  } catch (err) {
+    console.error(`onPresenceChanged failed for room ${roomId}, uid ${uid}`, err);
+  }
 });
