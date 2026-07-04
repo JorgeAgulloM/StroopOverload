@@ -64,6 +64,12 @@ fun MultiplayerGameScreen(
                         Spacer(Modifier.height(16.dp))
                         Text("Turno de ${room.players.firstOrNull { it.uid == room.currentTurnUid }?.displayName ?: "..."}")
                     }
+                } else {
+                    Text(
+                        text = "Preparando ronda...",
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.align(Alignment.CenterHorizontally),
+                    )
                 }
             }
             RoomStatus.FINISHED -> {
