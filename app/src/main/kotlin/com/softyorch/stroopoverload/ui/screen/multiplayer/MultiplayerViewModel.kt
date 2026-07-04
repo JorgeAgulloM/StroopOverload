@@ -5,6 +5,8 @@ import androidx.lifecycle.viewModelScope
 import com.softyorch.stroopoverload.core.StroopColor
 import com.softyorch.stroopoverload.data.FirebaseMultiplayerRepository
 import com.softyorch.stroopoverload.data.MultiplayerRepository
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -18,6 +20,7 @@ class MultiplayerViewModel(
     val state: StateFlow<MultiplayerUiState> = _state.asStateFlow()
 
     private var myUid: String = ""
+    private var observeRoomJob: Job? = null
 
     fun createRoom(uid: String, displayName: String) {
         myUid = uid
@@ -56,11 +59,23 @@ class MultiplayerViewModel(
     }
 
     private fun observeRoom(roomId: String) {
+        observeRoomJob?.cancel()
         repository.trackPresence(roomId, myUid)
-        viewModelScope.launch {
-            repository.observeRoom(roomId).collect { room ->
-                _state.value = MultiplayerUiState.InRoom(room, myUid)
+        observeRoomJob = viewModelScope.launch {
+            try {
+                repository.observeRoom(roomId).collect { room ->
+                    _state.value = MultiplayerUiState.InRoom(room, myUid)
+                }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _state.value = MultiplayerUiState.Error(e.message ?: "Se perdió la conexión con la sala.")
             }
         }
+    }
+
+    override fun onCleared() {
+        observeRoomJob?.cancel()
+        super.onCleared()
     }
 }

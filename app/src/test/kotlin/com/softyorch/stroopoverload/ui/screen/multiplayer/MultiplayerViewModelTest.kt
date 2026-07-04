@@ -7,6 +7,8 @@ import com.softyorch.stroopoverload.domain.multiplayer.RoomPlayer
 import com.softyorch.stroopoverload.domain.multiplayer.RoomStatus
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.runTest
@@ -108,5 +110,192 @@ class MultiplayerViewModelTest {
         dispatcher.scheduler.advanceUntilIdle()
 
         assertEquals(1, fake.submitAnswerCallCount)
+    }
+
+    @Test
+    fun `calling createRoom a second time cancels the previous room's collection`() = runTest {
+        val fake = FakeMultiplayerRepository()
+        val viewModel = MultiplayerViewModel(fake)
+        // A second, independent flow that the retry's listener will collect.
+        // Keeping it separate from the fake's internal room-1 flow lets us
+        // prove the OLD job was cancelled: if it weren't, emitting to the
+        // room-1 flow after the retry would still produce a new state.
+        val room2Flow = MutableSharedFlow<MultiplayerRoom>(replay = 1)
+
+        viewModel.state.test {
+            assertEquals(MultiplayerUiState.Idle, awaitItem())
+
+            viewModel.createRoom(uid = "host-1", displayName = "Neo")
+            assertEquals(MultiplayerUiState.Connecting, awaitItem())
+            dispatcher.scheduler.advanceUntilIdle()
+
+            val room1 = MultiplayerRoom(
+                roomId = "room-1",
+                code = "ABCDE",
+                status = RoomStatus.WAITING,
+                hostUid = "host-1",
+                players = listOf(RoomPlayer(uid = "host-1", displayName = "Neo")),
+                turnOrder = listOf("host-1"),
+            )
+            fake.emitRoom(room1)
+            val firstInRoom = awaitItem() as MultiplayerUiState.InRoom
+            assertEquals("room-1", firstInRoom.room.roomId)
+
+            // Simulate a retry (double-tap / retry-after-failure): the
+            // repository now points at a different room, backed by a
+            // different flow instance.
+            fake.createRoomResult = Result.success("room-2" to "FGHIJ")
+            fake.observeRoomFlow = room2Flow
+
+            viewModel.createRoom(uid = "host-1", displayName = "Neo")
+            assertEquals(MultiplayerUiState.Connecting, awaitItem())
+            dispatcher.scheduler.advanceUntilIdle()
+
+            // Emit a NEW value on the ORIGINAL room-1 flow. If the first
+            // collecting coroutine were still alive (the bug), this would
+            // overwrite the state with stale room-1 data right now. Because
+            // observeRoom cancels the previous job before launching the new
+            // one, nobody is collecting the room-1 flow anymore, so this
+            // must produce no emission at all.
+            fake.emitRoom(room1.copy(round = 99))
+            dispatcher.scheduler.advanceUntilIdle()
+            expectNoEvents()
+
+            // Confirm the new listener (room-2) is the one actually driving
+            // state going forward.
+            room2Flow.emit(
+                MultiplayerRoom(
+                    roomId = "room-2",
+                    code = "FGHIJ",
+                    status = RoomStatus.WAITING,
+                    hostUid = "host-1",
+                    players = listOf(RoomPlayer(uid = "host-1", displayName = "Neo")),
+                    turnOrder = listOf("host-1"),
+                )
+            )
+            dispatcher.scheduler.advanceUntilIdle()
+            val secondInRoom = awaitItem() as MultiplayerUiState.InRoom
+            assertEquals("room-2", secondInRoom.room.roomId)
+        }
+    }
+
+    @Test
+    fun `joinRoom moves to InRoom once the repository emits the room`() = runTest {
+        val fake = FakeMultiplayerRepository()
+        val viewModel = MultiplayerViewModel(fake)
+
+        viewModel.state.test {
+            assertEquals(MultiplayerUiState.Idle, awaitItem())
+
+            viewModel.joinRoom(uid = "player-2", code = "ABCDE", displayName = "Trinity")
+            assertEquals(MultiplayerUiState.Connecting, awaitItem())
+            dispatcher.scheduler.advanceUntilIdle()
+
+            fake.emitRoom(
+                MultiplayerRoom(
+                    roomId = "room-1",
+                    code = "ABCDE",
+                    status = RoomStatus.WAITING,
+                    hostUid = "host-1",
+                    players = listOf(
+                        RoomPlayer(uid = "host-1", displayName = "Neo"),
+                        RoomPlayer(uid = "player-2", displayName = "Trinity"),
+                    ),
+                    turnOrder = listOf("host-1", "player-2"),
+                )
+            )
+            val inRoom = awaitItem() as MultiplayerUiState.InRoom
+            assertEquals("room-1", inRoom.room.roomId)
+            assertTrue(fake.presenceTracked)
+        }
+    }
+
+    @Test
+    fun `createRoom failure surfaces MultiplayerUiState Error`() = runTest {
+        val fake = FakeMultiplayerRepository()
+        fake.createRoomResult = Result.failure(RuntimeException("nope"))
+        val viewModel = MultiplayerViewModel(fake)
+
+        viewModel.state.test {
+            assertEquals(MultiplayerUiState.Idle, awaitItem())
+
+            viewModel.createRoom(uid = "host-1", displayName = "Neo")
+            assertEquals(MultiplayerUiState.Connecting, awaitItem())
+            dispatcher.scheduler.advanceUntilIdle()
+
+            val error = awaitItem() as MultiplayerUiState.Error
+            assertTrue(error.message.isNotBlank())
+        }
+    }
+
+    @Test
+    fun `joinRoom failure surfaces MultiplayerUiState Error`() = runTest {
+        val fake = FakeMultiplayerRepository()
+        fake.joinRoomResult = Result.failure(RuntimeException("nope"))
+        val viewModel = MultiplayerViewModel(fake)
+
+        viewModel.state.test {
+            assertEquals(MultiplayerUiState.Idle, awaitItem())
+
+            viewModel.joinRoom(uid = "player-2", code = "ZZZZZ", displayName = "Trinity")
+            assertEquals(MultiplayerUiState.Connecting, awaitItem())
+            dispatcher.scheduler.advanceUntilIdle()
+
+            val error = awaitItem() as MultiplayerUiState.Error
+            assertTrue(error.message.isNotBlank())
+        }
+    }
+
+    @Test
+    fun `startGame calls the repository only while InRoom`() = runTest {
+        val fake = FakeMultiplayerRepository()
+        val viewModel = MultiplayerViewModel(fake)
+
+        // Idle state: startGame must no-op.
+        viewModel.startGame()
+        dispatcher.scheduler.advanceUntilIdle()
+        assertEquals(0, fake.startGameCallCount)
+
+        viewModel.state.test {
+            assertEquals(MultiplayerUiState.Idle, awaitItem())
+
+            viewModel.createRoom(uid = "host-1", displayName = "Neo")
+            assertEquals(MultiplayerUiState.Connecting, awaitItem())
+            dispatcher.scheduler.advanceUntilIdle()
+
+            fake.emitRoom(
+                MultiplayerRoom(
+                    roomId = "room-1",
+                    code = "ABCDE",
+                    status = RoomStatus.WAITING,
+                    hostUid = "host-1",
+                    players = listOf(RoomPlayer(uid = "host-1", displayName = "Neo")),
+                    turnOrder = listOf("host-1"),
+                )
+            )
+            awaitItem() // InRoom
+
+            viewModel.startGame()
+            dispatcher.scheduler.advanceUntilIdle()
+            assertEquals(1, fake.startGameCallCount)
+        }
+    }
+
+    @Test
+    fun `observeRoom flow throwing surfaces MultiplayerUiState Error`() = runTest {
+        val fake = FakeMultiplayerRepository()
+        fake.observeRoomFlow = flow { throw RuntimeException("boom") }
+        val viewModel = MultiplayerViewModel(fake)
+
+        viewModel.state.test {
+            assertEquals(MultiplayerUiState.Idle, awaitItem())
+
+            viewModel.createRoom(uid = "host-1", displayName = "Neo")
+            assertEquals(MultiplayerUiState.Connecting, awaitItem())
+            dispatcher.scheduler.advanceUntilIdle()
+
+            val error = awaitItem() as MultiplayerUiState.Error
+            assertTrue(error.message.isNotBlank())
+        }
     }
 }
