@@ -62,7 +62,9 @@ class FirebaseMultiplayerRepository(
         val offlineValue = mapOf("state" to "offline", "lastChanged" to ServerValue.TIMESTAMP)
         val onlineValue = mapOf("state" to "online", "lastChanged" to ServerValue.TIMESTAMP)
         presenceRef.onDisconnect().setValue(offlineValue)
+            .addOnFailureListener { Log.w("MultiplayerRepo", "Failed to register presence onDisconnect for room $roomId: ${it.message}") }
         presenceRef.setValue(onlineValue)
+            .addOnFailureListener { Log.w("MultiplayerRepo", "Failed to write online presence for room $roomId: ${it.message}") }
     }
 
     private fun mapRoom(roomId: String, data: Map<String, Any?>): MultiplayerRoom {
@@ -82,11 +84,16 @@ class FirebaseMultiplayerRepository(
         val stimulusMap = data["stimulus"] as? Map<String, Any?>
         val stimulus = stimulusMap?.let {
             @Suppress("UNCHECKED_CAST")
-            val options = it["options"] as? List<String> ?: emptyList()
+            val rawOptions = it["options"] as? List<String> ?: emptyList()
+            val options = rawOptions.mapNotNull { raw ->
+                StroopColor.entries.find { color -> color.name == raw }.also { parsed ->
+                    if (parsed == null) Log.w("MultiplayerRepo", "Unrecognized stimulus option color: $raw")
+                }
+            }
             MultiplayerStimulus(
-                wordLabel = StroopColor.valueOf(it["wordLabel"] as String),
-                inkColor = StroopColor.valueOf(it["inkColor"] as String),
-                options = options.map(StroopColor::valueOf),
+                wordLabel = parseStroopColor(it["wordLabel"] as? String, fallback = StroopColor.RED),
+                inkColor = parseStroopColor(it["inkColor"] as? String, fallback = StroopColor.RED),
+                options = options.ifEmpty { StroopColor.entries.toList() },
             )
         }
 
@@ -107,4 +114,9 @@ class FirebaseMultiplayerRepository(
             winnerUid = data["winnerUid"] as? String,
         )
     }
+
+    private fun parseStroopColor(raw: String?, fallback: StroopColor): StroopColor =
+        StroopColor.entries.find { it.name == raw } ?: fallback.also {
+            Log.w("MultiplayerRepo", "Unrecognized stimulus color value: $raw, falling back to $fallback")
+        }
 }
