@@ -57,6 +57,7 @@ fun MultiplayerGameScreen(
                                 onClick = { onColorTapped(option) },
                                 enabled = myTurn,
                                 colors = ButtonDefaults.buttonColors(containerColor = option.composeColor),
+                                modifier = Modifier.heightIn(min = 44.dp),
                             ) { Text(option.displayName, color = Color.Black) }
                         }
                     }

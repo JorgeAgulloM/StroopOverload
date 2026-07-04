@@ -11,6 +11,7 @@ fun LobbyScreen(
     onCreateRoom: (displayName: String) -> Unit,
     onJoinRoom: (code: String, displayName: String) -> Unit,
     errorMessage: String?,
+    isConnecting: Boolean,
 ) {
     var displayName by remember { mutableStateOf("") }
     var code by remember { mutableStateOf("") }
@@ -25,13 +26,15 @@ fun LobbyScreen(
             value = displayName,
             onValueChange = { displayName = it },
             label = { Text("Tu nombre de piloto") },
+            enabled = !isConnecting,
             modifier = Modifier.fillMaxWidth(),
         )
         Spacer(Modifier.height(24.dp))
         Button(
             onClick = { onCreateRoom(displayName.ifBlank { "Pilot" }) },
+            enabled = !isConnecting,
             modifier = Modifier.fillMaxWidth(),
-        ) { Text("CREAR SALA") }
+        ) { Text(if (isConnecting) "CONECTANDO..." else "CREAR SALA") }
         Spacer(Modifier.height(24.dp))
         HorizontalDivider()
         Spacer(Modifier.height(24.dp))
@@ -39,12 +42,13 @@ fun LobbyScreen(
             value = code,
             onValueChange = { code = it.uppercase().take(5) },
             label = { Text("Código de sala") },
+            enabled = !isConnecting,
             modifier = Modifier.fillMaxWidth(),
         )
         Spacer(Modifier.height(12.dp))
         Button(
             onClick = { onJoinRoom(code, displayName.ifBlank { "Pilot" }) },
-            enabled = code.length == 5,
+            enabled = !isConnecting && code.length == 5,
             modifier = Modifier.fillMaxWidth(),
         ) { Text("UNIRSE A SALA") }
         errorMessage?.let {
