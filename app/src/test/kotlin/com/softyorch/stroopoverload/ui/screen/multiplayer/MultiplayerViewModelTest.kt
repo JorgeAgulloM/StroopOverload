@@ -59,6 +59,37 @@ class MultiplayerViewModelTest {
     }
 
     @Test
+    fun `createRoom is a no-op while already connecting`() = runTest {
+        val fake = FakeMultiplayerRepository()
+        val viewModel = MultiplayerViewModel(fake)
+
+        viewModel.state.test {
+            assertEquals(MultiplayerUiState.Idle, awaitItem())
+
+            viewModel.createRoom(uid = "host-1", displayName = "Neo")
+            assertEquals(MultiplayerUiState.Connecting, awaitItem())
+
+            // Second call while still Connecting (fake hasn't emitted a room yet) must be ignored --
+            // no second Connecting emission, no double repository call.
+            viewModel.createRoom(uid = "host-2", displayName = "Trinity")
+            dispatcher.scheduler.advanceUntilIdle()
+
+            fake.emitRoom(
+                MultiplayerRoom(
+                    roomId = "room-1",
+                    code = "ABCDE",
+                    status = RoomStatus.WAITING,
+                    hostUid = "host-1",
+                    players = listOf(RoomPlayer(uid = "host-1", displayName = "Neo")),
+                    turnOrder = listOf("host-1"),
+                )
+            )
+            val inRoom = awaitItem() as MultiplayerUiState.InRoom
+            assertEquals("host-1", inRoom.myUid) // the SECOND call's uid never took effect
+        }
+    }
+
+    @Test
     fun `submitAnswer is ignored when it is not my turn`() = runTest {
         val fake = FakeMultiplayerRepository()
         val viewModel = MultiplayerViewModel(fake)
@@ -113,13 +144,12 @@ class MultiplayerViewModelTest {
     }
 
     @Test
-    fun `calling createRoom a second time cancels the previous room's collection`() = runTest {
+    fun `createRoom is a no-op while already in a room, original room keeps being observed`() = runTest {
         val fake = FakeMultiplayerRepository()
         val viewModel = MultiplayerViewModel(fake)
-        // A second, independent flow that the retry's listener will collect.
-        // Keeping it separate from the fake's internal room-1 flow lets us
-        // prove the OLD job was cancelled: if it weren't, emitting to the
-        // room-1 flow after the retry would still produce a new state.
+        // A second, independent flow that a (now impossible) re-entrant
+        // createRoom would have switched to. Kept separate from the fake's
+        // internal room-1 flow so we can prove it is never subscribed to.
         val room2Flow = MutableSharedFlow<MultiplayerRoom>(replay = 1)
 
         viewModel.state.test {
@@ -141,41 +171,24 @@ class MultiplayerViewModelTest {
             val firstInRoom = awaitItem() as MultiplayerUiState.InRoom
             assertEquals("room-1", firstInRoom.room.roomId)
 
-            // Simulate a retry (double-tap / retry-after-failure): the
-            // repository now points at a different room, backed by a
-            // different flow instance.
+            // MultiplayerScreen never exposes onCreateRoom while InRoom, but
+            // guard against re-entrant calls at the source too: this second
+            // call must be ignored entirely rather than tearing down the
+            // active room-1 subscription.
             fake.createRoomResult = Result.success("room-2" to "FGHIJ")
             fake.observeRoomFlow = room2Flow
 
             viewModel.createRoom(uid = "host-1", displayName = "Neo")
-            assertEquals(MultiplayerUiState.Connecting, awaitItem())
-            dispatcher.scheduler.advanceUntilIdle()
-
-            // Emit a NEW value on the ORIGINAL room-1 flow. If the first
-            // collecting coroutine were still alive (the bug), this would
-            // overwrite the state with stale room-1 data right now. Because
-            // observeRoom cancels the previous job before launching the new
-            // one, nobody is collecting the room-1 flow anymore, so this
-            // must produce no emission at all.
-            fake.emitRoom(room1.copy(round = 99))
             dispatcher.scheduler.advanceUntilIdle()
             expectNoEvents()
 
-            // Confirm the new listener (room-2) is the one actually driving
-            // state going forward.
-            room2Flow.emit(
-                MultiplayerRoom(
-                    roomId = "room-2",
-                    code = "FGHIJ",
-                    status = RoomStatus.WAITING,
-                    hostUid = "host-1",
-                    players = listOf(RoomPlayer(uid = "host-1", displayName = "Neo")),
-                    turnOrder = listOf("host-1"),
-                )
-            )
-            dispatcher.scheduler.advanceUntilIdle()
-            val secondInRoom = awaitItem() as MultiplayerUiState.InRoom
-            assertEquals("room-2", secondInRoom.room.roomId)
+            // The original room-1 flow must still be the one driving state --
+            // proof the guard returned before observeRoom() ever cancelled
+            // the existing job or subscribed to room2Flow.
+            fake.emitRoom(room1.copy(round = 99))
+            val stillRoom1 = awaitItem() as MultiplayerUiState.InRoom
+            assertEquals("room-1", stillRoom1.room.roomId)
+            assertEquals(99, stillRoom1.room.round)
         }
     }
 

@@ -23,6 +23,7 @@ class MultiplayerViewModel(
     private var observeRoomJob: Job? = null
 
     fun createRoom(uid: String, displayName: String) {
+        if (_state.value !is MultiplayerUiState.Idle && _state.value !is MultiplayerUiState.Error) return
         myUid = uid
         _state.value = MultiplayerUiState.Connecting
         viewModelScope.launch {
@@ -33,6 +34,7 @@ class MultiplayerViewModel(
     }
 
     fun joinRoom(uid: String, code: String, displayName: String) {
+        if (_state.value !is MultiplayerUiState.Idle && _state.value !is MultiplayerUiState.Error) return
         myUid = uid
         _state.value = MultiplayerUiState.Connecting
         viewModelScope.launch {
