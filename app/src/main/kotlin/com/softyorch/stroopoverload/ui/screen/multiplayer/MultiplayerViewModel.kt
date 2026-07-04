@@ -61,6 +61,9 @@ class MultiplayerViewModel(
     }
 
     private fun observeRoom(roomId: String) {
+        // createRoom/joinRoom's guard already blocks re-entry while a previous
+        // observeRoomJob would still be alive, so this cancel() is defense-in-depth
+        // rather than a live, test-covered path -- kept in case that guard ever changes.
         observeRoomJob?.cancel()
         repository.trackPresence(roomId, myUid)
         observeRoomJob = viewModelScope.launch {
