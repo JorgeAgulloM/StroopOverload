@@ -371,6 +371,22 @@ describe("resolveTimeout", () => {
     expect(room.turnIndex).toBe(1);
     expect(room.round).toBe(2);
   });
+
+  test("rethrows and logs when resolveRound throws for a genuinely expired deadline", async () => {
+    await seedPlayingRoom({ round: 1, turnIndex: 0, deadlineAtMs: Date.now() - 1000 });
+    const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+    const spy = jest.spyOn(resolveRoundModule, "resolveRound").mockRejectedValueOnce(new Error("boom"));
+
+    // Cloud Tasks' retryConfig relies on the task rejecting so it gets
+    // retried -- verify the catch block in resolveTimeout rethrows rather
+    // than swallowing the error.
+    await expect(resolveTimeout.run(buildTaskRequest({ roomId: "room-1", round: 1 }))).rejects.toThrow();
+
+    expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining("room-1"), expect.anything());
+
+    spy.mockRestore();
+    consoleErrorSpy.mockRestore();
+  });
 });
 
 describe("onPresenceChanged", () => {
@@ -395,5 +411,21 @@ describe("onPresenceChanged", () => {
     // A bystander's disconnect must not disturb the active player's turn.
     expect(room.turnIndex).toBe(0);
     expect(room.round).toBe(1);
+  });
+
+  test("swallows and logs when resolveRound throws instead of rejecting", async () => {
+    await seedPlayingRoom(); // "c" is a bystander -- "a" holds the turn at turnIndex 0
+    const consoleErrorSpy = jest.spyOn(console, "error").mockImplementation(() => {});
+    const spy = jest.spyOn(resolveRoundModule, "resolveRound").mockRejectedValueOnce(new Error("boom"));
+
+    // RTDB triggers don't get the same automatic retry semantics as Cloud
+    // Tasks -- verify the catch block in onPresenceChanged swallows the
+    // error (logs it) rather than letting it reject the handler.
+    await expect(onPresenceChanged.run(buildPresenceEvent("room-1", "c", { state: "offline" }))).resolves.not.toThrow();
+
+    expect(consoleErrorSpy).toHaveBeenCalledWith(expect.stringContaining("room-1"), expect.anything());
+
+    spy.mockRestore();
+    consoleErrorSpy.mockRestore();
   });
 });
