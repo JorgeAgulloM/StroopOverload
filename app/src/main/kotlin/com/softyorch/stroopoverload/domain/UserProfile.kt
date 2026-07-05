@@ -23,26 +23,16 @@ data class UserProfile(
     val isPremium: Boolean = false,
 ) {
     val uid: String get() = userId
-    val displayName: String get() = if (nickname.isNotBlank()) nickname else "Guest_${userId.takeLast(4).uppercase()}"
+    val displayName: String get() = when {
+        nickname.isNotBlank() -> nickname
+        userId.isNotBlank() -> "Guest_${userId.takeLast(4).uppercase()}"
+        else -> "Guest"
+    }
     val totalXp: Int get() = experience.toInt()
 
     fun generateUniqueName(): String {
         val base = if (nickname.isNotBlank()) nickname.lowercase().trim() else "neural_pilot"
         val suffix = if (userId.isNotBlank()) userId.takeLast(4).lowercase() else "0000"
         return "@$base-$suffix"
-    }
-
-    companion object {
-        fun initial(uid: String) = UserProfile(
-            userId = uid,
-            uniqueName = "@guest-${uid.takeLast(4).lowercase()}",
-            nickname = "Guest_${uid.takeLast(4).uppercase()}",
-            isAnonymous = true,
-            highScore = 0,
-            points = 0,
-            experience = 0L,
-            level = 1,
-            profileCreated = true
-        )
     }
 }

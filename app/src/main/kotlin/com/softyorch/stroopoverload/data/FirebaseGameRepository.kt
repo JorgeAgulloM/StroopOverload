@@ -34,7 +34,7 @@ class FirebaseGameRepository private constructor(
     private var lastLeaderboardFetchEpochMs: Long = 0L
 
     fun getProfile(): UserProfile {
-        return profileStore.getProfile() ?: UserProfile.initial("guest_local_0001")
+        return profileStore.getProfile() ?: UserProfile()
     }
 
     suspend fun updateProfile(profile: UserProfile) = withContext(Dispatchers.IO) {
@@ -75,6 +75,8 @@ class FirebaseGameRepository private constructor(
 
     suspend fun syncUserProfile(uid: String, nickname: String? = null) = withContext(Dispatchers.IO) {
         val local = getProfile()
+
+        // Case 1: local profile already belongs to this exact account — nothing to do.
         if (local.userId == uid && local.profileCreated) {
             if (nickname != null && local.nickname.isBlank()) {
                 val updated = local.copy(nickname = nickname, uniqueName = local.copy(nickname = nickname, userId = uid).generateUniqueName())
@@ -82,6 +84,13 @@ class FirebaseGameRepository private constructor(
             }
             return@withContext
         }
+
+        // Case 2 (blank userId: genuinely fresh install) vs case 3 (a different, previously-used
+        // account on this device) must be distinguished BEFORE wiping local storage below — only
+        // case 2 may legitimately carry over local.points/highScore/experience/level (progress
+        // played before this login on a brand-new install). Case 3 must never inherit another
+        // account's device-scoped stats.
+        val isFreshInstall = local.userId.isBlank()
 
         clearLocalProgress()
 
@@ -112,7 +121,10 @@ class FirebaseGameRepository private constructor(
             )
             profileStore.saveProfile(remoteProfile)
             restoreProgressFromCloud(data)
-        } else {
+        } else if (isFreshInstall) {
+            // Case 2: no remote doc yet, and there was no prior account on this device to
+            // contaminate from — safe to carry over whatever local progress accumulated
+            // (e.g. a few offline rounds played before registering).
             val nick = nickname ?: if (local.nickname.isNotBlank()) local.nickname else "Pilot_${uid.takeLast(4)}"
             val newProfile = UserProfile(
                 userId = uid,
@@ -123,6 +135,19 @@ class FirebaseGameRepository private constructor(
                 highScore = local.highScore,
                 experience = local.experience,
                 level = local.level,
+                profileCreated = true
+            )
+            updateProfile(newProfile)
+        } else {
+            // Case 3: switching to a different account than whatever was last used on this
+            // device, and it has no remote doc — start clean, never inherit the previous
+            // account's device-scoped stats.
+            val nick = nickname ?: "Pilot_${uid.takeLast(4)}"
+            val newProfile = UserProfile(
+                userId = uid,
+                uniqueName = "@${nick.lowercase().trim()}-${uid.takeLast(4).lowercase()}",
+                nickname = nick,
+                isAnonymous = false,
                 profileCreated = true
             )
             updateProfile(newProfile)

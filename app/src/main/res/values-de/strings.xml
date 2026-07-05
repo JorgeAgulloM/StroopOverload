@@ -112,7 +112,9 @@
     <string name="auth_tab_register">NEUER KADETT</string>
     <string name="auth_nickname_label">RUFZEICHEN / SPITZNAME</string>
     <string name="auth_email_label">NEURALE FREQUENZ (E-MAIL)</string>
+    <string name="auth_email_confirm_label">NEURALE FREQUENZ BESTÄTIGEN</string>
     <string name="auth_password_label">ZUGANGSCHIFFRE (PASSWORT)</string>
+    <string name="auth_password_confirm_label">ZUGANGSCHIFFRE BESTÄTIGEN</string>
     <string name="auth_register_button">NEURALEN LINK INITIALISIEREN</string>
     <string name="auth_login_button">LINK AKTIVIEREN</string>
     <string name="auth_guest_button">[ UMGEHEN // ALS GAST-PILOT EINSTEIGEN ]</string>
@@ -123,6 +125,12 @@
     <string name="auth_resend_button">E-MAIL ERNEUT SENDEN</string>
     <string name="auth_abort_button">[ ABBRECHEN // ABMELDEN ]</string>
     <string name="auth_default_pending_email">pilot@synapse.cyber</string>
+    <string name="auth_forgot_password_link">PASSWORT VERGESSEN?</string>
+    <string name="auth_forgot_password_title">[ NEURALE CHIFFRE ZURÜCKSETZEN ]</string>
+    <string name="auth_forgot_password_hint">Gib deine neurale Frequenz (E-Mail) ein — falls ein Konto existiert, senden wir einen Link zum Zurücksetzen.</string>
+    <string name="auth_forgot_password_button">LINK ÜBERTRAGEN</string>
+    <string name="auth_forgot_password_cancel">ZURÜCK</string>
+    <string name="auth_forgot_password_sent">[ SIGNAL GESENDET // PRÜFE DEIN POSTFACH FÜR DIE ANWEISUNGEN ]</string>
 
     <!-- Auth view model messages -->
     <string name="auth_error_missing_credentials">[ FEHLER // ANMELDEDATEN FEHLEN ]</string>
@@ -146,11 +154,13 @@
     <!-- Auth registration validation reasons -->
     <string name="auth_validation_nickname_short">DAS RUFZEICHEN MUSS MINDESTENS 3 ZEICHEN LANG SEIN.</string>
     <string name="auth_validation_invalid_email">UNGÜLTIGES E-MAIL-FORMAT.</string>
+    <string name="auth_validation_email_mismatch">DIE E-MAILS STIMMEN NICHT ÜBEREIN.</string>
     <string name="auth_validation_password_short">DAS PASSWORT MUSS MINDESTENS 8 ZEICHEN LANG SEIN.</string>
     <string name="auth_validation_password_needs_upper">DAS PASSWORT MUSS MINDESTENS EINEN GROSSBUCHSTABEN ENTHALTEN.</string>
     <string name="auth_validation_password_needs_lower">DAS PASSWORT MUSS MINDESTENS EINEN KLEINBUCHSTABEN ENTHALTEN.</string>
     <string name="auth_validation_password_needs_digit">DAS PASSWORT MUSS MINDESTENS EINE ZIFFER ENTHALTEN.</string>
     <string name="auth_validation_password_needs_symbol">DAS PASSWORT MUSS MINDESTENS EIN SONDERZEICHEN ENTHALTEN.</string>
+    <string name="auth_validation_password_mismatch">DIE PASSWÖRTER STIMMEN NICHT ÜBEREIN.</string>
 
     <!-- Multiplayer lobby -->
     <string name="mp_lobby_title">[ ONLINE-SPIEL ]</string>

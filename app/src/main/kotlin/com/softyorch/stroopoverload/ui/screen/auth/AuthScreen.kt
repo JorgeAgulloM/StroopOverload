@@ -30,10 +30,14 @@ fun AuthScreen(
 ) {
     val state by viewModel.state.collectAsState()
     var isRegisterTab by remember { mutableStateOf(false) }
+    var showForgotPassword by remember { mutableStateOf(false) }
 
     var email by remember { mutableStateOf("") }
+    var emailConfirm by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
+    var passwordConfirm by remember { mutableStateOf("") }
     var nickname by remember { mutableStateOf("") }
+    var forgotEmail by remember { mutableStateOf("") }
 
     LaunchedEffect(state.isLoggedIn, state.needsEmailVerification) {
         if (state.isLoggedIn && !state.needsEmailVerification) {
@@ -129,6 +133,80 @@ fun AuthScreen(
                         .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.8f))
                         .padding(20.dp)
                 ) {
+                  if (showForgotPassword) {
+                    Text(
+                        text = stringResource(R.string.auth_forgot_password_title),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.Black
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = stringResource(R.string.auth_forgot_password_hint),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Muted
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    OutlinedTextField(
+                        value = forgotEmail,
+                        onValueChange = { forgotEmail = it },
+                        label = { Text(stringResource(R.string.auth_email_label), color = Muted) },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = MaterialTheme.colorScheme.primary,
+                            unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                            focusedTextColor = MaterialTheme.colorScheme.onBackground,
+                            unfocusedTextColor = MaterialTheme.colorScheme.onBackground
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Spacer(modifier = Modifier.height(20.dp))
+                    if (state.errorMessage != null) {
+                        Text(
+                            text = state.errorMessage!!,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(bottom = 12.dp)
+                        )
+                    }
+                    if (state.successMessage != null) {
+                        Text(
+                            text = state.successMessage!!,
+                            color = MaterialTheme.colorScheme.tertiary,
+                            style = MaterialTheme.typography.bodySmall,
+                            modifier = Modifier.padding(bottom = 12.dp)
+                        )
+                    }
+                    Button(
+                        onClick = { viewModel.forgotPassword(forgotEmail) },
+                        enabled = !state.isLoading,
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
+                        shape = RoundedCornerShape(4.dp),
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)
+                    ) {
+                        if (state.isLoading) {
+                            CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Background, strokeWidth = 2.dp)
+                        } else {
+                            Text(
+                                text = stringResource(R.string.auth_forgot_password_button),
+                                color = Background,
+                                style = MaterialTheme.typography.titleMedium,
+                                fontWeight = FontWeight.Black
+                            )
+                        }
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+                    TextButton(
+                        onClick = {
+                            showForgotPassword = false
+                            viewModel.clearMessages()
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(stringResource(R.string.auth_forgot_password_cancel), color = Muted, style = MaterialTheme.typography.labelMedium)
+                    }
+                  } else {
                     AnimatedVisibility(visible = isRegisterTab) {
                         Column {
                             OutlinedTextField(
@@ -163,6 +241,26 @@ fun AuthScreen(
                         modifier = Modifier.fillMaxWidth()
                     )
 
+                    AnimatedVisibility(visible = isRegisterTab) {
+                        Column {
+                            Spacer(modifier = Modifier.height(16.dp))
+                            OutlinedTextField(
+                                value = emailConfirm,
+                                onValueChange = { emailConfirm = it },
+                                label = { Text(stringResource(R.string.auth_email_confirm_label), color = Muted) },
+                                singleLine = true,
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = MaterialTheme.colorScheme.secondary,
+                                    unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                                    focusedTextColor = MaterialTheme.colorScheme.onBackground,
+                                    unfocusedTextColor = MaterialTheme.colorScheme.onBackground
+                                ),
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
+
                     Spacer(modifier = Modifier.height(16.dp))
 
                     OutlinedTextField(
@@ -180,6 +278,27 @@ fun AuthScreen(
                         ),
                         modifier = Modifier.fillMaxWidth()
                     )
+
+                    AnimatedVisibility(visible = isRegisterTab) {
+                        Column {
+                            Spacer(modifier = Modifier.height(16.dp))
+                            OutlinedTextField(
+                                value = passwordConfirm,
+                                onValueChange = { passwordConfirm = it },
+                                label = { Text(stringResource(R.string.auth_password_confirm_label), color = Muted) },
+                                singleLine = true,
+                                visualTransformation = PasswordVisualTransformation(),
+                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                                colors = OutlinedTextFieldDefaults.colors(
+                                    focusedBorderColor = MaterialTheme.colorScheme.secondary,
+                                    unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                                    focusedTextColor = MaterialTheme.colorScheme.onBackground,
+                                    unfocusedTextColor = MaterialTheme.colorScheme.onBackground
+                                ),
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
 
                     Spacer(modifier = Modifier.height(24.dp))
 
@@ -203,7 +322,7 @@ fun AuthScreen(
                     Button(
                         onClick = {
                             if (isRegisterTab) {
-                                viewModel.register(email, password, nickname)
+                                viewModel.register(email, emailConfirm, password, passwordConfirm, nickname)
                             } else {
                                 viewModel.login(email, password)
                             }
@@ -229,6 +348,20 @@ fun AuthScreen(
                             )
                         }
                     }
+                    if (!isRegisterTab) {
+                        Spacer(modifier = Modifier.height(8.dp))
+                        TextButton(
+                            onClick = {
+                                showForgotPassword = true
+                                forgotEmail = email
+                                viewModel.clearMessages()
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(stringResource(R.string.auth_forgot_password_link), color = Muted, style = MaterialTheme.typography.labelMedium)
+                        }
+                    }
+                  }
                 }
 
                 Spacer(modifier = Modifier.height(24.dp))

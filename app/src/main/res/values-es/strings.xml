@@ -112,7 +112,9 @@
     <string name="auth_tab_register">NUEVO CADETE</string>
     <string name="auth_nickname_label">DISTINTIVO / APODO</string>
     <string name="auth_email_label">FRECUENCIA NEURAL (CORREO)</string>
+    <string name="auth_email_confirm_label">CONFIRMAR FRECUENCIA NEURAL</string>
     <string name="auth_password_label">CIFRA DE ACCESO (CONTRASEÑA)</string>
+    <string name="auth_password_confirm_label">CONFIRMAR CIFRA DE ACCESO</string>
     <string name="auth_register_button">INICIALIZAR ENLACE NEURAL</string>
     <string name="auth_login_button">ACTIVAR ENLACE</string>
     <string name="auth_guest_button">[ OMITIR // ENTRAR COMO PILOTO INVITADO ]</string>
@@ -123,6 +125,12 @@
     <string name="auth_resend_button">RETRANSMITIR CORREO</string>
     <string name="auth_abort_button">[ ABORTAR // CERRAR SESIÓN ]</string>
     <string name="auth_default_pending_email">piloto@synapse.cyber</string>
+    <string name="auth_forgot_password_link">¿OLVIDASTE TU CONTRASEÑA?</string>
+    <string name="auth_forgot_password_title">[ RESTABLECER CIFRA NEURAL ]</string>
+    <string name="auth_forgot_password_hint">Introduce tu frecuencia neural (correo) y transmitiremos un enlace de restablecimiento si existe una cuenta.</string>
+    <string name="auth_forgot_password_button">TRANSMITIR ENLACE</string>
+    <string name="auth_forgot_password_cancel">ATRÁS</string>
+    <string name="auth_forgot_password_sent">[ SEÑAL ENVIADA // REVISA TU BANDEJA DE ENTRADA PARA LAS INSTRUCCIONES ]</string>
 
     <!-- Auth view model messages -->
     <string name="auth_error_missing_credentials">[ ERROR // FALTAN CREDENCIALES ]</string>
@@ -146,11 +154,13 @@
     <!-- Auth registration validation reasons -->
     <string name="auth_validation_nickname_short">EL DISTINTIVO DEBE TENER AL MENOS 3 CARACTERES.</string>
     <string name="auth_validation_invalid_email">FORMATO DE CORREO INVÁLIDO.</string>
+    <string name="auth_validation_email_mismatch">LOS CORREOS NO COINCIDEN.</string>
     <string name="auth_validation_password_short">LA CONTRASEÑA DEBE TENER AL MENOS 8 CARACTERES.</string>
     <string name="auth_validation_password_needs_upper">LA CONTRASEÑA DEBE CONTENER AL MENOS UNA MAYÚSCULA.</string>
     <string name="auth_validation_password_needs_lower">LA CONTRASEÑA DEBE CONTENER AL MENOS UNA MINÚSCULA.</string>
     <string name="auth_validation_password_needs_digit">LA CONTRASEÑA DEBE CONTENER AL MENOS UN DÍGITO.</string>
     <string name="auth_validation_password_needs_symbol">LA CONTRASEÑA DEBE CONTENER AL MENOS UN SÍMBOLO.</string>
+    <string name="auth_validation_password_mismatch">LAS CONTRASEÑAS NO COINCIDEN.</string>
 
     <!-- Multiplayer lobby -->
     <string name="mp_lobby_title">[ PARTIDA ONLINE ]</string>

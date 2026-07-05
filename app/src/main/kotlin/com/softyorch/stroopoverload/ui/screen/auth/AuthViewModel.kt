@@ -32,8 +32,6 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     private val _state = MutableStateFlow(AuthUiState())
     val state: StateFlow<AuthUiState> = _state.asStateFlow()
 
-    private var lastVerificationSentEpochMs: Long = 0L
-
     private fun string(resId: Int): String = getApplication<Application>().getString(resId)
     private fun string(resId: Int, vararg args: Any): String = getApplication<Application>().getString(resId, *args)
 
@@ -58,13 +56,14 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun login(email: String, pass: String) {
-        if (email.isBlank() || pass.isBlank()) {
+        val trimmedEmail = email.trim()
+        if (trimmedEmail.isBlank() || pass.isBlank()) {
             _state.value = _state.value.copy(errorMessage = string(R.string.auth_error_missing_credentials))
             return
         }
         _state.value = _state.value.copy(isLoading = true, errorMessage = null)
         viewModelScope.launch {
-            val res = authService.signInWithEmail(email, pass)
+            val res = authService.signInWithEmail(trimmedEmail, pass)
             res.onSuccess { user ->
                 repository.syncUserProfile(user.uid, authService.consumePendingNickname())
                 _state.value = _state.value.copy(
@@ -87,18 +86,20 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun register(email: String, pass: String, nickname: String) {
-        val validationErr = AuthService.validateRegistration(email, pass, nickname)
+    fun register(email: String, emailConfirm: String, pass: String, passConfirm: String, nickname: String) {
+        val trimmedEmail = email.trim()
+        val trimmedEmailConfirm = emailConfirm.trim()
+        val validationErr = AuthService.validateRegistration(trimmedEmail, trimmedEmailConfirm, pass, passConfirm, nickname)
         if (validationErr != null) {
             _state.value = _state.value.copy(errorMessage = string(R.string.auth_register_rejected, string(registrationErrorRes(validationErr))))
             return
         }
         _state.value = _state.value.copy(isLoading = true, errorMessage = null)
         viewModelScope.launch {
-            val res = authService.registerWithEmail(email, pass, nickname)
+            val res = authService.registerWithEmail(trimmedEmail, trimmedEmailConfirm, pass, passConfirm, nickname)
             res.onSuccess { user ->
-                lastVerificationSentEpochMs = System.currentTimeMillis()
                 repository.syncUserProfile(user.uid, nickname)
+                repository.updateProfile(repository.getProfile().copy(lastVerificationEmailSentAtEpochMs = System.currentTimeMillis()))
                 _state.value = _state.value.copy(
                     isLoading = false,
                     isLoggedIn = true,
@@ -123,11 +124,13 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     private fun registrationErrorRes(error: RegistrationError): Int = when (error) {
         RegistrationError.NicknameTooShort -> R.string.auth_validation_nickname_short
         RegistrationError.InvalidEmailFormat -> R.string.auth_validation_invalid_email
+        RegistrationError.EmailMismatch -> R.string.auth_validation_email_mismatch
         RegistrationError.PasswordTooShort -> R.string.auth_validation_password_short
         RegistrationError.PasswordNeedsUppercase -> R.string.auth_validation_password_needs_upper
         RegistrationError.PasswordNeedsLowercase -> R.string.auth_validation_password_needs_lower
         RegistrationError.PasswordNeedsDigit -> R.string.auth_validation_password_needs_digit
         RegistrationError.PasswordNeedsSymbol -> R.string.auth_validation_password_needs_symbol
+        RegistrationError.PasswordMismatch -> R.string.auth_validation_password_mismatch
     }
 
     fun continueAsGuest() {
@@ -151,8 +154,10 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
     fun resendVerificationEmail() {
         viewModelScope.launch {
+            val profile = repository.getProfile()
             try {
-                lastVerificationSentEpochMs = authService.resendVerificationEmailWithCooldown(lastVerificationSentEpochMs)
+                val sentAt = authService.resendVerificationEmailWithCooldown(profile.lastVerificationEmailSentAtEpochMs)
+                repository.updateProfile(profile.copy(lastVerificationEmailSentAtEpochMs = sentAt))
                 _state.value = _state.value.copy(
                     successMessage = string(R.string.auth_resend_success),
                     errorMessage = null
@@ -184,9 +189,21 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
     fun signOut() {
         authService.signOut()
+        _state.value = AuthUiState()
+    }
+
+    fun forgotPassword(email: String) {
+        val trimmedEmail = email.trim()
+        if (trimmedEmail.isBlank()) {
+            _state.value = _state.value.copy(errorMessage = string(R.string.auth_error_missing_credentials))
+            return
+        }
+        _state.value = _state.value.copy(isLoading = true, errorMessage = null, successMessage = null)
         viewModelScope.launch {
-            repository.clearLocalProgress()
-            _state.value = AuthUiState()
+            authService.sendPasswordResetEmail(trimmedEmail)
+            // Always the same generic confirmation regardless of outcome — never reveal
+            // whether the email belongs to an existing account (user enumeration).
+            _state.value = _state.value.copy(isLoading = false, successMessage = string(R.string.auth_forgot_password_sent))
         }
     }
 }

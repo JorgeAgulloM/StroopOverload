@@ -112,7 +112,9 @@
     <string name="auth_tab_register">新規候補生</string>
     <string name="auth_nickname_label">コールサイン / ニックネーム</string>
     <string name="auth_email_label">ニューラル周波数（メール）</string>
+    <string name="auth_email_confirm_label">ニューラル周波数の確認</string>
     <string name="auth_password_label">アクセス暗号（パスワード）</string>
+    <string name="auth_password_confirm_label">アクセス暗号の確認</string>
     <string name="auth_register_button">ニューラルリンク初期化</string>
     <string name="auth_login_button">リンク起動</string>
     <string name="auth_guest_button">[ バイパス // ゲストパイロットとして入場 ]</string>
@@ -123,6 +125,12 @@
     <string name="auth_resend_button">メールを再送信</string>
     <string name="auth_abort_button">[ 中止 // サインアウト ]</string>
     <string name="auth_default_pending_email">pilot@synapse.cyber</string>
+    <string name="auth_forgot_password_link">パスワードをお忘れですか?</string>
+    <string name="auth_forgot_password_title">[ ニューラル暗号のリセット ]</string>
+    <string name="auth_forgot_password_hint">ニューラル周波数（メール）を入力してください。アカウントが存在する場合、リセットリンクを送信します。</string>
+    <string name="auth_forgot_password_button">リセットリンクを送信</string>
+    <string name="auth_forgot_password_cancel">戻る</string>
+    <string name="auth_forgot_password_sent">[ 信号送信完了 // 受信トレイで手順を確認してください ]</string>
 
     <!-- Auth view model messages -->
     <string name="auth_error_missing_credentials">[ エラー // 認証情報がありません ]</string>
@@ -146,11 +154,13 @@
     <!-- Auth registration validation reasons -->
     <string name="auth_validation_nickname_short">コールサインは3文字以上にしてください。</string>
     <string name="auth_validation_invalid_email">メール形式が無効です。</string>
+    <string name="auth_validation_email_mismatch">メールアドレスが一致しません。</string>
     <string name="auth_validation_password_short">パスワードは8文字以上にしてください。</string>
     <string name="auth_validation_password_needs_upper">パスワードには大文字を1つ以上含めてください。</string>
     <string name="auth_validation_password_needs_lower">パスワードには小文字を1つ以上含めてください。</string>
     <string name="auth_validation_password_needs_digit">パスワードには数字を1つ以上含めてください。</string>
     <string name="auth_validation_password_needs_symbol">パスワードには記号を1つ以上含めてください。</string>
+    <string name="auth_validation_password_mismatch">パスワードが一致しません。</string>
 
     <!-- Multiplayer lobby -->
     <string name="mp_lobby_title">[ オンライン対戦 ]</string>

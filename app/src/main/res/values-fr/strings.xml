@@ -112,7 +112,9 @@
     <string name="auth_tab_register">NOUVELLE RECRUE</string>
     <string name="auth_nickname_label">INDICATIF / PSEUDO</string>
     <string name="auth_email_label">FRÉQUENCE NEURALE (E-MAIL)</string>
+    <string name="auth_email_confirm_label">CONFIRMER LA FRÉQUENCE NEURALE</string>
     <string name="auth_password_label">CHIFFRE D\'ACCÈS (MOT DE PASSE)</string>
+    <string name="auth_password_confirm_label">CONFIRMER LE CHIFFRE D\'ACCÈS</string>
     <string name="auth_register_button">INITIALISER LE LIEN NEURAL</string>
     <string name="auth_login_button">ACTIVER LE LIEN</string>
     <string name="auth_guest_button">[ CONTOURNER // ENTRER COMME PILOTE INVITÉ ]</string>
@@ -123,6 +125,12 @@
     <string name="auth_resend_button">RETRANSMETTRE L\'E-MAIL</string>
     <string name="auth_abort_button">[ ABANDONNER // DÉCONNEXION ]</string>
     <string name="auth_default_pending_email">pilote@synapse.cyber</string>
+    <string name="auth_forgot_password_link">MOT DE PASSE OUBLIÉ ?</string>
+    <string name="auth_forgot_password_title">[ RÉINITIALISER LE CHIFFRE NEURAL ]</string>
+    <string name="auth_forgot_password_hint">Entre ta fréquence neurale (e-mail) et nous transmettrons un lien de réinitialisation si un compte existe.</string>
+    <string name="auth_forgot_password_button">TRANSMETTRE LE LIEN</string>
+    <string name="auth_forgot_password_cancel">RETOUR</string>
+    <string name="auth_forgot_password_sent">[ SIGNAL ENVOYÉ // CONSULTE TA BOÎTE DE RÉCEPTION POUR LES INSTRUCTIONS ]</string>
 
     <!-- Auth view model messages -->
     <string name="auth_error_missing_credentials">[ ERREUR // IDENTIFIANTS MANQUANTS ]</string>
@@ -146,11 +154,13 @@
     <!-- Auth registration validation reasons -->
     <string name="auth_validation_nickname_short">L\'INDICATIF DOIT COMPORTER AU MOINS 3 CARACTÈRES.</string>
     <string name="auth_validation_invalid_email">FORMAT D\'E-MAIL INVALIDE.</string>
+    <string name="auth_validation_email_mismatch">LES E-MAILS NE CORRESPONDENT PAS.</string>
     <string name="auth_validation_password_short">LE MOT DE PASSE DOIT COMPORTER AU MOINS 8 CARACTÈRES.</string>
     <string name="auth_validation_password_needs_upper">LE MOT DE PASSE DOIT CONTENIR AU MOINS UNE MAJUSCULE.</string>
     <string name="auth_validation_password_needs_lower">LE MOT DE PASSE DOIT CONTENIR AU MOINS UNE MINUSCULE.</string>
     <string name="auth_validation_password_needs_digit">LE MOT DE PASSE DOIT CONTENIR AU MOINS UN CHIFFRE.</string>
     <string name="auth_validation_password_needs_symbol">LE MOT DE PASSE DOIT CONTENIR AU MOINS UN SYMBOLE.</string>
+    <string name="auth_validation_password_mismatch">LES MOTS DE PASSE NE CORRESPONDENT PAS.</string>
 
     <!-- Multiplayer lobby -->
     <string name="mp_lobby_title">[ PARTIE EN LIGNE ]</string>

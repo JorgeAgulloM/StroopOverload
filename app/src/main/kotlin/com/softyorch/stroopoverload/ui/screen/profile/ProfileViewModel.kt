@@ -84,9 +84,6 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
 
     fun signOut(onSignedOut: () -> Unit) {
         authService.signOut()
-        viewModelScope.launch {
-            repository.clearLocalProgress()
-            onSignedOut()
-        }
+        onSignedOut()
     }
 }

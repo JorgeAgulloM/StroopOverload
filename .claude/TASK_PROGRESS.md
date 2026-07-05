@@ -214,3 +214,100 @@ Verified: `compileDevDebugKotlin`/`compileDemoDebugKotlin`/`compileProdDebugKotl
 `MultiplayerErrorReason` type). Not yet verified visually in-app for text overflow in the longer
 languages (German especially — several strings run long, e.g. password validation messages); worth
 an on-device pass per locale before shipping. Not committed yet.
+
+---
+
+## Sub-task: auth/profile blueprint audit fixes (2026-07-05, IN PROGRESS)
+
+Audited current auth/profile against `C:\Users\Jorge\.claude\templates\user-profile-auth-blueprint.md`
+(user's own proven pattern from a production app). Findings + fix plan below. **If this session gets
+interrupted, resume from the first unchecked box below** — each is independent enough to pick up cold.
+
+### Findings (verified via grep/read, not assumption)
+1. **CRITICAL** — `firestore.rules` has no rule for `users/{uid}`, only `rooms/{roomId}`. Firestore
+   denies-by-default on unmatched paths → all client reads/writes to `users/{uid}` (profile push,
+   leaderboard, progress sync) likely silently fail in production right now (every call site wraps
+   Firestore access in try/catch-log-and-fallback, so failure is invisible). This file is what's
+   actually deployed (`firebase.json` → `"rules": "firestore.rules"`).
+2. No password-reset flow exists anywhere (`sendPasswordResetEmail` — zero matches).
+3. Email is never `.trim()`-ed in login/register (`AuthViewModel.kt` — zero `.trim()` calls).
+4. Verification-resend cooldown (`AuthViewModel.lastVerificationSentEpochMs`) lives in ViewModel
+   memory, not persisted — `UserProfile.lastVerificationEmailSentAtEpochMs` field exists but is
+   never read/written anywhere. Cooldown resets to 0 on app restart → spammable.
+5. `FirebaseGameRepository.syncUserProfile` only distinguishes "same uid" vs "everything else" —
+   doesn't separate "fresh install" from "different account switched in on this device". When no
+   remote doc exists, it carries over `local.points/highScore/experience/level` regardless, so
+   account B can inherit account A's stats if A's cloud push never landed (offline/best-effort push
+   with no retry, which this codebase already has).
+6. Root cause behind #5: `UserProfile.initial()`/`FirebaseGameRepository.getProfile()` default to a
+   **non-blank** placeholder uid (`"guest_local_0001"`) when no local profile exists yet, destroying
+   the blank-uid == "genuinely fresh install" signal the sync logic depends on.
+7. **Self-inflicted, previous session**: `clearLocalProgress()` (which now also deletes the local
+   profile, added last session) is called from `AuthViewModel.signOut()` / `ProfileViewModel.signOut()`
+   on every logout. Blueprint explicitly says: never wipe local progress on logout, only on next-login
+   if the incoming account differs — wiping on logout can lose real progress that was played offline
+   and never finished syncing to Firestore (best-effort push, no retry queue). The original bug this
+   was fixing (stale data shown with no session) is already fixed by the NavGraph `currentUid` gate
+   from the same session — this call is now redundant AND introduces a data-loss risk.
+8. No email/password confirmation fields on registration (blueprint recommends double-entry,
+   validated client-side, never sent to backend).
+9. `pendingNickname` not cleared in `AuthService.signOut()` (low risk — no shared/singleton
+   `AuthService` instance currently, but checklist-incomplete).
+
+### Fix plan (sequential, check off as completed)
+- [x] **F1** — Fix `UserProfile.initial()` / `FirebaseGameRepository.getProfile()` to keep uid
+  genuinely blank on a fresh install instead of defaulting to `"guest_local_0001"` (finding #6,
+  foundational for F2). Deleted the now-dead `UserProfile.initial()` companion function;
+  `getProfile()` fallback is now plain `UserProfile()`. `displayName` getter adjusted to handle a
+  genuinely blank userId gracefully ("Guest" instead of "Guest_" with an empty suffix).
+- [x] **F2** — Rewrote `syncUserProfile` to the blueprint's explicit 3-case shape: same uid
+  (no-op) / blank uid (fresh install, may carry over local stats) / different uid (account switch,
+  starts clean, never inherits the previous account's local stats when no remote doc exists)
+  (finding #5). `isFreshInstall` captured from `local.userId.isBlank()` before `clearLocalProgress()`
+  wipes storage.
+- [x] **F3** — Removed `repository.clearLocalProgress()` from `AuthViewModel.signOut()` and
+  `ProfileViewModel.signOut()` (both became synchronous, no more `viewModelScope.launch` needed for
+  just that call — other suspend calls in each file still use it). `clearLocalProgress()` itself
+  untouched, still correctly used inside `syncUserProfile`'s account-switch path (finding #7).
+- [x] **F4** — Moved verification-resend cooldown from `AuthViewModel`'s in-memory var to
+  `UserProfile.lastVerificationEmailSentAtEpochMs`, read/written through `repository.getProfile()`/
+  `updateProfile()` in both `register()`'s success path and `resendVerificationEmail()` (finding #4).
+- [x] **F5** — `.trim()` email in `AuthViewModel.login()` and `.register()` before calling
+  `AuthService` (finding #3).
+- [x] **F6** — Clear `pendingNickname` in `AuthService.signOut()` (finding #9).
+- [x] **F7** — Added password-reset flow: `AuthService.sendPasswordResetEmail` (wraps Firebase's
+  `sendPasswordResetEmail`), `AuthViewModel.forgotPassword(email)` (always shows the same generic
+  confirmation regardless of success/failure — no enumeration), `AuthScreen` UI ("Forgot password?"
+  link on the login tab only, toggles a small reset form inside the Input Box, pre-fills from
+  whatever email was already typed). 6 new string keys × 6 locales.
+- [x] **F8** — Added email-confirm + password-confirm fields to registration UI + validation
+  (client-side only, never sent to backend). `RegistrationError` gained `EmailMismatch`/
+  `PasswordMismatch`; `validateRegistration`/`registerWithEmail`/`AuthViewModel.register` signatures
+  extended with the confirm params. 4 new string keys × 6 locales (finding #8).
+- [x] **F9 — DEPLOYED** — Added `match /users/{uid}` block to `firestore.rules`: `allow read: if
+  request.auth != null` (leaderboard needs cross-user reads), `allow write: if request.auth != null
+  && request.auth.uid == uid`. User confirmed go-ahead, deployed via `firebase deploy --only
+  firestore:rules` to project `stroopoverload-softyorch` — succeeded (finding #1 fully closed).
+- [x] **F10** — `compileDevDebugKotlin`/`compileDemoDebugKotlin`/`compileProdDebugKotlin` all green,
+  `testDevDebugUnitTest` green. No test file referenced the old `validateRegistration`/
+  `registerWithEmail` signatures, so F8's signature changes needed no test updates.
+- [x] **F11** — DONE except the one item that needs the user: F9's Firestore rule is written but
+  **not deployed**. Ask before running `firebase deploy --only firestore:rules` (needs `firebase
+  login`). Not committed yet.
+
+### Not yet verified (flagged, not blocking)
+- Password-reset flow (F7) and confirm-password fields (F8) compile and are wired correctly, but
+  have not been exercised on-device/emulator — worth a manual pass (registration mismatch errors,
+  reset email arriving, cooldown persisting across app restart) before considering this closed.
+- F9's rule fixes the *symptom* (no rule = deny-all) but the actual production impact (whether
+  profile sync/leaderboard have in fact been failing silently) can only be confirmed by deploying
+  and testing live, or checking Firebase console logs for permission-denied errors historically.
+
+### Design decisions locked in
+- Registration confirm fields (F8) are pure client-side validation, never transmitted — matches
+  blueprint §2 exactly.
+- Password-reset (F7) never reveals in the UI whether the email exists or not — same
+  no-enumeration principle as login's `WrongPassword` bucket already applies.
+- F9's Firestore rule intentionally allows broad *read* on `users` (needed for the existing
+  leaderboard query across all users) while restricting *write* to the owning uid — not a blanket
+  `allow read, write: if true`.

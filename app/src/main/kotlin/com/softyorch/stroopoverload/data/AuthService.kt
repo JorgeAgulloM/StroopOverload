@@ -33,11 +33,13 @@ class CooldownException(val remainingCooldownSeconds: Int) : Exception("Please w
 sealed interface RegistrationError {
     object NicknameTooShort : RegistrationError
     object InvalidEmailFormat : RegistrationError
+    object EmailMismatch : RegistrationError
     object PasswordTooShort : RegistrationError
     object PasswordNeedsUppercase : RegistrationError
     object PasswordNeedsLowercase : RegistrationError
     object PasswordNeedsDigit : RegistrationError
     object PasswordNeedsSymbol : RegistrationError
+    object PasswordMismatch : RegistrationError
 }
 
 class RegistrationValidationException(val reason: RegistrationError) : Exception()
@@ -67,8 +69,14 @@ class AuthService(
         Result.failure(e)
     }
 
-    suspend fun registerWithEmail(email: String, pass: String, nickname: String): Result<FirebaseUser> {
-        val validationErr = validateRegistration(email, pass, nickname)
+    suspend fun registerWithEmail(
+        email: String,
+        emailConfirm: String,
+        pass: String,
+        passConfirm: String,
+        nickname: String,
+    ): Result<FirebaseUser> {
+        val validationErr = validateRegistration(email, emailConfirm, pass, passConfirm, nickname)
         if (validationErr != null) return Result.failure(RegistrationValidationException(validationErr))
 
         return try {
@@ -136,18 +144,35 @@ class AuthService(
         } catch (e: Exception) {
             Log.w("AuthService", "SignOut error: ${e.message}")
         }
+        pendingNickname = null
+    }
+
+    suspend fun sendPasswordResetEmail(email: String): Result<Unit> = try {
+        auth.sendPasswordResetEmail(email.trim()).await()
+        Result.success(Unit)
+    } catch (e: Exception) {
+        Log.w("AuthService", "Password reset error: ${e.message}", e)
+        Result.failure(e)
     }
 
     companion object {
-        fun validateRegistration(email: String, pass: String, nickname: String): RegistrationError? {
+        fun validateRegistration(
+            email: String,
+            emailConfirm: String,
+            pass: String,
+            passConfirm: String,
+            nickname: String,
+        ): RegistrationError? {
             if (nickname.trim().length < 3) return RegistrationError.NicknameTooShort
             if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) return RegistrationError.InvalidEmailFormat
+            if (email.trim() != emailConfirm.trim()) return RegistrationError.EmailMismatch
             if (pass.length < 8) return RegistrationError.PasswordTooShort
             if (!pass.any { it.isUpperCase() }) return RegistrationError.PasswordNeedsUppercase
             if (!pass.any { it.isLowerCase() }) return RegistrationError.PasswordNeedsLowercase
             if (!pass.any { it.isDigit() }) return RegistrationError.PasswordNeedsDigit
             val symbolRegex = "[^A-Za-z0-9]".toRegex()
             if (!pass.contains(symbolRegex)) return RegistrationError.PasswordNeedsSymbol
+            if (pass != passConfirm) return RegistrationError.PasswordMismatch
             return null
         }
     }

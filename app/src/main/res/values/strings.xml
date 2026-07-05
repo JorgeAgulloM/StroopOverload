@@ -112,7 +112,9 @@
     <string name="auth_tab_register">NEW CADET</string>
     <string name="auth_nickname_label">CALLSIGN / NICKNAME</string>
     <string name="auth_email_label">NEURAL FREQUENCY (EMAIL)</string>
+    <string name="auth_email_confirm_label">CONFIRM NEURAL FREQUENCY</string>
     <string name="auth_password_label">ACCESS CIPHER (PASSWORD)</string>
+    <string name="auth_password_confirm_label">CONFIRM ACCESS CIPHER</string>
     <string name="auth_register_button">INITIALIZE NEURAL LINK</string>
     <string name="auth_login_button">ENGAGE LINK</string>
     <string name="auth_guest_button">[ BYPASS // ENTER AS GUEST PILOT ]</string>
@@ -123,6 +125,12 @@
     <string name="auth_resend_button">RE-TRANSMIT EMAIL</string>
     <string name="auth_abort_button">[ ABORT // SIGN OUT ]</string>
     <string name="auth_default_pending_email">pilot@synapse.cyber</string>
+    <string name="auth_forgot_password_link">FORGOT PASSWORD?</string>
+    <string name="auth_forgot_password_title">[ RESET NEURAL CIPHER ]</string>
+    <string name="auth_forgot_password_hint">Enter your neural frequency (email) and we\'ll transmit a reset link if an account exists.</string>
+    <string name="auth_forgot_password_button">TRANSMIT RESET LINK</string>
+    <string name="auth_forgot_password_cancel">BACK</string>
+    <string name="auth_forgot_password_sent">[ SIGNAL SENT // CHECK YOUR INBOX FOR RESET INSTRUCTIONS ]</string>
 
     <!-- Auth view model messages -->
     <string name="auth_error_missing_credentials">[ ERROR // MISSING CREDENTIALS ]</string>
@@ -146,11 +154,13 @@
     <!-- Auth registration validation reasons -->
     <string name="auth_validation_nickname_short">NICKNAME MUST BE AT LEAST 3 CHARACTERS.</string>
     <string name="auth_validation_invalid_email">INVALID EMAIL FORMAT.</string>
+    <string name="auth_validation_email_mismatch">EMAIL ADDRESSES DO NOT MATCH.</string>
     <string name="auth_validation_password_short">PASSWORD MUST BE AT LEAST 8 CHARACTERS.</string>
     <string name="auth_validation_password_needs_upper">PASSWORD MUST CONTAIN AT LEAST ONE UPPERCASE LETTER.</string>
     <string name="auth_validation_password_needs_lower">PASSWORD MUST CONTAIN AT LEAST ONE LOWERCASE LETTER.</string>
     <string name="auth_validation_password_needs_digit">PASSWORD MUST CONTAIN AT LEAST ONE DIGIT.</string>
     <string name="auth_validation_password_needs_symbol">PASSWORD MUST CONTAIN AT LEAST ONE SYMBOL.</string>
+    <string name="auth_validation_password_mismatch">PASSWORDS DO NOT MATCH.</string>
 
     <!-- Multiplayer lobby -->
     <string name="mp_lobby_title">[ ONLINE MATCH ]</string>

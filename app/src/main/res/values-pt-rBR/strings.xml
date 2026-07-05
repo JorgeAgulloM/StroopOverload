@@ -112,7 +112,9 @@
     <string name="auth_tab_register">NOVO CADETE</string>
     <string name="auth_nickname_label">CODINOME / APELIDO</string>
     <string name="auth_email_label">FREQUÊNCIA NEURAL (E-MAIL)</string>
+    <string name="auth_email_confirm_label">CONFIRMAR FREQUÊNCIA NEURAL</string>
     <string name="auth_password_label">CIFRA DE ACESSO (SENHA)</string>
+    <string name="auth_password_confirm_label">CONFIRMAR CIFRA DE ACESSO</string>
     <string name="auth_register_button">INICIALIZAR LINK NEURAL</string>
     <string name="auth_login_button">ATIVAR LINK</string>
     <string name="auth_guest_button">[ IGNORAR // ENTRAR COMO PILOTO CONVIDADO ]</string>
@@ -123,6 +125,12 @@
     <string name="auth_resend_button">REENVIAR E-MAIL</string>
     <string name="auth_abort_button">[ ABORTAR // SAIR ]</string>
     <string name="auth_default_pending_email">piloto@synapse.cyber</string>
+    <string name="auth_forgot_password_link">ESQUECEU A SENHA?</string>
+    <string name="auth_forgot_password_title">[ REDEFINIR CIFRA NEURAL ]</string>
+    <string name="auth_forgot_password_hint">Digite sua frequência neural (e-mail) e enviaremos um link de redefinição se existir uma conta.</string>
+    <string name="auth_forgot_password_button">TRANSMITIR LINK</string>
+    <string name="auth_forgot_password_cancel">VOLTAR</string>
+    <string name="auth_forgot_password_sent">[ SINAL ENVIADO // VERIFIQUE SUA CAIXA DE ENTRADA PARA AS INSTRUÇÕES ]</string>
 
     <!-- Auth view model messages -->
     <string name="auth_error_missing_credentials">[ ERRO // CREDENCIAIS AUSENTES ]</string>
@@ -146,11 +154,13 @@
     <!-- Auth registration validation reasons -->
     <string name="auth_validation_nickname_short">O CODINOME DEVE TER PELO MENOS 3 CARACTERES.</string>
     <string name="auth_validation_invalid_email">FORMATO DE E-MAIL INVÁLIDO.</string>
+    <string name="auth_validation_email_mismatch">OS E-MAILS NÃO COINCIDEM.</string>
     <string name="auth_validation_password_short">A SENHA DEVE TER PELO MENOS 8 CARACTERES.</string>
     <string name="auth_validation_password_needs_upper">A SENHA DEVE CONTER PELO MENOS UMA LETRA MAIÚSCULA.</string>
     <string name="auth_validation_password_needs_lower">A SENHA DEVE CONTER PELO MENOS UMA LETRA MINÚSCULA.</string>
     <string name="auth_validation_password_needs_digit">A SENHA DEVE CONTER PELO MENOS UM DÍGITO.</string>
     <string name="auth_validation_password_needs_symbol">A SENHA DEVE CONTER PELO MENOS UM SÍMBOLO.</string>
+    <string name="auth_validation_password_mismatch">AS SENHAS NÃO COINCIDEM.</string>
 
     <!-- Multiplayer lobby -->
     <string name="mp_lobby_title">[ PARTIDA ONLINE ]</string>
