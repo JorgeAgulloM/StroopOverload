@@ -303,6 +303,72 @@ interrupted, resume from the first unchecked box below** — each is independent
   profile sync/leaderboard have in fact been failing silently) can only be confirmed by deploying
   and testing live, or checking Firebase console logs for permission-denied errors historically.
 
+---
+
+## Sub-task: fix XP/achievement economy — root cause (2026-07-05, IN PROGRESS)
+
+User report: "una partidita de nada" gives achievements too easily and 6-7 levels. Reviewed against
+`C:\Users\Jorge\Proyectos\MillAndFriends\docs\GAME_PLATFORM_SPEC.md` (user's own reusable spec from a
+shipped game, §5.2-5.3 achievement engine + cascade-lock pattern).
+
+**Root cause, finally confirmed and fixed** (previously only flagged, never fixed — see the
+2026-07-03 "rebalance achievements" sub-task above, which explicitly punted on this and only
+compensated thresholds instead): `GameViewModel.onColorTapped`'s wrong-tap branch called
+`endGame(playing)` directly WITHOUT incrementing `totalRounds` for the miss. Since `totalRounds`
+only ever counted correct taps, `accuracy` was mathematically always 100%, meaning `GameResult.won`
+(needs ≥5 rounds + ≥70% accuracy) and `isFlawless` (needs `correctHits == totalRounds`) were
+**structurally guaranteed true** the instant a run reached 5 correct hits — regardless of how the
+run actually went.
+
+**Fix**: `onColorTapped`'s wrong-tap branch now does `endGame(playing.copy(totalRounds =
+playing.totalRounds + 1))` — the miss counts as a played round, not incrementing `correctHits`.
+Timeout-ending (in `startTimer`) deliberately left unchanged (does NOT increment either counter) —
+this is what makes `isFlawless` meaningful again without any other code change: a wrong-tap ending
+now always has `totalRounds = correctHits + 1` (breaks the flawless equality, as it should — you
+made a mistake), while a timeout ending still has `totalRounds == correctHits` (equality holds,
+`isFlawless` can be true) — i.e. "flawless" now means *never tapped the wrong color, eventually lost
+only to the accelerating clock*, not *zero mistakes forever*, which is the only honest way "flawless"
+can exist in an endless-survival game with no round cap. `GameResult.won`/`isFlawless` formulas
+themselves needed zero changes — they were already correct, just fed dishonest input.
+
+**Consequence — achievement threshold rollback**: the 2026-07-03 session doubled/tripled several
+thresholds *specifically to compensate for wins/flawless being cheap under this bug* (its own words:
+"compensates for 'win' being cheap under the core bug", "individual bar still easy (core bug),
+compensated with far more career reps required"). Now that per-run difficulty is honest, that
+compensation is stale over-correction and is being rolled back to the pre-compensation values in
+this pass:
+- Wins track: 10/30/60/100/200/400 → back to **5/15/30/50/100/200**.
+- Flawless track: 3/10/30/60 → back to **1/5/15/30** (each rep is now genuinely hard — zero misses
+  ever, survive to the 800ms timer floor — tripling on top of that would be excessive).
+- Win-streak track: 8/15/25 → back to **5/10/20**; `cyber_veteran` 35 → back to **25**.
+- NOT touching: score thresholds (already calibrated off the real scoring formula, unrelated to this
+  bug), survival-time thresholds (already honest, driven by real elapsed ms), games-played track
+  (unaffected by win/flawless honesty), `first_blood`'s 2026-07-03 change to "5 hits in one run"
+  (an unrelated, legitimate tightening, not bug-compensation).
+- XP formula constants (`XpSystem.calculateGameXp`) NOT changed — the perfectBonus/won-gated base XP
+  will now naturally fire far less often given honest accuracy, which should account for most of the
+  reported "6-7 levels from one game" without also needing to retune the point values themselves.
+
+### Fix plan (sequential, check off as completed)
+- [x] **X1** — `GameViewModel.onColorTapped`: count the miss into `totalRounds` before `endGame`.
+- [x] **X2** — `AchievementEngine.evaluate()` + `progressFor()`: reverted wins/flawless/streak
+  thresholds to pre-compensation values (listed above).
+- [x] **X3** — Updated the numbers quoted in `achievement_*_desc` (EN `strings.xml`) for the same
+  tracks (e.g. "Win 10 challenge runs." → "Win 5...").
+- [x] **X4** — Propagated the same numeric corrections to `values-{es,ja,fr,de,pt-rBR}/strings.xml`
+  achievement descriptions (14 strings × 5 locales).
+- [x] **X5** — `compileDevDebugKotlin`/`compileDemoDebugKotlin`/`compileProdDebugKotlin` all green,
+  `testDevDebugUnitTest` green — no breakage, as expected (tests construct `GameResult`/`CareerStats`
+  manually, never exercised the buggy path).
+- [x] **X6** — DONE. Reported to user. Flagged (per reference doc §5.3 calibration note): exact
+  thresholds are a first-pass, not final — revisit with real playtest data. Not committed yet.
+
+### Design decision locked in
+"Flawless" redefined implicitly (via the counting fix, no new field needed) as "never tapped the
+wrong color; run ended only because the clock caught you" — distinguishes it from a wrong-tap
+ending, which can never be flawless again. This is the only honest reading of "flawless" for an
+endless-survival mode with no win-and-stop condition.
+
 ### Design decisions locked in
 - Registration confirm fields (F8) are pure client-side validation, never transmitted — matches
   blueprint §2 exactly.

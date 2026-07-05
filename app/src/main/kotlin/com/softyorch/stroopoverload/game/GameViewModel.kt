@@ -59,7 +59,10 @@ class GameViewModel(
             )
             nextStimulus()
         } else {
-            endGame(playing)
+            // The miss counts as a played round (but not a correct hit) so that accuracy/won/
+            // isFlawless reflect what actually happened, instead of only ever counting correct
+            // taps and making both structurally guaranteed true at 5+ hits.
+            endGame(playing.copy(totalRounds = playing.totalRounds + 1))
         }
     }
 
