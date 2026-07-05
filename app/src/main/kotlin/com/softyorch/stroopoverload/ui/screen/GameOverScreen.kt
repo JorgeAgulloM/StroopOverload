@@ -13,9 +13,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.softyorch.stroopoverload.R
 import com.softyorch.stroopoverload.domain.Achievement
 import com.softyorch.stroopoverload.domain.GameResult
 import com.softyorch.stroopoverload.domain.XpBreakdown
@@ -46,14 +48,14 @@ fun GameOverScreen(
             item {
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = if (result.won) "[ SYNAPSE VICTORY ]" else "[ NEURAL OVERLOAD ]",
+                    text = stringResource(if (result.won) R.string.game_over_victory_title else R.string.game_over_defeat_title),
                     style = MaterialTheme.typography.titleMedium,
                     color = if (result.won) MaterialTheme.colorScheme.tertiary else TechAccent,
                     letterSpacing = 4.sp
                 )
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
-                    text = if (result.won) "LINK MASTERED" else "SYSTEM CRASH",
+                    text = stringResource(if (result.won) R.string.game_over_victory_subtitle else R.string.game_over_defeat_subtitle),
                     style = MaterialTheme.typography.headlineMedium,
                     color = if (result.won) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
                     fontWeight = FontWeight.Black
@@ -71,7 +73,7 @@ fun GameOverScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "★ NEW COGNITIVE HIGH SCORE ★",
+                            text = stringResource(R.string.game_over_new_high_score),
                             style = MaterialTheme.typography.labelLarge,
                             color = NeonYellow,
                             fontWeight = FontWeight.Bold
@@ -90,13 +92,13 @@ fun GameOverScreen(
                         .padding(14.dp),
                     verticalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Text("[ RUN TELEMETRY ]", style = MaterialTheme.typography.labelMedium, color = TechAccent)
-                    StatRow("FINAL SCORE", result.finalScore.toString(), MaterialTheme.colorScheme.primary)
-                    StatRow("ACCURACY", "${result.accuracy}%", if (result.accuracy >= 80) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onBackground)
-                    StatRow("ROUNDS SURVIVED", result.totalRounds.toString(), MaterialTheme.colorScheme.onBackground)
-                    StatRow("TIME ELAPSED", "${result.durationSeconds}s", MaterialTheme.colorScheme.onBackground)
+                    Text(stringResource(R.string.game_over_telemetry_header), style = MaterialTheme.typography.labelMedium, color = TechAccent)
+                    StatRow(stringResource(R.string.game_over_final_score), result.finalScore.toString(), MaterialTheme.colorScheme.primary)
+                    StatRow(stringResource(R.string.game_over_accuracy), "${result.accuracy}%", if (result.accuracy >= 80) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onBackground)
+                    StatRow(stringResource(R.string.game_over_rounds_survived), result.totalRounds.toString(), MaterialTheme.colorScheme.onBackground)
+                    StatRow(stringResource(R.string.game_over_time_elapsed), "${result.durationSeconds}s", MaterialTheme.colorScheme.onBackground)
                     if (result.isFlawless) {
-                        StatRow("PERFECT BONUS", "FLAWLESS 100%", MaterialTheme.colorScheme.secondary)
+                        StatRow(stringResource(R.string.game_over_perfect_bonus), stringResource(R.string.game_over_flawless_100), MaterialTheme.colorScheme.secondary)
                     }
                 }
             }
@@ -113,16 +115,16 @@ fun GameOverScreen(
                         verticalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
                         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                            Text("[ XP SYNTHESIS ]", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.secondary)
-                            Text("+${xpBreakdown.total} XP", style = MaterialTheme.typography.titleMedium, color = NeonYellow, fontWeight = FontWeight.Bold)
+                            Text(stringResource(R.string.game_over_xp_header), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.secondary)
+                            Text(stringResource(R.string.game_over_xp_total, xpBreakdown.total), style = MaterialTheme.typography.titleMedium, color = NeonYellow, fontWeight = FontWeight.Bold)
                         }
                         HorizontalDivider(color = MaterialTheme.colorScheme.outline, thickness = 1.dp)
-                        XpRow("BASE (${xpBreakdown.baseLabel})", "+${xpBreakdown.base}")
-                        if (xpBreakdown.perfectBonus > 0) XpRow("FLAWLESS BONUS", "+${xpBreakdown.perfectBonus}")
-                        if (xpBreakdown.timeBonus > 0) XpRow("OVERCLOCK TIME", "+${xpBreakdown.timeBonus}")
-                        if (xpBreakdown.streakBonus > 0) XpRow("MOMENTUM STREAK", "+${xpBreakdown.streakBonus}")
-                        if (xpBreakdown.dailyStreakBonus > 0) XpRow("DAILY LINK BONUS", "+${xpBreakdown.dailyStreakBonus}")
-                        if (xpBreakdown.multiplier > 1.0) XpRow("HIGH SCORE MULTIPLIER", "x${xpBreakdown.multiplier}")
+                        XpRow(stringResource(R.string.game_over_xp_base, stringResource(xpBreakdown.baseLabelRes)), "+${xpBreakdown.base}")
+                        if (xpBreakdown.perfectBonus > 0) XpRow(stringResource(R.string.game_over_xp_flawless_bonus), "+${xpBreakdown.perfectBonus}")
+                        if (xpBreakdown.timeBonus > 0) XpRow(stringResource(R.string.game_over_xp_time_bonus), "+${xpBreakdown.timeBonus}")
+                        if (xpBreakdown.streakBonus > 0) XpRow(stringResource(R.string.game_over_xp_streak_bonus), "+${xpBreakdown.streakBonus}")
+                        if (xpBreakdown.dailyStreakBonus > 0) XpRow(stringResource(R.string.game_over_xp_daily_bonus), "+${xpBreakdown.dailyStreakBonus}")
+                        if (xpBreakdown.multiplier > 1.0) XpRow(stringResource(R.string.game_over_xp_multiplier), stringResource(R.string.game_over_xp_multiplier_value, xpBreakdown.multiplier.toString()))
                     }
                 }
             }
@@ -130,7 +132,7 @@ fun GameOverScreen(
             // Newly Unlocked Trophies Banner
             if (newAchievements.isNotEmpty()) {
                 item {
-                    Text("[ NEW SYNAPTIC TROPHIES UNLOCKED! ]", style = MaterialTheme.typography.titleMedium, color = NeonYellow)
+                    Text(stringResource(R.string.game_over_new_trophies), style = MaterialTheme.typography.titleMedium, color = NeonYellow)
                 }
                 items(newAchievements) { ach ->
                     Row(
@@ -145,12 +147,12 @@ fun GameOverScreen(
                         Text(ach.iconEmoji, fontSize = 24.sp)
                         Column {
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                Text(ach.titleKey, style = MaterialTheme.typography.labelLarge, color = Color(ach.rarity.composeColorArgb), fontWeight = FontWeight.Bold)
+                                Text(stringResource(ach.titleRes), style = MaterialTheme.typography.labelLarge, color = Color(ach.rarity.composeColorArgb), fontWeight = FontWeight.Bold)
                                 if (ach.xpReward > 0) {
-                                    Text("(+${ach.xpReward} XP)", style = MaterialTheme.typography.labelMedium, color = NeonYellow, fontWeight = FontWeight.Black)
+                                    Text(stringResource(R.string.game_over_xp_reward, ach.xpReward), style = MaterialTheme.typography.labelMedium, color = NeonYellow, fontWeight = FontWeight.Black)
                                 }
                             }
-                            Text(ach.descriptionKey, style = MaterialTheme.typography.bodySmall, color = Muted, fontSize = 11.sp)
+                            Text(stringResource(ach.descriptionRes), style = MaterialTheme.typography.bodySmall, color = Muted, fontSize = 11.sp)
                         }
                     }
                 }
@@ -165,18 +167,16 @@ fun GameOverScreen(
                     shape = RoundedCornerShape(6.dp),
                     modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)
                 ) {
-                    Text("[ RE-ENGAGE LINK // PLAY AGAIN ]", color = Background, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black)
+                    Text(stringResource(R.string.game_over_play_again), color = Background, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Black)
                 }
                 Spacer(modifier = Modifier.height(12.dp))
+                val shareText = stringResource(R.string.game_over_share_text, result.finalScore, xpBreakdown?.total ?: 0, result.accuracy)
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     OutlinedButton(
                         onClick = {
                             val intent = Intent(Intent.ACTION_SEND).apply {
                                 type = "text/plain"
-                                putExtra(
-                                    Intent.EXTRA_TEXT,
-                                    "I scored ${result.finalScore} (+${xpBreakdown?.total ?: 0} XP) on Stroop Overload! Accuracy: ${result.accuracy}% — Can you beat my cognitive reaction? 🧠⚡"
-                                )
+                                putExtra(Intent.EXTRA_TEXT, shareText)
                             }
                             context.startActivity(Intent.createChooser(intent, null))
                         },
@@ -185,7 +185,7 @@ fun GameOverScreen(
                         shape = RoundedCornerShape(4.dp),
                         modifier = Modifier.weight(1f).heightIn(min = 48.dp)
                     ) {
-                        Text("SHARE SCORE")
+                        Text(stringResource(R.string.game_over_share_score))
                     }
                     OutlinedButton(
                         onClick = onMenu,
@@ -194,7 +194,7 @@ fun GameOverScreen(
                         shape = RoundedCornerShape(4.dp),
                         modifier = Modifier.weight(1f).heightIn(min = 48.dp)
                     ) {
-                        Text("MAIN MENU")
+                        Text(stringResource(R.string.game_over_main_menu))
                     }
                 }
                 Spacer(modifier = Modifier.height(24.dp))

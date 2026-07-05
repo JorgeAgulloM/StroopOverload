@@ -147,6 +147,7 @@ class FirebaseGameRepository private constructor(
 
     suspend fun clearLocalProgress() = withContext(Dispatchers.IO) {
         achievementsStore.clearProgress()
+        profileStore.deleteProfile()
     }
 
     suspend fun recordGameResult(result: GameResult, xpEarned: Int): List<Achievement> = withContext(Dispatchers.IO) {

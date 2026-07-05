@@ -15,9 +15,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.softyorch.stroopoverload.R
 import com.softyorch.stroopoverload.data.FirebaseGameRepository
 import com.softyorch.stroopoverload.domain.UserProfile
 import com.softyorch.stroopoverload.ui.theme.*
@@ -55,7 +57,7 @@ fun LeaderboardScreen(onBack: () -> Unit) {
             TopAppBar(
                 title = {
                     Text(
-                        "[ CYBER // LEADERBOARD ]",
+                        stringResource(R.string.leaderboard_title),
                         style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.primary,
                         letterSpacing = 2.sp
@@ -63,12 +65,12 @@ fun LeaderboardScreen(onBack: () -> Unit) {
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colorScheme.primary)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back), tint = MaterialTheme.colorScheme.primary)
                     }
                 },
                 actions = {
                     IconButton(onClick = { fetchLeaderboard(force = true) }) {
-                        Icon(Icons.Default.Refresh, contentDescription = "Refresh", tint = TechAccent)
+                        Icon(Icons.Default.Refresh, contentDescription = stringResource(R.string.common_refresh), tint = TechAccent)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background),
@@ -97,25 +99,25 @@ fun LeaderboardScreen(onBack: () -> Unit) {
                             Text("#$myRank", color = NeonYellow, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
                         }
                         Column {
-                            Text("YOUR SYNAPSE RANK", style = MaterialTheme.typography.bodySmall, color = Muted, fontSize = 10.sp)
+                            Text(stringResource(R.string.leaderboard_your_rank), style = MaterialTheme.typography.bodySmall, color = Muted, fontSize = 10.sp)
                             Text(myProfile.displayName, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.Bold)
                         }
                     }
                     Column(horizontalAlignment = Alignment.End) {
-                        Text("${myProfile.points} PTS", style = MaterialTheme.typography.titleMedium, color = NeonYellow, fontWeight = FontWeight.Bold)
-                        Text("LVL ${myProfile.level}", style = MaterialTheme.typography.bodySmall, color = TechAccent, fontSize = 11.sp)
+                        Text(stringResource(R.string.leaderboard_points, myProfile.points), style = MaterialTheme.typography.titleMedium, color = NeonYellow, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.leaderboard_level, myProfile.level), style = MaterialTheme.typography.bodySmall, color = TechAccent, fontSize = 11.sp)
                     }
                 }
                 Spacer(modifier = Modifier.height(16.dp))
             }
 
-            Text("[ TOP PILOTS GLOBALLY ]", style = MaterialTheme.typography.labelMedium, color = TechAccent)
+            Text(stringResource(R.string.leaderboard_top_pilots), style = MaterialTheme.typography.labelMedium, color = TechAccent)
             Spacer(modifier = Modifier.height(8.dp))
 
             Box(modifier = Modifier.fillMaxSize()) {
                 when {
                     loading -> CircularProgressIndicator(modifier = Modifier.align(Alignment.Center), color = MaterialTheme.colorScheme.primary)
-                    entries.isEmpty() -> Text("No pilots linked yet.", color = Muted, modifier = Modifier.align(Alignment.Center))
+                    entries.isEmpty() -> Text(stringResource(R.string.leaderboard_empty), color = Muted, modifier = Modifier.align(Alignment.Center))
                     else -> LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                         itemsIndexed(entries) { index, user ->
                             val rank = index + 1
@@ -171,7 +173,7 @@ fun LeaderboardScreen(onBack: () -> Unit) {
                                                 fontWeight = if (isMe) FontWeight.Black else FontWeight.Bold
                                             )
                                             if (isMe) {
-                                                Text("[ YOU ]", style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary, fontSize = 10.sp)
+                                                Text(stringResource(R.string.leaderboard_you_tag), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary, fontSize = 10.sp)
                                             }
                                         }
                                         Text(
@@ -185,7 +187,7 @@ fun LeaderboardScreen(onBack: () -> Unit) {
 
                                 Column(horizontalAlignment = Alignment.End) {
                                     Text(
-                                        text = "${user.points} PTS",
+                                        text = stringResource(R.string.leaderboard_points, user.points),
                                         style = MaterialTheme.typography.titleMedium,
                                         color = when (rank) {
                                             1 -> NeonYellow
@@ -195,7 +197,7 @@ fun LeaderboardScreen(onBack: () -> Unit) {
                                         fontWeight = FontWeight.Bold
                                     )
                                     Text(
-                                        text = "HIGH: ${user.highScore}",
+                                        text = stringResource(R.string.leaderboard_high_score, user.highScore),
                                         style = MaterialTheme.typography.bodySmall,
                                         color = TechAccent,
                                         fontSize = 10.sp

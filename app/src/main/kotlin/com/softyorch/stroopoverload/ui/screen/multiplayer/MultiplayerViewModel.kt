@@ -29,7 +29,7 @@ class MultiplayerViewModel(
         viewModelScope.launch {
             repository.createRoom(displayName)
                 .onSuccess { (roomId, _) -> observeRoom(roomId) }
-                .onFailure { _state.value = MultiplayerUiState.Error(it.message ?: "No se pudo crear la sala.") }
+                .onFailure { _state.value = MultiplayerUiState.Error(MultiplayerErrorReason.CreateRoomFailed(it.message)) }
         }
     }
 
@@ -40,7 +40,7 @@ class MultiplayerViewModel(
         viewModelScope.launch {
             repository.joinRoom(code, displayName)
                 .onSuccess { roomId -> observeRoom(roomId) }
-                .onFailure { _state.value = MultiplayerUiState.Error(it.message ?: "No se pudo unir a la sala.") }
+                .onFailure { _state.value = MultiplayerUiState.Error(MultiplayerErrorReason.JoinRoomFailed(it.message)) }
         }
     }
 
@@ -48,7 +48,7 @@ class MultiplayerViewModel(
         val current = _state.value as? MultiplayerUiState.InRoom ?: return
         viewModelScope.launch {
             repository.startGame(current.room.roomId)
-                .onFailure { _state.value = MultiplayerUiState.Error(it.message ?: "No se pudo iniciar la partida.") }
+                .onFailure { _state.value = MultiplayerUiState.Error(MultiplayerErrorReason.StartGameFailed(it.message)) }
         }
     }
 
@@ -74,7 +74,7 @@ class MultiplayerViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                _state.value = MultiplayerUiState.Error(e.message ?: "Se perdió la conexión con la sala.")
+                _state.value = MultiplayerUiState.Error(MultiplayerErrorReason.ConnectionLost(e.message))
             }
         }
     }

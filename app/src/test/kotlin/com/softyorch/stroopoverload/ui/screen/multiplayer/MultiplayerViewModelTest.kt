@@ -237,7 +237,8 @@ class MultiplayerViewModelTest {
             dispatcher.scheduler.advanceUntilIdle()
 
             val error = awaitItem() as MultiplayerUiState.Error
-            assertTrue(error.message.isNotBlank())
+            val reason = error.reason as MultiplayerErrorReason.CreateRoomFailed
+            assertEquals("nope", reason.detail)
         }
     }
 
@@ -255,7 +256,8 @@ class MultiplayerViewModelTest {
             dispatcher.scheduler.advanceUntilIdle()
 
             val error = awaitItem() as MultiplayerUiState.Error
-            assertTrue(error.message.isNotBlank())
+            val reason = error.reason as MultiplayerErrorReason.JoinRoomFailed
+            assertEquals("nope", reason.detail)
         }
     }
 
@@ -308,7 +310,8 @@ class MultiplayerViewModelTest {
             dispatcher.scheduler.advanceUntilIdle()
 
             val error = awaitItem() as MultiplayerUiState.Error
-            assertTrue(error.message.isNotBlank())
+            val reason = error.reason as MultiplayerErrorReason.ConnectionLost
+            assertEquals("boom", reason.detail)
         }
     }
 }

@@ -1,17 +1,20 @@
 package com.softyorch.stroopoverload.domain
 
-enum class Rarity(val colorArgb: Long, val baseXp: Int, val label: String) {
-    COMMON(0xFFB0BAC5, 25, "COMMON // BASE"),
-    UNCOMMON(0xFF00C853, 75, "UNCOMMON // NEON"),
-    RARE(0xFF4A9EFF, 100, "RARE // CYBER"),
-    EPIC(0xFFC06EFF, 250, "EPIC // SYNAPSE"),
-    LEGENDARY(0xFFFFD400, 750, "LEGENDARY // SINGULARITY");
+import androidx.annotation.StringRes
+import com.softyorch.stroopoverload.R
+
+enum class Rarity(val colorArgb: Long, val baseXp: Int) {
+    COMMON(0xFFB0BAC5, 25),
+    UNCOMMON(0xFF00C853, 75),
+    RARE(0xFF4A9EFF, 100),
+    EPIC(0xFFC06EFF, 250),
+    LEGENDARY(0xFFFFD400, 750);
 
     val composeColorArgb: Long get() = colorArgb
 }
 
 data class XpBreakdown(
-    val baseLabel: String,
+    @StringRes val baseLabelRes: Int,
     val base: Int,
     val perfectBonus: Int,
     val timeBonus: Int,
@@ -62,7 +65,7 @@ object XpSystem {
     ): XpBreakdown {
         if (result.correctHits == 0 || result.finalScore <= 0) {
             return XpBreakdown(
-                baseLabel = "AFK // NO_SIGNAL",
+                baseLabelRes = R.string.xp_base_afk,
                 base = 0,
                 perfectBonus = 0,
                 timeBonus = 0,
@@ -78,7 +81,7 @@ object XpSystem {
         } else {
             result.correctHits * 5
         }
-        val baseLabel = if (result.won) "CYBER_WIN" else "SYNAPSE_LOSS"
+        val baseLabelRes = if (result.won) R.string.xp_base_win else R.string.xp_base_loss
 
         val perfectBonus = if (result.isFlawless) 100 else 0
         val timeBonus = when {
@@ -94,7 +97,7 @@ object XpSystem {
         val total = (sum * multiplier).toInt().coerceAtLeast(0)
 
         return XpBreakdown(
-            baseLabel = baseLabel,
+            baseLabelRes = baseLabelRes,
             base = base,
             perfectBonus = perfectBonus,
             timeBonus = timeBonus,

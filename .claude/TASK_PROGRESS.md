@@ -159,3 +159,58 @@ None from the original 15-task plan — see B6 note above for the one deliberate
 2. Check out `feature/online-multiplayer` (should already be current branch) — note this branch itself was never merged/PR'd.
 3. **Open item carried over from B6**, now bigger: `HomeScreen.kt`, `NavGraph.kt`, `LobbyScreen.kt`, `WaitingRoomScreen.kt`, `MultiplayerGameScreen.kt` all currently have real, working, verified-on-device changes sitting UNCOMMITTED, three of them (`HomeScreen`/`NavGraph`) still tangled with someone's separate pending redesign work. Nothing is at risk (normal working tree, not a stash) but ask the user for a commit-strategy decision before doing anything destructive to these files — do not run any `git checkout`/`reset`/`clean` on them without confirming first.
 4. Firebase backend is live in production already — no further deploy needed unless functions code changes again (in which case `firebase deploy --only functions` from repo root, user must be logged in via `firebase login`).
+
+---
+
+## Sub-task: demo build flavor + session/auth cleanup + keyboard fix + full i18n (2026-07-05)
+
+**Demo build flavor**: added a 3rd product flavor `demo` (shares prod's applicationId/Firebase
+registration, no `applicationIdSuffix`) so `AsoDemoSeeder` and the "restore VIP demo pilot" button
+only ever run under `BuildConfig.FLAVOR == "demo"` — `dev` (normal debug testing) no longer
+auto-seeds a fake profile, so the full auth path is testable from debug again.
+
+**Session/auth data leak fix**: two real bugs found and fixed —
+1. `NavGraph.kt` startRoute gated on local `profileCreated` flag (survived sign-out/reinstall
+   residue) instead of only on `authService.currentUid` — fixed to require a real Firebase session
+   (demo flavor gets an explicit bypass since it never logs in for real).
+2. `FirebaseGameRepository.clearLocalProgress()` only cleared achievements/career stats, never the
+   `ProfileLocalStore` — sign-out left the old profile on disk. Now also calls
+   `profileStore.deleteProfile()`.
+
+**Keyboard-squish fix in AuthScreen**: root `Box` had no `imePadding()`/scroll, so opening the
+keyboard during registration (nickname → email → password) shrank the available height and
+squashed fields below the fold with no way to scroll to them. Added `.imePadding()` +
+`.verticalScroll(rememberScrollState())`. Works because `MainActivity` already calls
+`enableEdgeToEdge()`.
+
+**Full i18n (EN default, ES/JA/FR/DE/PT-BR)**: extracted every user-facing string across all 8
+screens + ViewModels + domain models into `app/src/main/res/values{,-es,-ja,-fr,-de,-pt-rBR}/strings.xml`
+(~150 keys × 6 locales). Also caught two strings that were hardcoded in *Spanish* even in the
+supposed English/default codepath (`LobbyScreen`, `WaitingRoomScreen`, `MultiplayerGameScreen` —
+these three multiplayer screens were never localized at all before this).
+
+Non-Composable layers needed structural changes, not just string swaps, since they have no
+`Context`/can't call `stringResource()`:
+- `Achievement.titleKey/descriptionKey: String` → `titleRes/descriptionRes: @StringRes Int`
+  (`AchievementDefinitions.kt` rewritten, 30 achievements × 2 keys).
+- `StroopColor.displayName: String` → `displayNameRes: @StringRes Int` (color names shown as the
+  Stroop word/answers are now translated too).
+- `XpBreakdown.baseLabel: String` → `baseLabelRes: @StringRes Int`; `Rarity.label` deleted (dead
+  code, never read anywhere).
+- `AuthService.validateRegistration()` returned raw English strings → now returns a sealed
+  `RegistrationError`, resolved to a string resource in `AuthViewModel` (which has `Context` via
+  `AndroidViewModel`).
+- `MultiplayerViewModel`/`MultiplayerUiState.Error` carried raw Spanish fallback strings → replaced
+  with sealed `MultiplayerErrorReason` (mirrors the existing `LoginError` pattern); resolved to
+  string resources in `LobbyScreen`. Backend exception messages (e.g. real Firebase errors) still
+  pass through raw when present — only the "no detail" fallback text is localized.
+- Added `locales_config.xml` + `android:localeConfig` manifest attribute for Android 13+ per-app
+  language picker support.
+- Added project `CLAUDE.md` codifying "never hardcode user-visible text" going forward, with the
+  exact patterns to use for Composables vs. ViewModels vs. domain models vs. cross-layer errors.
+
+Verified: `compileDevDebugKotlin`/`compileDemoDebugKotlin`/`compileProdDebugKotlin` all green,
+`testDevDebugUnitTest` green (updated `MultiplayerViewModelTest` assertions for the new sealed
+`MultiplayerErrorReason` type). Not yet verified visually in-app for text overflow in the longer
+languages (German especially — several strings run long, e.g. password validation messages); worth
+an on-device pass per locale before shipping. Not committed yet.

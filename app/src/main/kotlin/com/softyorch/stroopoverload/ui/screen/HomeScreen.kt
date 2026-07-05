@@ -14,9 +14,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.softyorch.stroopoverload.R
 import com.softyorch.stroopoverload.domain.UserProfile
 import com.softyorch.stroopoverload.domain.XpSystem
 import com.softyorch.stroopoverload.ui.theme.*
@@ -69,17 +71,17 @@ fun HomeScreen(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                Icon(Icons.Default.Person, contentDescription = "Profile", tint = Color(rarity.composeColorArgb), modifier = Modifier.size(16.dp))
+                Icon(Icons.Default.Person, contentDescription = stringResource(R.string.common_profile_icon_desc), tint = Color(rarity.composeColorArgb), modifier = Modifier.size(16.dp))
                 Text(
-                    text = "${profile.displayName.take(10)} // LVL ${profile.level}",
+                    text = stringResource(R.string.home_player_badge, profile.displayName.take(10), profile.level),
                     color = Color(rarity.composeColorArgb),
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold
                 )
                 if (profile.isAdFree || profile.isPremium) {
-                    Text("💎 VIP", color = MaterialTheme.colorScheme.tertiary, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                    Text(stringResource(R.string.home_vip_badge), color = MaterialTheme.colorScheme.tertiary, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
                 }
-                Text("🔥 ${profile.dailyStreak}d", color = NeonYellow, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.home_streak_badge, profile.dailyStreak), color = NeonYellow, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
             }
         }
 
@@ -90,25 +92,25 @@ fun HomeScreen(
             verticalArrangement = Arrangement.Center,
         ) {
             Text(
-                text = "[ COGNITIVE OVERCLOCK ]",
+                text = stringResource(R.string.home_tagline),
                 style = MaterialTheme.typography.labelLarge,
                 color = TechAccent,
                 letterSpacing = 4.sp
             )
             Spacer(Modifier.height(12.dp))
             Text(
-                text = "STROOP",
+                text = stringResource(R.string.home_title_line1),
                 style = MaterialTheme.typography.displayLarge,
                 color = MaterialTheme.colorScheme.primary,
             )
             Text(
-                text = "OVERLOAD",
+                text = stringResource(R.string.home_title_line2),
                 style = MaterialTheme.typography.displayMedium,
                 color = MaterialTheme.colorScheme.secondary,
             )
             Spacer(Modifier.height(8.dp))
             Text(
-                text = "NEURAL REACTION SYNAPSE TEST",
+                text = stringResource(R.string.home_subtitle),
                 style = MaterialTheme.typography.bodySmall,
                 color = Muted,
                 letterSpacing = 2.sp
@@ -131,7 +133,7 @@ fun HomeScreen(
                 shape = RoundedCornerShape(6.dp)
             ) {
                 Text(
-                    text = if (isReady) "[ ENGAGE NEURAL LAUNCH ]" else "[ CALIBRATING LINK... ]",
+                    text = stringResource(if (isReady) R.string.home_play_button else R.string.home_play_button_loading),
                     style = MaterialTheme.typography.titleMedium,
                     color = Background,
                     fontWeight = FontWeight.Black
@@ -148,7 +150,7 @@ fun HomeScreen(
                 shape = RoundedCornerShape(4.dp),
                 modifier = Modifier.width(200.dp).heightIn(min = 44.dp)
             ) {
-                Text("🏆 LEADERBOARD", style = MaterialTheme.typography.labelLarge)
+                Text(stringResource(R.string.home_leaderboard_button), style = MaterialTheme.typography.labelLarge)
             }
 
             Spacer(Modifier.height(12.dp))
@@ -160,13 +162,13 @@ fun HomeScreen(
                 shape = RoundedCornerShape(4.dp),
                 modifier = Modifier.width(200.dp).heightIn(min = 44.dp)
             ) {
-                Text("🌐 PARTIDA ONLINE", style = MaterialTheme.typography.labelLarge)
+                Text(stringResource(R.string.home_multiplayer_button), style = MaterialTheme.typography.labelLarge)
             }
         }
 
         // Footer HUD Info
         Text(
-            text = "SYS_VER: 2.0 // CYBERPUNK HUD ACTIVE",
+            text = stringResource(R.string.home_footer),
             style = MaterialTheme.typography.bodySmall,
             color = Muted,
             fontSize = 10.sp,

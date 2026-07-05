@@ -3,10 +3,12 @@ package com.softyorch.stroopoverload.ui.screen.auth
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.softyorch.stroopoverload.R
 import com.softyorch.stroopoverload.data.AuthService
 import com.softyorch.stroopoverload.data.CooldownException
 import com.softyorch.stroopoverload.data.FirebaseGameRepository
 import com.softyorch.stroopoverload.data.LoginError
+import com.softyorch.stroopoverload.data.RegistrationError
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -32,6 +34,9 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
     private var lastVerificationSentEpochMs: Long = 0L
 
+    private fun string(resId: Int): String = getApplication<Application>().getString(resId)
+    private fun string(resId: Int, vararg args: Any): String = getApplication<Application>().getString(resId, *args)
+
     init {
         checkCurrentSession()
     }
@@ -54,7 +59,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
 
     fun login(email: String, pass: String) {
         if (email.isBlank() || pass.isBlank()) {
-            _state.value = _state.value.copy(errorMessage = "[ ERROR // MISSING CREDENTIALS ]")
+            _state.value = _state.value.copy(errorMessage = string(R.string.auth_error_missing_credentials))
             return
         }
         _state.value = _state.value.copy(isLoading = true, errorMessage = null)
@@ -72,10 +77,10 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
             }.onFailure { e ->
                 val loginErr = LoginError.fromException(e)
                 val msg = when (loginErr) {
-                    is LoginError.WrongPassword -> "[ DENIED // INVALID PASSWORD ]"
-                    is LoginError.InvalidEmail -> "[ DENIED // UNKNOWN EMAIL OR BAD FORMAT ]"
-                    is LoginError.NetworkError -> "[ OFFLINE // NETWORK CONNECTION TIMEOUT ]"
-                    is LoginError.Unknown -> "[ DENIED // ${loginErr.message} ]"
+                    is LoginError.WrongPassword -> string(R.string.auth_error_wrong_password)
+                    is LoginError.InvalidEmail -> string(R.string.auth_error_invalid_email)
+                    is LoginError.NetworkError -> string(R.string.auth_error_network)
+                    is LoginError.Unknown -> string(R.string.auth_error_unknown, loginErr.message)
                 }
                 _state.value = _state.value.copy(isLoading = false, errorMessage = msg)
             }
@@ -85,7 +90,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
     fun register(email: String, pass: String, nickname: String) {
         val validationErr = AuthService.validateRegistration(email, pass, nickname)
         if (validationErr != null) {
-            _state.value = _state.value.copy(errorMessage = "[ REGISTRATION REJECTED // ${validationErr.uppercase()} ]")
+            _state.value = _state.value.copy(errorMessage = string(R.string.auth_register_rejected, string(registrationErrorRes(validationErr))))
             return
         }
         _state.value = _state.value.copy(isLoading = true, errorMessage = null)
@@ -100,19 +105,29 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                     userUid = user.uid,
                     isAnonymous = false,
                     needsEmailVerification = !user.isEmailVerified,
-                    successMessage = "[ REGISTRATION SUCCESS // VERIFICATION EMAIL DISPATCHED ]"
+                    successMessage = string(R.string.auth_register_success)
                 )
             }.onFailure { e ->
                 val loginErr = LoginError.fromException(e)
                 val msg = when (loginErr) {
-                    is LoginError.WrongPassword -> "[ REJECTED // WEAK PASSWORD ]"
-                    is LoginError.InvalidEmail -> "[ REJECTED // INVALID EMAIL FORMAT ]"
-                    is LoginError.NetworkError -> "[ OFFLINE // NETWORK ERROR DURING REGISTRATION ]"
-                    is LoginError.Unknown -> "[ REJECTED // ${loginErr.message} ]"
+                    is LoginError.WrongPassword -> string(R.string.auth_register_error_weak_password)
+                    is LoginError.InvalidEmail -> string(R.string.auth_register_error_invalid_email)
+                    is LoginError.NetworkError -> string(R.string.auth_register_error_network)
+                    is LoginError.Unknown -> string(R.string.auth_register_error_unknown, loginErr.message)
                 }
                 _state.value = _state.value.copy(isLoading = false, errorMessage = msg)
             }
         }
+    }
+
+    private fun registrationErrorRes(error: RegistrationError): Int = when (error) {
+        RegistrationError.NicknameTooShort -> R.string.auth_validation_nickname_short
+        RegistrationError.InvalidEmailFormat -> R.string.auth_validation_invalid_email
+        RegistrationError.PasswordTooShort -> R.string.auth_validation_password_short
+        RegistrationError.PasswordNeedsUppercase -> R.string.auth_validation_password_needs_upper
+        RegistrationError.PasswordNeedsLowercase -> R.string.auth_validation_password_needs_lower
+        RegistrationError.PasswordNeedsDigit -> R.string.auth_validation_password_needs_digit
+        RegistrationError.PasswordNeedsSymbol -> R.string.auth_validation_password_needs_symbol
     }
 
     fun continueAsGuest() {
@@ -129,7 +144,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                     needsEmailVerification = false
                 )
             } else {
-                _state.value = _state.value.copy(isLoading = false, errorMessage = "[ ERROR // GUEST NEURAL LINK FAILED ]")
+                _state.value = _state.value.copy(isLoading = false, errorMessage = string(R.string.auth_guest_error))
             }
         }
     }
@@ -139,15 +154,15 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
             try {
                 lastVerificationSentEpochMs = authService.resendVerificationEmailWithCooldown(lastVerificationSentEpochMs)
                 _state.value = _state.value.copy(
-                    successMessage = "[ SIGNAL SENT // VERIFICATION EMAIL RE-DISPATCHED ]",
+                    successMessage = string(R.string.auth_resend_success),
                     errorMessage = null
                 )
             } catch (e: CooldownException) {
                 _state.value = _state.value.copy(
-                    errorMessage = "[ COOLDOWN ACTIVE // WAIT ${e.remainingCooldownSeconds}S BEFORE RESENDING ]"
+                    errorMessage = string(R.string.auth_resend_cooldown, e.remainingCooldownSeconds)
                 )
             } catch (e: Exception) {
-                _state.value = _state.value.copy(errorMessage = "[ ERROR // DISPATCH FAILED ]")
+                _state.value = _state.value.copy(errorMessage = string(R.string.auth_resend_failed))
             }
         }
     }
@@ -156,9 +171,9 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             val verified = authService.reloadUser()
             if (verified) {
-                _state.value = _state.value.copy(needsEmailVerification = false, successMessage = "[ NEURAL LINK VERIFIED ]")
+                _state.value = _state.value.copy(needsEmailVerification = false, successMessage = string(R.string.auth_verified_success))
             } else {
-                _state.value = _state.value.copy(errorMessage = "[ STATUS // EMAIL STILL PENDING VERIFICATION ]")
+                _state.value = _state.value.copy(errorMessage = string(R.string.auth_still_pending))
             }
         }
     }

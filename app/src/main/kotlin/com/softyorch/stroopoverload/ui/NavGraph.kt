@@ -53,8 +53,8 @@ fun StroopNavGraph() {
 
     val startRoute = remember {
         AsoDemoSeeder.seedIfNeeded(context)
-        val prof = repository.getProfile()
-        if (authService.currentUid == null && !prof.profileCreated) ROUTE_AUTH else ROUTE_HOME
+        val isDemoShowcaseBuild = com.softyorch.stroopoverload.BuildConfig.FLAVOR == "demo"
+        if (authService.currentUid == null && !isDemoShowcaseBuild) ROUTE_AUTH else ROUTE_HOME
     }
 
     LaunchedEffect(navController) {

@@ -30,6 +30,18 @@ sealed interface LoginError {
 
 class CooldownException(val remainingCooldownSeconds: Int) : Exception("Please wait $remainingCooldownSeconds seconds before resending verification email.")
 
+sealed interface RegistrationError {
+    object NicknameTooShort : RegistrationError
+    object InvalidEmailFormat : RegistrationError
+    object PasswordTooShort : RegistrationError
+    object PasswordNeedsUppercase : RegistrationError
+    object PasswordNeedsLowercase : RegistrationError
+    object PasswordNeedsDigit : RegistrationError
+    object PasswordNeedsSymbol : RegistrationError
+}
+
+class RegistrationValidationException(val reason: RegistrationError) : Exception()
+
 class AuthService(
     private val auth: FirebaseAuth = try { FirebaseAuth.getInstance() } catch (e: Exception) { null } ?: FirebaseAuth.getInstance()
 ) {
@@ -57,7 +69,7 @@ class AuthService(
 
     suspend fun registerWithEmail(email: String, pass: String, nickname: String): Result<FirebaseUser> {
         val validationErr = validateRegistration(email, pass, nickname)
-        if (validationErr != null) return Result.failure(IllegalArgumentException(validationErr))
+        if (validationErr != null) return Result.failure(RegistrationValidationException(validationErr))
 
         return try {
             pendingNickname = nickname.trim()
@@ -127,15 +139,15 @@ class AuthService(
     }
 
     companion object {
-        fun validateRegistration(email: String, pass: String, nickname: String): String? {
-            if (nickname.trim().length < 3) return "Nickname must be at least 3 characters."
-            if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) return "Invalid email format."
-            if (pass.length < 8) return "Password must be at least 8 characters."
-            if (!pass.any { it.isUpperCase() }) return "Password must contain at least one uppercase letter."
-            if (!pass.any { it.isLowerCase() }) return "Password must contain at least one lowercase letter."
-            if (!pass.any { it.isDigit() }) return "Password must contain at least one digit."
+        fun validateRegistration(email: String, pass: String, nickname: String): RegistrationError? {
+            if (nickname.trim().length < 3) return RegistrationError.NicknameTooShort
+            if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) return RegistrationError.InvalidEmailFormat
+            if (pass.length < 8) return RegistrationError.PasswordTooShort
+            if (!pass.any { it.isUpperCase() }) return RegistrationError.PasswordNeedsUppercase
+            if (!pass.any { it.isLowerCase() }) return RegistrationError.PasswordNeedsLowercase
+            if (!pass.any { it.isDigit() }) return RegistrationError.PasswordNeedsDigit
             val symbolRegex = "[^A-Za-z0-9]".toRegex()
-            if (!pass.contains(symbolRegex)) return "Password must contain at least one symbol."
+            if (!pass.contains(symbolRegex)) return RegistrationError.PasswordNeedsSymbol
             return null
         }
     }

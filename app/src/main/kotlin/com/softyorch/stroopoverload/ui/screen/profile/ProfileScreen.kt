@@ -14,9 +14,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.softyorch.stroopoverload.R
 import com.softyorch.stroopoverload.domain.Achievement
 import com.softyorch.stroopoverload.domain.XpSystem
 import com.softyorch.stroopoverload.ui.theme.*
@@ -37,20 +39,20 @@ fun ProfileScreen(
             TopAppBar(
                 title = {
                     Text(
-                        "[ NEURAL // PROFILE ]",
+                        stringResource(R.string.profile_title),
                         style = MaterialTheme.typography.titleLarge,
                         color = MaterialTheme.colorScheme.primary
                     )
                 },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = MaterialTheme.colorScheme.primary)
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(R.string.common_back), tint = MaterialTheme.colorScheme.primary)
                     }
                 },
                 actions = {
                     if (!state.isEditing) {
                         IconButton(onClick = { viewModel.beginEdit() }) {
-                            Icon(Icons.Default.Edit, contentDescription = "Edit Profile", tint = MaterialTheme.colorScheme.secondary)
+                            Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.common_edit_profile), tint = MaterialTheme.colorScheme.secondary)
                         }
                     }
                 },
@@ -85,7 +87,7 @@ fun ProfileScreen(
                                 OutlinedTextField(
                                     value = state.profile.nickname,
                                     onValueChange = { viewModel.updateDraftNickname(it) },
-                                    label = { Text("CALLSIGN", color = Muted) },
+                                    label = { Text(stringResource(R.string.profile_callsign_label), color = Muted) },
                                     singleLine = true,
                                     colors = OutlinedTextFieldDefaults.colors(
                                         focusedBorderColor = MaterialTheme.colorScheme.secondary,
@@ -115,7 +117,7 @@ fun ProfileScreen(
                                             .padding(horizontal = 8.dp, vertical = 4.dp),
                                         verticalAlignment = Alignment.CenterVertically
                                     ) {
-                                        Text("💎 VIP AD-FREE PILOT", color = MaterialTheme.colorScheme.tertiary, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, fontSize = 10.sp)
+                                        Text(stringResource(R.string.profile_vip_badge), color = MaterialTheme.colorScheme.tertiary, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, fontSize = 10.sp)
                                     }
                                 }
                             }
@@ -129,7 +131,7 @@ fun ProfileScreen(
                                 .padding(horizontal = 12.dp, vertical = 6.dp)
                         ) {
                             Text(
-                                text = "LVL ${state.profile.level}",
+                                text = stringResource(R.string.leaderboard_level, state.profile.level),
                                 color = Color(rarity.composeColorArgb),
                                 style = MaterialTheme.typography.titleMedium,
                                 fontWeight = FontWeight.Bold
@@ -145,7 +147,7 @@ fun ProfileScreen(
                                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
                                 modifier = Modifier.weight(1f).heightIn(min = 44.dp)
                             ) {
-                                Text("SAVE LINK", color = Background, fontWeight = FontWeight.Bold)
+                                Text(stringResource(R.string.profile_save), color = Background, fontWeight = FontWeight.Bold)
                             }
                             OutlinedButton(
                                 onClick = { viewModel.discardEdit() },
@@ -153,7 +155,7 @@ fun ProfileScreen(
                                 border = androidx.compose.foundation.BorderStroke(1.dp, Muted),
                                 modifier = Modifier.weight(1f).heightIn(min = 44.dp)
                             ) {
-                                Text("DISCARD")
+                                Text(stringResource(R.string.profile_discard))
                             }
                         }
                     }
@@ -162,9 +164,9 @@ fun ProfileScreen(
 
                     // XP Progress
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("SYNAPSE XP PROGRESS", style = MaterialTheme.typography.labelMedium, color = Muted)
+                        Text(stringResource(R.string.profile_xp_progress_label), style = MaterialTheme.typography.labelMedium, color = Muted)
                         Text(
-                            "${state.xpInCurrentLevel} / ${state.xpNeededForNextLevel} XP",
+                            stringResource(R.string.profile_xp_progress_value, state.xpInCurrentLevel, state.xpNeededForNextLevel),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onBackground
                         )
@@ -184,19 +186,19 @@ fun ProfileScreen(
 
             // Career Stats Grid
             item {
-                Text("[ TELEMETRY // CAREER STATS ]", style = MaterialTheme.typography.titleMedium, color = TechAccent)
+                Text(stringResource(R.string.profile_career_stats_header), style = MaterialTheme.typography.titleMedium, color = TechAccent)
             }
             item {
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
-                        StatBox("TOTAL RUNS", state.careerStats.totalGamesPlayed.toString(), MaterialTheme.colorScheme.primary, Modifier.weight(1f))
-                        StatBox("VICTORIES", state.careerStats.totalGamesWon.toString(), MaterialTheme.colorScheme.tertiary, Modifier.weight(1f))
-                        StatBox("FLAWLESS", state.careerStats.flawlessGamesCount.toString(), MaterialTheme.colorScheme.secondary, Modifier.weight(1f))
+                        StatBox(stringResource(R.string.profile_stat_total_runs), state.careerStats.totalGamesPlayed.toString(), MaterialTheme.colorScheme.primary, Modifier.weight(1f))
+                        StatBox(stringResource(R.string.profile_stat_victories), state.careerStats.totalGamesWon.toString(), MaterialTheme.colorScheme.tertiary, Modifier.weight(1f))
+                        StatBox(stringResource(R.string.profile_stat_flawless), state.careerStats.flawlessGamesCount.toString(), MaterialTheme.colorScheme.secondary, Modifier.weight(1f))
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
-                        StatBox("MAX STREAK", "${state.careerStats.maxWinStreak} 🔥", NeonYellow, Modifier.weight(1f))
-                        StatBox("MAX SURVIVAL", "${state.careerStats.maxSurvivalTimeMs / 1000}s ⏱️", TechAccent, Modifier.weight(1f))
-                        StatBox("HIGH SCORE", state.profile.highScore.toString(), Color(0xFFFF8000), Modifier.weight(1f))
+                        StatBox(stringResource(R.string.profile_stat_max_streak_label), stringResource(R.string.profile_stat_max_streak_value, state.careerStats.maxWinStreak), NeonYellow, Modifier.weight(1f))
+                        StatBox(stringResource(R.string.profile_stat_max_survival_label), stringResource(R.string.profile_stat_max_survival_value, state.careerStats.maxSurvivalTimeMs / 1000), TechAccent, Modifier.weight(1f))
+                        StatBox(stringResource(R.string.profile_stat_high_score_label), state.profile.highScore.toString(), Color(0xFFFF8000), Modifier.weight(1f))
                     }
                 }
             }
@@ -204,9 +206,9 @@ fun ProfileScreen(
             // Achievements Header
             item {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Text("[ SYNAPTIC TROPHIES ]", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.secondary)
+                    Text(stringResource(R.string.profile_trophies_header), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.secondary)
                     val unlockedCount = state.achievements.count { it.isUnlocked }
-                    Text("$unlockedCount / ${state.achievements.size}", style = MaterialTheme.typography.labelLarge, color = Muted)
+                    Text(stringResource(R.string.profile_trophies_count, unlockedCount, state.achievements.size), style = MaterialTheme.typography.labelLarge, color = Muted)
                 }
             }
 
@@ -225,7 +227,7 @@ fun ProfileScreen(
             // Sign out Button
             item {
                 Spacer(modifier = Modifier.height(16.dp))
-                if (com.softyorch.stroopoverload.BuildConfig.FLAVOR == "dev") {
+                if (com.softyorch.stroopoverload.BuildConfig.FLAVOR == "demo") {
                     val context = androidx.compose.ui.platform.LocalContext.current
                     Button(
                         onClick = {
@@ -236,7 +238,7 @@ fun ProfileScreen(
                         shape = RoundedCornerShape(4.dp),
                         modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
                     ) {
-                        Text("[ 📸 ASO // RESTORE VIP DEMO PILOT ]", color = Background, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Black)
+                        Text(stringResource(R.string.profile_demo_restore_button), color = Background, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Black)
                     }
                     Spacer(modifier = Modifier.height(12.dp))
                 }
@@ -247,7 +249,7 @@ fun ProfileScreen(
                     shape = RoundedCornerShape(4.dp),
                     modifier = Modifier.fillMaxWidth().height(48.dp)
                 ) {
-                    Text("[ TERMINATE NEURAL SESSION // SIGN OUT ]", style = MaterialTheme.typography.labelLarge)
+                    Text(stringResource(R.string.profile_sign_out), style = MaterialTheme.typography.labelLarge)
                 }
                 Spacer(modifier = Modifier.height(32.dp))
             }
@@ -287,7 +289,7 @@ private fun AchievementCard(achievement: Achievement, modifier: Modifier = Modif
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Text(text = achievement.iconEmoji, fontSize = 24.sp)
             Text(
-                text = if (unlocked) achievement.rarity.name else "LOCKED",
+                text = if (unlocked) achievement.rarity.name else stringResource(R.string.common_locked),
                 style = MaterialTheme.typography.bodySmall,
                 color = if (unlocked) Color(achievement.rarity.composeColorArgb) else Muted,
                 fontSize = 9.sp,
@@ -295,8 +297,8 @@ private fun AchievementCard(achievement: Achievement, modifier: Modifier = Modif
             )
         }
         Column {
-            val title = if (!unlocked && achievement.hidden) "???" else achievement.titleKey
-            val desc = if (!unlocked && achievement.hidden) "Confidential Synapse Trophy" else achievement.descriptionKey
+            val title = if (!unlocked && achievement.hidden) stringResource(R.string.profile_achievement_hidden_title) else stringResource(achievement.titleRes)
+            val desc = if (!unlocked && achievement.hidden) stringResource(R.string.profile_achievement_hidden_desc) else stringResource(achievement.descriptionRes)
             Text(
                 text = title,
                 style = MaterialTheme.typography.labelMedium,

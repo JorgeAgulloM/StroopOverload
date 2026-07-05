@@ -38,6 +38,10 @@ android {
         create("prod") {
             dimension = "environment"
         }
+        create("demo") {
+            dimension = "environment"
+            versionNameSuffix = "-demo"
+        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11

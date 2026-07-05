@@ -5,18 +5,22 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.softyorch.stroopoverload.R
 import com.softyorch.stroopoverload.ui.theme.*
 
 @Composable
@@ -42,11 +46,13 @@ fun AuthScreen(
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
             .safeDrawingPadding()
+            .imePadding()
+            .verticalScroll(rememberScrollState())
             .padding(24.dp)
     ) {
         if (state.needsEmailVerification) {
             EmailVerificationCard(
-                email = email.ifBlank { "pilot@synapse.cyber" },
+                email = email.ifBlank { stringResource(R.string.auth_default_pending_email) },
                 onResend = { viewModel.resendVerificationEmail() },
                 onCheckVerified = { viewModel.checkEmailVerified() },
                 onSignOut = { viewModel.signOut() },
@@ -61,14 +67,14 @@ fun AuthScreen(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "[ STROOP // OVERLOAD ]",
+                    text = stringResource(R.string.auth_brand),
                     style = MaterialTheme.typography.titleMedium,
                     color = TechAccent,
                     letterSpacing = 4.sp
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "NEURAL LINK ACCESS",
+                    text = stringResource(R.string.auth_headline),
                     style = MaterialTheme.typography.headlineLarge,
                     color = MaterialTheme.colorScheme.primary,
                     fontWeight = FontWeight.Black
@@ -92,7 +98,7 @@ fun AuthScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "PILOT LOGIN",
+                            text = stringResource(R.string.auth_tab_login),
                             color = if (!isRegisterTab) MaterialTheme.colorScheme.primary else Muted,
                             style = MaterialTheme.typography.labelLarge
                         )
@@ -106,7 +112,7 @@ fun AuthScreen(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "NEW CADET",
+                            text = stringResource(R.string.auth_tab_register),
                             color = if (isRegisterTab) MaterialTheme.colorScheme.secondary else Muted,
                             style = MaterialTheme.typography.labelLarge
                         )
@@ -128,7 +134,7 @@ fun AuthScreen(
                             OutlinedTextField(
                                 value = nickname,
                                 onValueChange = { nickname = it },
-                                label = { Text("CALLSIGN / NICKNAME", color = Muted) },
+                                label = { Text(stringResource(R.string.auth_nickname_label), color = Muted) },
                                 singleLine = true,
                                 colors = OutlinedTextFieldDefaults.colors(
                                     focusedBorderColor = MaterialTheme.colorScheme.secondary,
@@ -145,7 +151,7 @@ fun AuthScreen(
                     OutlinedTextField(
                         value = email,
                         onValueChange = { email = it },
-                        label = { Text("NEURAL FREQUENCY (EMAIL)", color = Muted) },
+                        label = { Text(stringResource(R.string.auth_email_label), color = Muted) },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                         colors = OutlinedTextFieldDefaults.colors(
@@ -162,7 +168,7 @@ fun AuthScreen(
                     OutlinedTextField(
                         value = password,
                         onValueChange = { password = it },
-                        label = { Text("ACCESS CIPHER (PASSWORD)", color = Muted) },
+                        label = { Text(stringResource(R.string.auth_password_label), color = Muted) },
                         singleLine = true,
                         visualTransformation = PasswordVisualTransformation(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
@@ -216,7 +222,7 @@ fun AuthScreen(
                             CircularProgressIndicator(modifier = Modifier.size(24.dp), color = Background, strokeWidth = 2.dp)
                         } else {
                             Text(
-                                text = if (isRegisterTab) "INITIALIZE NEURAL LINK" else "ENGAGE LINK",
+                                text = stringResource(if (isRegisterTab) R.string.auth_register_button else R.string.auth_login_button),
                                 color = Background,
                                 style = MaterialTheme.typography.titleLarge,
                                 fontWeight = FontWeight.Black
@@ -238,7 +244,7 @@ fun AuthScreen(
                         .heightIn(min = 48.dp)
                 ) {
                     Text(
-                        text = "[ BYPASS // ENTER AS GUEST PILOT ]",
+                        text = stringResource(R.string.auth_guest_button),
                         style = MaterialTheme.typography.labelLarge
                     )
                 }
@@ -265,20 +271,20 @@ private fun EmailVerificationCard(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "⚠️ NEURAL LINK PENDING",
+            text = stringResource(R.string.auth_verify_pending_title),
             style = MaterialTheme.typography.headlineMedium,
             color = NeonYellow
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = "A verification frequency has been transmitted to:\n$email",
+            text = stringResource(R.string.auth_verify_pending_message, email),
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onBackground,
             textAlign = androidx.compose.ui.text.style.TextAlign.Center
         )
         Spacer(modifier = Modifier.height(16.dp))
         Text(
-            text = "Please authenticate your frequency to synchronize cloud progress and unlock online leaderboards.",
+            text = stringResource(R.string.auth_verify_pending_hint),
             style = MaterialTheme.typography.bodySmall,
             color = Muted,
             textAlign = androidx.compose.ui.text.style.TextAlign.Center
@@ -300,7 +306,7 @@ private fun EmailVerificationCard(
             shape = RoundedCornerShape(4.dp),
             modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
         ) {
-            Text("VERIFY STATUS", color = Background, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
+            Text(stringResource(R.string.auth_verify_status_button), color = Background, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold)
         }
         Spacer(modifier = Modifier.height(12.dp))
         OutlinedButton(
@@ -310,11 +316,11 @@ private fun EmailVerificationCard(
             shape = RoundedCornerShape(4.dp),
             modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
         ) {
-            Text("RE-TRANSMIT EMAIL", style = MaterialTheme.typography.labelLarge)
+            Text(stringResource(R.string.auth_resend_button), style = MaterialTheme.typography.labelLarge)
         }
         Spacer(modifier = Modifier.height(12.dp))
         TextButton(onClick = onSignOut) {
-            Text("[ ABORT // SIGN OUT ]", color = Muted, style = MaterialTheme.typography.labelMedium)
+            Text(stringResource(R.string.auth_abort_button), color = Muted, style = MaterialTheme.typography.labelMedium)
         }
     }
 }

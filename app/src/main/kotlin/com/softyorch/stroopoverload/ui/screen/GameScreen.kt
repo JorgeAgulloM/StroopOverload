@@ -15,9 +15,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.softyorch.stroopoverload.R
 import com.softyorch.stroopoverload.audio.AudioPlayer
 import com.softyorch.stroopoverload.core.StroopColor
 import com.softyorch.stroopoverload.domain.GameResult
@@ -69,21 +71,21 @@ fun GameScreen(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Column {
-                Text("SCORE", style = MaterialTheme.typography.bodySmall, color = Muted, fontSize = 10.sp)
+                Text(stringResource(R.string.game_hud_score), style = MaterialTheme.typography.bodySmall, color = Muted, fontSize = 10.sp)
                 Text(playingState?.score?.toString() ?: "0", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Black)
             }
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("STREAK", style = MaterialTheme.typography.bodySmall, color = Muted, fontSize = 10.sp)
+                Text(stringResource(R.string.game_hud_streak), style = MaterialTheme.typography.bodySmall, color = Muted, fontSize = 10.sp)
                 val streak = playingState?.currentStreak ?: 0
                 Text("$streak 🔥", style = MaterialTheme.typography.titleMedium, color = if (streak >= 5) NeonYellow else MaterialTheme.colorScheme.onBackground)
             }
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("ROUND", style = MaterialTheme.typography.bodySmall, color = Muted, fontSize = 10.sp)
+                Text(stringResource(R.string.game_hud_round), style = MaterialTheme.typography.bodySmall, color = Muted, fontSize = 10.sp)
                 Text(playingState?.totalRounds?.toString() ?: "0", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
             }
             Column(horizontalAlignment = Alignment.End) {
-                Text("LEVEL", style = MaterialTheme.typography.bodySmall, color = Muted, fontSize = 10.sp)
-                Text("LVL ${playingState?.level ?: 1}", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.secondary, fontWeight = FontWeight.Bold)
+                Text(stringResource(R.string.game_hud_level), style = MaterialTheme.typography.bodySmall, color = Muted, fontSize = 10.sp)
+                Text(stringResource(R.string.game_hud_level_value, playingState?.level ?: 1), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.secondary, fontWeight = FontWeight.Bold)
             }
         }
 
@@ -113,7 +115,7 @@ fun GameScreen(
             stimulus?.let { s ->
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(
-                        text = "[ SYNAPSE TARGET // MATCH INK COLOR ]",
+                        text = stringResource(R.string.game_stimulus_hint),
                         style = MaterialTheme.typography.bodySmall,
                         color = Muted,
                         letterSpacing = 2.sp,
@@ -121,7 +123,7 @@ fun GameScreen(
                     )
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
-                        text = s.wordLabel.displayName,
+                        text = stringResource(s.wordLabel.displayNameRes),
                         color = s.inkColor.composeColor,
                         fontSize = 46.sp,
                         fontWeight = FontWeight.Black,
@@ -171,7 +173,7 @@ private fun QuadrantBox(color: StroopColor, modifier: Modifier, onTap: () -> Uni
         contentAlignment = Alignment.Center,
     ) {
         Text(
-            text = color.displayName,
+            text = stringResource(color.displayNameRes),
             color = color.composeColor,
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Black,

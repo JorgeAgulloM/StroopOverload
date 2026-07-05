@@ -1,9 +1,11 @@
 package com.softyorch.stroopoverload.domain
 
+import androidx.annotation.StringRes
+
 data class Achievement(
     val id: String,
-    val titleKey: String,
-    val descriptionKey: String,
+    @StringRes val titleRes: Int,
+    @StringRes val descriptionRes: Int,
     val rarity: Rarity,
     val iconEmoji: String,
     val hidden: Boolean = false,

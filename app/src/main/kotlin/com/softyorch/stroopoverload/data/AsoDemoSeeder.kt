@@ -12,7 +12,7 @@ object AsoDemoSeeder {
     const val DEMO_VIP_USER_ID = "demo_vip_aso_777"
 
     fun seedIfNeeded(context: Context) {
-        if (BuildConfig.FLAVOR != "dev") return
+        if (BuildConfig.FLAVOR != "demo") return
 
         val profileStore = ProfileLocalStore(context)
         val currentProfile = profileStore.getProfile() ?: UserProfile()

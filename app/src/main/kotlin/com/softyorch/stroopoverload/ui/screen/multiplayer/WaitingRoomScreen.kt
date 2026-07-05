@@ -25,11 +25,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.softyorch.stroopoverload.R
 import com.softyorch.stroopoverload.domain.multiplayer.MultiplayerRoom
 import com.softyorch.stroopoverload.domain.multiplayer.RoomPlayer
 import com.softyorch.stroopoverload.ui.theme.Muted
@@ -56,7 +58,7 @@ fun WaitingRoomScreen(
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             Text(
-                text = "[ SALA DE ESPERA ]",
+                text = stringResource(R.string.mp_waiting_title),
                 style = MaterialTheme.typography.labelLarge,
                 color = TechAccent,
                 letterSpacing = 4.sp,
@@ -75,7 +77,7 @@ fun WaitingRoomScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text(
-                    text = "CÓDIGO DE SALA",
+                    text = stringResource(R.string.mp_waiting_room_code_label),
                     style = MaterialTheme.typography.labelSmall,
                     color = Muted,
                     letterSpacing = 2.sp,
@@ -90,7 +92,7 @@ fun WaitingRoomScreen(
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    text = "toca para copiar",
+                    text = stringResource(R.string.mp_waiting_tap_to_copy),
                     style = MaterialTheme.typography.labelSmall,
                     color = Muted,
                 )
@@ -99,7 +101,7 @@ fun WaitingRoomScreen(
             Spacer(Modifier.height(24.dp))
 
             Text(
-                text = "PILOTOS CONECTADOS (${room.players.size}/$MAX_PLAYERS)",
+                text = stringResource(R.string.mp_waiting_connected_pilots, room.players.size, MAX_PLAYERS),
                 style = MaterialTheme.typography.labelMedium,
                 color = Muted,
                 letterSpacing = 1.sp,
@@ -130,7 +132,7 @@ fun WaitingRoomScreen(
                     shape = RoundedCornerShape(6.dp),
                 ) {
                     Text(
-                        text = "[ EMPEZAR PARTIDA ]",
+                        text = stringResource(R.string.mp_waiting_start_game),
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.background,
                         fontWeight = FontWeight.Black,
@@ -140,7 +142,7 @@ fun WaitingRoomScreen(
             }
 
             SignalScanner(
-                label = if (isHost) "ESPERANDO MÁS PILOTOS..." else "ESPERANDO AL HOST...",
+                label = stringResource(if (isHost) R.string.mp_waiting_scanning_host else R.string.mp_waiting_scanning_guest),
             )
         }
     }
@@ -167,7 +169,7 @@ private fun PlayerSlot(player: RoomPlayer, hostUid: String) {
         )
         if (player.uid == hostUid) {
             Text(
-                text = "HOST",
+                text = stringResource(R.string.mp_waiting_host_badge),
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.background,
                 fontWeight = FontWeight.Bold,
@@ -190,7 +192,7 @@ private fun EmptyPlayerSlot() {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            text = "· esperando piloto ·",
+            text = stringResource(R.string.mp_waiting_empty_slot),
             style = MaterialTheme.typography.bodyMedium,
             color = Muted,
         )

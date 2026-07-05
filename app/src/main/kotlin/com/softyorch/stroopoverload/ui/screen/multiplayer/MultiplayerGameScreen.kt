@@ -9,7 +9,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.softyorch.stroopoverload.R
 import com.softyorch.stroopoverload.core.StroopColor
 import com.softyorch.stroopoverload.domain.multiplayer.MultiplayerRoom
 import com.softyorch.stroopoverload.domain.multiplayer.RoomStatus
@@ -39,7 +41,10 @@ fun MultiplayerGameScreen(
                         .padding(8.dp)
                 ) {
                     Text(player.displayName, style = MaterialTheme.typography.labelMedium)
-                    Text(if (player.alive) "VIVO" else "ELIMINADO", style = MaterialTheme.typography.labelSmall)
+                    Text(
+                        if (player.alive) stringResource(R.string.mp_game_alive) else stringResource(R.string.mp_game_eliminated),
+                        style = MaterialTheme.typography.labelSmall
+                    )
                 }
             }
         }
@@ -51,7 +56,7 @@ fun MultiplayerGameScreen(
                 val stimulus = room.stimulus
                 if (stimulus != null) {
                     Text(
-                        text = stimulus.wordLabel.displayName,
+                        text = stringResource(stimulus.wordLabel.displayNameRes),
                         style = MaterialTheme.typography.displayMedium,
                         color = stimulus.inkColor.composeColor,
                         modifier = Modifier.align(Alignment.CenterHorizontally),
@@ -64,16 +69,18 @@ fun MultiplayerGameScreen(
                                 enabled = myTurn,
                                 colors = ButtonDefaults.buttonColors(containerColor = option.composeColor),
                                 modifier = Modifier.heightIn(min = 44.dp),
-                            ) { Text(option.displayName, color = Color.Black) }
+                            ) { Text(stringResource(option.displayNameRes), color = Color.Black) }
                         }
                     }
                     if (!myTurn) {
                         Spacer(Modifier.height(16.dp))
-                        Text("Turno de ${room.players.firstOrNull { it.uid == room.currentTurnUid }?.displayName ?: "..."}")
+                        val turnName = room.players.firstOrNull { it.uid == room.currentTurnUid }?.displayName
+                            ?: stringResource(R.string.mp_game_unknown_player)
+                        Text(stringResource(R.string.mp_game_turn_of, turnName))
                     }
                 } else {
                     Text(
-                        text = "Preparando ronda...",
+                        text = stringResource(R.string.mp_game_preparing_round),
                         style = MaterialTheme.typography.bodyMedium,
                         modifier = Modifier.align(Alignment.CenterHorizontally),
                     )
@@ -82,11 +89,15 @@ fun MultiplayerGameScreen(
             RoomStatus.FINISHED -> {
                 val winner = room.players.firstOrNull { it.uid == room.winnerUid }
                 Text(
-                    text = if (room.winnerUid == myUid) "¡GANASTE!" else "Ganó ${winner?.displayName ?: "?"}",
+                    text = if (room.winnerUid == myUid) {
+                        stringResource(R.string.mp_game_you_won)
+                    } else {
+                        stringResource(R.string.mp_game_won_by, winner?.displayName ?: stringResource(R.string.mp_game_unknown_player))
+                    },
                     style = MaterialTheme.typography.headlineMedium,
                 )
             }
-            RoomStatus.WAITING -> Text("Esperando...")
+            RoomStatus.WAITING -> Text(stringResource(R.string.mp_game_waiting))
         }
 
         Spacer(Modifier.weight(1f))
