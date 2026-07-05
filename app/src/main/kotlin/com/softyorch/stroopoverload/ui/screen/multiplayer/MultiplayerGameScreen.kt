@@ -22,7 +22,13 @@ fun MultiplayerGameScreen(
 ) {
     val myTurn = room.isMyTurn(myUid)
 
-    Column(modifier = Modifier.fillMaxSize().padding(16.dp)) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background)
+            .safeDrawingPadding()
+            .padding(16.dp)
+    ) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
             room.players.forEach { player ->
                 val isTurn = player.uid == room.currentTurnUid

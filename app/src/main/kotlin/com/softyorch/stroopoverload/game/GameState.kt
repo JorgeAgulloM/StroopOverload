@@ -1,4 +1,4 @@
-﻿package com.softyorch.stroopoverload.game
+package com.softyorch.stroopoverload.game
 
 import com.softyorch.stroopoverload.domain.GameResult
 
@@ -10,6 +10,7 @@ sealed interface GameState {
         val correctHits: Int = 0,
         val totalRounds: Int = 0,
         val survivalMs: Long = 0L,
+        val currentStreak: Int = 0,
     ) : GameState
     data class GameOver(val result: GameResult) : GameState
 }

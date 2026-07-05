@@ -1,10 +1,12 @@
-﻿package com.softyorch.stroopoverload.game
+package com.softyorch.stroopoverload.game
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.softyorch.stroopoverload.core.GameConfig
 import com.softyorch.stroopoverload.core.StroopColor
+import com.softyorch.stroopoverload.domain.AiDifficulty
 import com.softyorch.stroopoverload.domain.GameResult
+import com.softyorch.stroopoverload.domain.OpponentType
 import com.softyorch.stroopoverload.domain.StroopStimulus
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -44,13 +46,16 @@ class GameViewModel(
         if (tapped == current.correctAnswer) {
             val newHits = playing.correctHits + 1
             val newRounds = playing.totalRounds + 1
-            val newScore = playing.score + GameConfig.POINTS_PER_CORRECT
+            val newStreak = playing.currentStreak + 1
+            val streakBonus = (newStreak * 10).coerceAtMost(100)
+            val newScore = playing.score + GameConfig.POINTS_PER_CORRECT + streakBonus
             val newLevel = (newRounds / GameConfig.LEVELS_PER_DIFFICULTY) + 1
             _state.value = playing.copy(
                 score = newScore,
                 level = newLevel,
                 correctHits = newHits,
                 totalRounds = newRounds,
+                currentStreak = newStreak,
             )
             nextStimulus()
         } else {
@@ -96,6 +101,7 @@ class GameViewModel(
 
     private fun endGame(playing: GameState.Playing) {
         timerJob?.cancel()
+        val won = playing.score > 0 && (playing.totalRounds >= 5 && (playing.correctHits.toFloat() / playing.totalRounds) >= 0.7f)
         _state.value = GameState.GameOver(
             GameResult(
                 finalScore = playing.score,
@@ -103,6 +109,11 @@ class GameViewModel(
                 totalRounds = playing.totalRounds,
                 survivalMs = playing.survivalMs,
                 previousHighScore = previousHighScore,
+                won = won,
+                opponentType = OpponentType.SINGLE_PLAYER_CHALLENGE,
+                aiDifficulty = AiDifficulty.OVERLOAD_CYBER,
+                durationSeconds = (playing.survivalMs / 1000).toInt(),
+                moveCount = playing.totalRounds,
             )
         )
     }

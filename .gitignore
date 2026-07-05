@@ -25,3 +25,9 @@ database-debug.log
 ui-debug.log
 .firebase/
 functions/coverage/
+
+# Shell crash dumps
+*.stackdump
+
+# MobiAI tool cache
+.mobiai/
