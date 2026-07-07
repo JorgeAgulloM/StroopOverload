@@ -53,21 +53,17 @@ fun HomeScreen(
             .safeDrawingPadding()
             .padding(16.dp)
     ) {
-        // Top Command Bar - Unified Left Badge
-        Row(
+        // Top Command Bar - Unified Left Badge (two rows: identity, then sub-badges)
+        Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .align(Alignment.TopStart),
-            horizontalArrangement = Arrangement.Start,
-            verticalAlignment = Alignment.CenterVertically
+                .align(Alignment.TopStart)
+                .border(1.dp, Color(rarity.composeColorArgb), RoundedCornerShape(6.dp))
+                .background(MaterialTheme.colorScheme.surface)
+                .clickable(onClick = onProfile)
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            horizontalAlignment = Alignment.Start,
         ) {
             Row(
-                modifier = Modifier
-                    .heightIn(min = 44.dp)
-                    .border(1.dp, Color(rarity.composeColorArgb), RoundedCornerShape(6.dp))
-                    .background(MaterialTheme.colorScheme.surface)
-                    .clickable(onClick = onProfile)
-                    .padding(horizontal = 12.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
@@ -78,6 +74,12 @@ fun HomeScreen(
                     style = MaterialTheme.typography.labelMedium,
                     fontWeight = FontWeight.Bold
                 )
+            }
+            Spacer(Modifier.height(4.dp))
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
                 if (profile.isAdFree || profile.isPremium) {
                     Text(stringResource(R.string.home_vip_badge), color = MaterialTheme.colorScheme.tertiary, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold)
                 }

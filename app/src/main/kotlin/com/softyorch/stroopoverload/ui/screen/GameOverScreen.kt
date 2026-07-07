@@ -15,6 +15,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.softyorch.stroopoverload.R
@@ -145,14 +146,35 @@ fun GameOverScreen(
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         Text(ach.iconEmoji, fontSize = 24.sp)
-                        Column {
+                        Column(modifier = Modifier.weight(1f)) {
                             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                Text(stringResource(ach.titleRes), style = MaterialTheme.typography.labelLarge, color = Color(ach.rarity.composeColorArgb), fontWeight = FontWeight.Bold)
+                                Text(
+                                    text = stringResource(ach.titleRes),
+                                    style = MaterialTheme.typography.labelLarge,
+                                    color = Color(ach.rarity.composeColorArgb),
+                                    fontWeight = FontWeight.Bold,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.weight(1f, fill = false),
+                                )
                                 if (ach.xpReward > 0) {
-                                    Text(stringResource(R.string.game_over_xp_reward, ach.xpReward), style = MaterialTheme.typography.labelMedium, color = NeonYellow, fontWeight = FontWeight.Black)
+                                    Text(
+                                        text = stringResource(R.string.game_over_xp_reward, ach.xpReward),
+                                        style = MaterialTheme.typography.labelMedium,
+                                        color = NeonYellow,
+                                        fontWeight = FontWeight.Black,
+                                        maxLines = 1,
+                                    )
                                 }
                             }
-                            Text(stringResource(ach.descriptionRes), style = MaterialTheme.typography.bodySmall, color = Muted, fontSize = 11.sp)
+                            Text(
+                                text = stringResource(ach.descriptionRes),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = Muted,
+                                fontSize = 11.sp,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                            )
                         }
                     }
                 }
@@ -185,7 +207,7 @@ fun GameOverScreen(
                         shape = RoundedCornerShape(4.dp),
                         modifier = Modifier.weight(1f).heightIn(min = 48.dp)
                     ) {
-                        Text(stringResource(R.string.game_over_share_score))
+                        Text(stringResource(R.string.game_over_share_score), maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
                     OutlinedButton(
                         onClick = onMenu,
@@ -194,7 +216,7 @@ fun GameOverScreen(
                         shape = RoundedCornerShape(4.dp),
                         modifier = Modifier.weight(1f).heightIn(min = 48.dp)
                     ) {
-                        Text(stringResource(R.string.game_over_main_menu))
+                        Text(stringResource(R.string.game_over_main_menu), maxLines = 1, overflow = TextOverflow.Ellipsis)
                     }
                 }
                 Spacer(modifier = Modifier.height(24.dp))

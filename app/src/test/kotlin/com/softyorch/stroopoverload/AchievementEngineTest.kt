@@ -53,6 +53,68 @@ class AchievementEngineTest {
     }
 
     @Test
+    fun `crossing multiple score tiers in one game unlocks only the first tier`() {
+        // maxScoreEver jumps straight past centurion(2500), score_3k(5000) and score_titan(7500).
+        val career = CareerStats(maxScoreEver = 8000)
+
+        val newIds = engine.evaluate(
+            game = GameResult(finalScore = 8000, correctHits = 20, totalRounds = 20, survivalMs = 1000L, previousHighScore = 0),
+            career = career,
+            alreadyUnlocked = emptySet(),
+        )
+
+        assertTrue("centurion should unlock", "centurion" in newIds)
+        assertFalse("score_3k should be blocked, its prerequisite centurion isn't unlocked yet", "score_3k" in newIds)
+        assertFalse("score_titan should be blocked too", "score_titan" in newIds)
+    }
+
+    @Test
+    fun `next game unlocks the next score tier once the prerequisite is already unlocked`() {
+        val career = CareerStats(maxScoreEver = 8000)
+
+        val newIds = engine.evaluate(
+            game = GameResult(finalScore = 8000, correctHits = 20, totalRounds = 20, survivalMs = 1000L, previousHighScore = 0),
+            career = career,
+            alreadyUnlocked = setOf("centurion"),
+        )
+
+        assertTrue("score_3k should unlock now that centurion is already unlocked", "score_3k" in newIds)
+        assertFalse("score_titan should still be blocked by its own prerequisite", "score_titan" in newIds)
+    }
+
+    @Test
+    fun `crossing multiple win-streak tiers in one game unlocks only the first tier`() {
+        // maxWinStreak jumps straight past streak_master(5), streak_legend(10) and streak_god(20).
+        val career = CareerStats(maxWinStreak = 25)
+
+        val newIds = engine.evaluate(
+            game = GameResult(finalScore = 100, correctHits = 20, totalRounds = 20, survivalMs = 1000L, previousHighScore = 0),
+            career = career,
+            alreadyUnlocked = emptySet(),
+        )
+
+        assertTrue("streak_master should unlock", "streak_master" in newIds)
+        assertFalse("streak_legend should be blocked", "streak_legend" in newIds)
+        assertFalse("streak_god should be blocked", "streak_god" in newIds)
+    }
+
+    @Test
+    fun `crossing multiple survival tiers in one game unlocks only the first tier`() {
+        // maxSurvivalTimeMs jumps straight past survival_expert(30s), survival_master(50s) and survival_legend(75s).
+        val career = CareerStats(maxSurvivalTimeMs = 80_000L)
+
+        val newIds = engine.evaluate(
+            game = GameResult(finalScore = 100, correctHits = 20, totalRounds = 20, survivalMs = 80_000L, previousHighScore = 0),
+            career = career,
+            alreadyUnlocked = emptySet(),
+        )
+
+        assertTrue("survival_expert should unlock", "survival_expert" in newIds)
+        assertFalse("survival_master should be blocked", "survival_master" in newIds)
+        assertFalse("survival_legend should be blocked", "survival_legend" in newIds)
+    }
+
+    @Test
     fun `updatedCareerStats increments cumulative telemetry accurately`() {
         val current = CareerStats(totalGamesPlayed = 10, totalGamesWon = 4, maxScoreEver = 500)
         val game = GameResult(finalScore = 1500, correctHits = 8, totalRounds = 10, survivalMs = 15_000L, previousHighScore = 500, won = true)

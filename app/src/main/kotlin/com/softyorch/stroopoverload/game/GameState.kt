@@ -4,6 +4,7 @@ import com.softyorch.stroopoverload.domain.GameResult
 
 sealed interface GameState {
     data object Menu : GameState
+    data object Countdown : GameState
     data class Playing(
         val score: Int = 0,
         val level: Int = 1,

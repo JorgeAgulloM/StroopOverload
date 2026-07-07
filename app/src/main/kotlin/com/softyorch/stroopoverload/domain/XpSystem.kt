@@ -25,12 +25,13 @@ data class XpBreakdown(
 )
 
 object XpSystem {
-    fun xpForLevel(level: Int): Int = 100 * level + 4 * level * level
+    /** XP needed to go from level (n-1) to level n. Uncapped: leveling continues forever. */
+    fun xpForLevel(level: Int): Int = level * (400 + 16 * level) / 5
 
     fun levelFromTotalXp(totalXp: Long): Int {
         var level = 1
         var remaining = totalXp
-        while (level < 99) {
+        while (true) {
             val need = xpForLevel(level)
             if (remaining < need) break
             remaining -= need

@@ -1,7 +1,9 @@
 package com.softyorch.stroopoverload.ui.screen.multiplayer
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
@@ -10,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.softyorch.stroopoverload.R
 import com.softyorch.stroopoverload.core.StroopColor
@@ -31,19 +34,28 @@ fun MultiplayerGameScreen(
             .safeDrawingPadding()
             .padding(16.dp)
     ) {
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             room.players.forEach { player ->
                 val isTurn = player.uid == room.currentTurnUid
                 Column(
                     modifier = Modifier
+                        .weight(1f)
                         .clip(RoundedCornerShape(8.dp))
                         .background(if (isTurn) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface)
-                        .padding(8.dp)
+                        .padding(8.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    Text(player.displayName, style = MaterialTheme.typography.labelMedium)
                     Text(
-                        if (player.alive) stringResource(R.string.mp_game_alive) else stringResource(R.string.mp_game_eliminated),
-                        style = MaterialTheme.typography.labelSmall
+                        text = player.displayName,
+                        style = MaterialTheme.typography.labelMedium,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Text(
+                        text = if (player.alive) stringResource(R.string.mp_game_alive) else stringResource(R.string.mp_game_eliminated),
+                        style = MaterialTheme.typography.labelSmall,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
                 }
             }
@@ -62,14 +74,26 @@ fun MultiplayerGameScreen(
                         modifier = Modifier.align(Alignment.CenterHorizontally),
                     )
                     Spacer(Modifier.height(32.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .horizontalScroll(rememberScrollState()),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
                         stimulus.options.forEach { option ->
                             Button(
                                 onClick = { onColorTapped(option) },
                                 enabled = myTurn,
                                 colors = ButtonDefaults.buttonColors(containerColor = option.composeColor),
                                 modifier = Modifier.heightIn(min = 44.dp),
-                            ) { Text(stringResource(option.displayNameRes), color = Color.Black) }
+                            ) {
+                                Text(
+                                    text = stringResource(option.displayNameRes),
+                                    color = Color.Black,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
                         }
                     }
                     if (!myTurn) {

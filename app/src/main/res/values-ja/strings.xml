@@ -37,6 +37,10 @@
     <string name="game_hud_level_value">LV %1$d</string>
     <string name="game_stimulus_hint">[ シナプスターゲット // インクの色を選べ ]</string>
 
+    <!-- Countdown overlay (local + online game start) -->
+    <string name="countdown_get_ready">準備しろ</string>
+    <string name="countdown_go">スタート!</string>
+
     <!-- Game over screen -->
     <string name="game_over_victory_title">[ シナプス勝利 ]</string>
     <string name="game_over_defeat_title">[ ニューラル・オーバーロード ]</string>

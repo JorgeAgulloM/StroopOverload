@@ -37,6 +37,10 @@
     <string name="game_hud_level_value">NIV %1$d</string>
     <string name="game_stimulus_hint">[ CIBLE SYNAPTIQUE // FAITES CORRESPONDRE LA COULEUR DE L\'ENCRE ]</string>
 
+    <!-- Countdown overlay (local + online game start) -->
+    <string name="countdown_get_ready">PRÉPAREZ-VOUS</string>
+    <string name="countdown_go">GO !</string>
+
     <!-- Game over screen -->
     <string name="game_over_victory_title">[ VICTOIRE SYNAPTIQUE ]</string>
     <string name="game_over_defeat_title">[ SURCHARGE NEURALE ]</string>

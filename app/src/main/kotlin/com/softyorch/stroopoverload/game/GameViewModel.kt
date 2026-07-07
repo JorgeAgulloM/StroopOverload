@@ -33,6 +33,11 @@ class GameViewModel(
 
     fun startGame(previousHigh: Int = 0) {
         previousHighScore = previousHigh
+        _state.value = GameState.Countdown
+    }
+
+    fun beginRound() {
+        if (_state.value !is GameState.Countdown) return
         _state.value = GameState.Playing()
         nextStimulus()
     }

@@ -37,6 +37,10 @@
     <string name="game_hud_level_value">NVL %1$d</string>
     <string name="game_stimulus_hint">[ ALVO SINÁPTICO // COMBINE A COR DA TINTA ]</string>
 
+    <!-- Countdown overlay (local + online game start) -->
+    <string name="countdown_get_ready">PREPARE-SE</string>
+    <string name="countdown_go">VAI!</string>
+
     <!-- Game over screen -->
     <string name="game_over_victory_title">[ VITÓRIA SINÁPTICA ]</string>
     <string name="game_over_defeat_title">[ SOBRECARGA NEURAL ]</string>

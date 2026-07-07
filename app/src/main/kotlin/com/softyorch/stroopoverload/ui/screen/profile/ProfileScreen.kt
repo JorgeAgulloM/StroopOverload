@@ -16,6 +16,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.softyorch.stroopoverload.R
@@ -101,7 +103,9 @@ fun ProfileScreen(
                                     text = state.profile.displayName,
                                     style = MaterialTheme.typography.headlineLarge,
                                     color = MaterialTheme.colorScheme.onBackground,
-                                    fontWeight = FontWeight.Black
+                                    fontWeight = FontWeight.Black,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
                                 )
                                 Text(
                                     text = state.profile.uniqueName.ifBlank { "@pilot-${state.profile.userId.takeLast(4)}" },
@@ -266,9 +270,24 @@ private fun StatBox(label: String, value: String, color: Color, modifier: Modifi
             .padding(12.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        Text(text = label, style = MaterialTheme.typography.bodySmall, color = Muted, fontSize = 10.sp)
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodySmall,
+            color = Muted,
+            fontSize = 10.sp,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            textAlign = TextAlign.Center,
+        )
         Spacer(modifier = Modifier.height(4.dp))
-        Text(text = value, style = MaterialTheme.typography.titleMedium, color = color, fontWeight = FontWeight.Bold)
+        Text(
+            text = value,
+            style = MaterialTheme.typography.titleMedium,
+            color = color,
+            fontWeight = FontWeight.Bold,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
     }
 }
 
@@ -283,7 +302,7 @@ private fun AchievementCard(achievement: Achievement, modifier: Modifier = Modif
             .border(1.dp, borderColor, RoundedCornerShape(6.dp))
             .background(bgColor)
             .padding(12.dp)
-            .height(110.dp),
+            .heightIn(min = 110.dp),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
@@ -304,7 +323,8 @@ private fun AchievementCard(achievement: Achievement, modifier: Modifier = Modif
                 style = MaterialTheme.typography.labelMedium,
                 color = if (unlocked) MaterialTheme.colorScheme.onBackground else Muted,
                 fontWeight = FontWeight.Bold,
-                maxLines = 1
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
             )
             Spacer(modifier = Modifier.height(2.dp))
             Text(
@@ -312,7 +332,8 @@ private fun AchievementCard(achievement: Achievement, modifier: Modifier = Modif
                 style = MaterialTheme.typography.bodySmall,
                 color = Muted,
                 fontSize = 10.sp,
-                maxLines = 2
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
             )
         }
     }

@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.softyorch.stroopoverload.R
@@ -90,7 +91,11 @@ fun LeaderboardScreen(onBack: () -> Unit) {
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Row(
+                        modifier = Modifier.weight(1f),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    ) {
                         Box(
                             modifier = Modifier
                                 .background(NeonYellow.copy(alpha = 0.2f), RoundedCornerShape(4.dp))
@@ -98,11 +103,19 @@ fun LeaderboardScreen(onBack: () -> Unit) {
                         ) {
                             Text("#$myRank", color = NeonYellow, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Black)
                         }
-                        Column {
+                        Column(modifier = Modifier.weight(1f)) {
                             Text(stringResource(R.string.leaderboard_your_rank), style = MaterialTheme.typography.bodySmall, color = Muted, fontSize = 10.sp)
-                            Text(myProfile.displayName, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground, fontWeight = FontWeight.Bold)
+                            Text(
+                                text = myProfile.displayName,
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onBackground,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
                         }
                     }
+                    Spacer(modifier = Modifier.width(12.dp))
                     Column(horizontalAlignment = Alignment.End) {
                         Text(stringResource(R.string.leaderboard_points, myProfile.points), style = MaterialTheme.typography.titleMedium, color = NeonYellow, fontWeight = FontWeight.Bold)
                         Text(stringResource(R.string.leaderboard_level, myProfile.level), style = MaterialTheme.typography.bodySmall, color = TechAccent, fontSize = 11.sp)
@@ -144,7 +157,11 @@ fun LeaderboardScreen(onBack: () -> Unit) {
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                Row(
+                                    modifier = Modifier.weight(1f),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                                ) {
                                     Box(
                                         modifier = Modifier
                                             .width(40.dp)
@@ -164,27 +181,33 @@ fun LeaderboardScreen(onBack: () -> Unit) {
                                             fontWeight = FontWeight.Bold
                                         )
                                     }
-                                    Column {
+                                    Column(modifier = Modifier.weight(1f)) {
                                         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                                             Text(
                                                 text = user.displayName,
                                                 style = MaterialTheme.typography.titleMedium,
                                                 color = if (isMe) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground,
-                                                fontWeight = if (isMe) FontWeight.Black else FontWeight.Bold
+                                                fontWeight = if (isMe) FontWeight.Black else FontWeight.Bold,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis,
+                                                modifier = Modifier.weight(1f, fill = false),
                                             )
                                             if (isMe) {
-                                                Text(stringResource(R.string.leaderboard_you_tag), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary, fontSize = 10.sp)
+                                                Text(stringResource(R.string.leaderboard_you_tag), style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.primary, fontSize = 10.sp, maxLines = 1)
                                             }
                                         }
                                         Text(
                                             text = user.uniqueName.ifBlank { "@pilot-${user.userId.takeLast(4)}" },
                                             style = MaterialTheme.typography.bodySmall,
                                             color = Muted,
-                                            fontSize = 11.sp
+                                            fontSize = 11.sp,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis,
                                         )
                                     }
                                 }
 
+                                Spacer(modifier = Modifier.width(12.dp))
                                 Column(horizontalAlignment = Alignment.End) {
                                     Text(
                                         text = stringResource(R.string.leaderboard_points, user.points),

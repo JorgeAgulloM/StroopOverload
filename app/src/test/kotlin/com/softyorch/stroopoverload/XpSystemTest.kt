@@ -10,21 +10,27 @@ import org.junit.Test
 class XpSystemTest {
 
     @Test
-    fun `xpForLevel computes quadratic formula correctly`() {
-        assertEquals(104, XpSystem.xpForLevel(1))
-        assertEquals(216, XpSystem.xpForLevel(2))
-        assertEquals(336, XpSystem.xpForLevel(3))
+    fun `xpForLevel computes the curve correctly`() {
+        assertEquals(83, XpSystem.xpForLevel(1))
+        assertEquals(172, XpSystem.xpForLevel(2))
+        assertEquals(268, XpSystem.xpForLevel(3))
     }
 
     @Test
     fun `levelFromTotalXp resolves proper level boundaries`() {
         assertEquals(1, XpSystem.levelFromTotalXp(0))
-        assertEquals(1, XpSystem.levelFromTotalXp(103))
-        assertEquals(2, XpSystem.levelFromTotalXp(104))
-        assertEquals(2, XpSystem.levelFromTotalXp(319))
-        assertEquals(3, XpSystem.levelFromTotalXp(320))
-        assertEquals(3, XpSystem.levelFromTotalXp(655))
-        assertEquals(4, XpSystem.levelFromTotalXp(656))
+        assertEquals(1, XpSystem.levelFromTotalXp(82))
+        assertEquals(2, XpSystem.levelFromTotalXp(83))
+        assertEquals(2, XpSystem.levelFromTotalXp(254))
+        assertEquals(3, XpSystem.levelFromTotalXp(255))
+        assertEquals(3, XpSystem.levelFromTotalXp(522))
+        assertEquals(4, XpSystem.levelFromTotalXp(523))
+    }
+
+    @Test
+    fun `leveling has no cap`() {
+        // Old formula hard-capped at level 99; the curve must now climb forever.
+        assertTrue(XpSystem.levelFromTotalXp(10_000_000L) > 99)
     }
 
     @Test

@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.softyorch.stroopoverload.R
@@ -25,6 +26,7 @@ import com.softyorch.stroopoverload.core.StroopColor
 import com.softyorch.stroopoverload.domain.GameResult
 import com.softyorch.stroopoverload.game.GameState
 import com.softyorch.stroopoverload.game.GameViewModel
+import com.softyorch.stroopoverload.ui.components.CountdownOverlay
 import com.softyorch.stroopoverload.ui.theme.*
 
 @Composable
@@ -53,109 +55,115 @@ fun GameScreen(
         else -> Unit
     }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .safeDrawingPadding()
-            .padding(horizontal = 14.dp, vertical = 8.dp)
-    ) {
-        // Top Live Telemetry HUD
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(6.dp))
-                .background(MaterialTheme.colorScheme.surface)
-                .padding(10.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column {
-                Text(stringResource(R.string.game_hud_score), style = MaterialTheme.typography.bodySmall, color = Muted, fontSize = 10.sp)
-                Text(playingState?.score?.toString() ?: "0", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Black)
-            }
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(stringResource(R.string.game_hud_streak), style = MaterialTheme.typography.bodySmall, color = Muted, fontSize = 10.sp)
-                val streak = playingState?.currentStreak ?: 0
-                Text("$streak 🔥", style = MaterialTheme.typography.titleMedium, color = if (streak >= 5) NeonYellow else MaterialTheme.colorScheme.onBackground)
-            }
-            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text(stringResource(R.string.game_hud_round), style = MaterialTheme.typography.bodySmall, color = Muted, fontSize = 10.sp)
-                Text(playingState?.totalRounds?.toString() ?: "0", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
-            }
-            Column(horizontalAlignment = Alignment.End) {
-                Text(stringResource(R.string.game_hud_level), style = MaterialTheme.typography.bodySmall, color = Muted, fontSize = 10.sp)
-                Text(stringResource(R.string.game_hud_level_value, playingState?.level ?: 1), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.secondary, fontWeight = FontWeight.Bold)
-            }
-        }
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        // Cyber Timer Gauge
-        TimerBar(
-            progress = timerProgress,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(8.dp)
-                .clip(RoundedCornerShape(4.dp))
-                .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(4.dp)),
-        )
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        // Central Neural Word Terminal
-        Box(
-            modifier = Modifier
-                .weight(1.0f)
-                .fillMaxWidth()
-                .border(2.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(12.dp))
-                .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)),
-            contentAlignment = Alignment.Center
-        ) {
-            stimulus?.let { s ->
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        text = stringResource(R.string.game_stimulus_hint),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Muted,
-                        letterSpacing = 2.sp,
-                        fontSize = 11.sp
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        text = stringResource(s.wordLabel.displayNameRes),
-                        color = s.inkColor.composeColor,
-                        fontSize = 46.sp,
-                        fontWeight = FontWeight.Black,
-                        letterSpacing = 4.sp,
-                    )
-                }
-            }
-        }
-
-        Spacer(modifier = Modifier.height(10.dp))
-
-        // Cyber Quadrant Pad Grid
+    Box(modifier = Modifier.fillMaxSize()) {
         Column(
-            modifier = Modifier.weight(1.2f).fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.background)
+                .safeDrawingPadding()
+                .padding(horizontal = 14.dp, vertical = 8.dp)
         ) {
-            Row(modifier = Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                QuadrantBox(color = StroopColor.RED, modifier = Modifier.weight(1f).fillMaxHeight()) {
-                    viewModel.onColorTapped(StroopColor.RED)
+            // Top Live Telemetry HUD
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(6.dp))
+                    .background(MaterialTheme.colorScheme.surface)
+                    .padding(10.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(stringResource(R.string.game_hud_score), style = MaterialTheme.typography.bodySmall, color = Muted, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(playingState?.score?.toString() ?: "0", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Black)
                 }
-                QuadrantBox(color = StroopColor.GREEN, modifier = Modifier.weight(1f).fillMaxHeight()) {
-                    viewModel.onColorTapped(StroopColor.GREEN)
+                Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(stringResource(R.string.game_hud_streak), style = MaterialTheme.typography.bodySmall, color = Muted, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    val streak = playingState?.currentStreak ?: 0
+                    Text("$streak 🔥", style = MaterialTheme.typography.titleMedium, color = if (streak >= 5) NeonYellow else MaterialTheme.colorScheme.onBackground)
+                }
+                Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(stringResource(R.string.game_hud_round), style = MaterialTheme.typography.bodySmall, color = Muted, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(playingState?.totalRounds?.toString() ?: "0", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
+                }
+                Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.End) {
+                    Text(stringResource(R.string.game_hud_level), style = MaterialTheme.typography.bodySmall, color = Muted, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(stringResource(R.string.game_hud_level_value, playingState?.level ?: 1), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.secondary, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
             }
-            Row(modifier = Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                QuadrantBox(color = StroopColor.BLUE, modifier = Modifier.weight(1f).fillMaxHeight()) {
-                    viewModel.onColorTapped(StroopColor.BLUE)
-                }
-                QuadrantBox(color = StroopColor.YELLOW, modifier = Modifier.weight(1f).fillMaxHeight()) {
-                    viewModel.onColorTapped(StroopColor.YELLOW)
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // Cyber Timer Gauge
+            TimerBar(
+                progress = timerProgress,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(8.dp)
+                    .clip(RoundedCornerShape(4.dp))
+                    .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(4.dp)),
+            )
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Central Neural Word Terminal
+            Box(
+                modifier = Modifier
+                    .weight(1.0f)
+                    .fillMaxWidth()
+                    .border(2.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(12.dp))
+                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)),
+                contentAlignment = Alignment.Center
+            ) {
+                stimulus?.let { s ->
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            text = stringResource(R.string.game_stimulus_hint),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Muted,
+                            letterSpacing = 2.sp,
+                            fontSize = 11.sp
+                        )
+                        Spacer(modifier = Modifier.height(12.dp))
+                        Text(
+                            text = stringResource(s.wordLabel.displayNameRes),
+                            color = s.inkColor.composeColor,
+                            fontSize = 46.sp,
+                            fontWeight = FontWeight.Black,
+                            letterSpacing = 4.sp,
+                        )
+                    }
                 }
             }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            // Cyber Quadrant Pad Grid
+            Column(
+                modifier = Modifier.weight(1.2f).fillMaxWidth(),
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                Row(modifier = Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    QuadrantBox(color = StroopColor.RED, modifier = Modifier.weight(1f).fillMaxHeight()) {
+                        viewModel.onColorTapped(StroopColor.RED)
+                    }
+                    QuadrantBox(color = StroopColor.GREEN, modifier = Modifier.weight(1f).fillMaxHeight()) {
+                        viewModel.onColorTapped(StroopColor.GREEN)
+                    }
+                }
+                Row(modifier = Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    QuadrantBox(color = StroopColor.BLUE, modifier = Modifier.weight(1f).fillMaxHeight()) {
+                        viewModel.onColorTapped(StroopColor.BLUE)
+                    }
+                    QuadrantBox(color = StroopColor.YELLOW, modifier = Modifier.weight(1f).fillMaxHeight()) {
+                        viewModel.onColorTapped(StroopColor.YELLOW)
+                    }
+                }
+            }
+        }
+
+        if (state is GameState.Countdown) {
+            CountdownOverlay(onFinished = { viewModel.beginRound() })
         }
     }
 }
@@ -163,7 +171,7 @@ fun GameScreen(
 @Composable
 private fun QuadrantBox(color: StroopColor, modifier: Modifier, onTap: () -> Unit) {
     val bgAlpha = remember { mutableFloatStateOf(0.15f) }
-    
+
     Box(
         modifier = modifier
             .clip(RoundedCornerShape(8.dp))
@@ -177,7 +185,9 @@ private fun QuadrantBox(color: StroopColor, modifier: Modifier, onTap: () -> Uni
             color = color.composeColor,
             style = MaterialTheme.typography.titleLarge,
             fontWeight = FontWeight.Black,
-            letterSpacing = 3.sp
+            letterSpacing = 3.sp,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
         )
     }
 }

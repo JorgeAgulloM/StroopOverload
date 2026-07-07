@@ -37,6 +37,10 @@
     <string name="game_hud_level_value">STF %1$d</string>
     <string name="game_stimulus_hint">[ SYNAPSENZIEL // FARBE DER TINTE ZUORDNEN ]</string>
 
+    <!-- Countdown overlay (local + online game start) -->
+    <string name="countdown_get_ready">BEREIT MACHEN</string>
+    <string name="countdown_go">LOS!</string>
+
     <!-- Game over screen -->
     <string name="game_over_victory_title">[ SYNAPSEN-SIEG ]</string>
     <string name="game_over_defeat_title">[ NEURALE ÜBERLASTUNG ]</string>

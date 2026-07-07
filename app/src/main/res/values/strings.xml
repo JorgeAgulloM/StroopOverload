@@ -37,6 +37,10 @@
     <string name="game_hud_level_value">LVL %1$d</string>
     <string name="game_stimulus_hint">[ SYNAPSE TARGET // MATCH INK COLOR ]</string>
 
+    <!-- Countdown overlay (local + online game start) -->
+    <string name="countdown_get_ready">GET READY</string>
+    <string name="countdown_go">GO!</string>
+
     <!-- Game over screen -->
     <string name="game_over_victory_title">[ SYNAPSE VICTORY ]</string>
     <string name="game_over_defeat_title">[ NEURAL OVERLOAD ]</string>
