@@ -8,6 +8,7 @@
     <string name="common_edit_profile">Edit Profile</string>
     <string name="common_profile_icon_desc">Profile</string>
     <string name="common_locked">LOCKED</string>
+    <string name="common_cancel">Cancel</string>
 
     <!-- Stroop colors (shown as the gameplay word/answers) -->
     <string name="color_red">RED</string>
@@ -140,6 +141,26 @@
     <string name="profile_trophies_header">[ SYNAPTIC TROPHIES ]</string>
     <string name="profile_trophies_count">%1$d / %2$d</string>
     <string name="profile_demo_restore_button">[ 📸 ASO // RESTORE VIP DEMO PILOT ]</string>
+    <string name="profile_change_password_button">CHANGE PASSWORD</string>
+    <string name="profile_change_password_title">[ CHANGE PASSWORD ]</string>
+    <string name="profile_change_password_current_label">CURRENT PASSWORD</string>
+    <string name="profile_change_password_new_label">NEW PASSWORD</string>
+    <string name="profile_change_password_confirm_label">CONFIRM NEW PASSWORD</string>
+    <string name="profile_change_password_mismatch">New password and confirmation don\'t match.</string>
+    <string name="profile_change_password_success">Password updated.</string>
+    <string name="profile_change_password_error_wrong_current">Current password is incorrect.</string>
+    <string name="profile_change_password_error_recent_login">Please sign out and back in, then try again.</string>
+    <string name="profile_change_password_error_network">Network error. Try again.</string>
+    <string name="profile_change_password_error_generic">Couldn\'t change the password. Try again.</string>
+    <string name="profile_delete_account_button">DELETE MY DATA</string>
+    <string name="profile_delete_account_title">[ DELETE ACCOUNT ]</string>
+    <string name="profile_delete_account_warning">This permanently deletes your profile, career stats, achievements and account. This cannot be undone.</string>
+    <string name="profile_delete_account_password_label">PASSWORD</string>
+    <string name="profile_delete_account_confirm_button">DELETE PERMANENTLY</string>
+    <string name="profile_delete_account_error_wrong_password">Password is incorrect.</string>
+    <string name="profile_delete_account_error_recent_login">Please sign out and back in, then try again.</string>
+    <string name="profile_delete_account_error_network">Network error. Try again.</string>
+    <string name="profile_delete_account_error_generic">Couldn\'t delete the account. Try again.</string>
     <string name="profile_sign_out">[ TERMINATE NEURAL SESSION // SIGN OUT ]</string>
     <string name="profile_achievement_hidden_title">\?\?\?</string>
     <string name="profile_achievement_hidden_desc">Confidential Synaptic Trophy</string>

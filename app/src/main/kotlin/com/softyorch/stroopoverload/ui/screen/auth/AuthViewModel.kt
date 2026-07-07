@@ -91,7 +91,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         val trimmedEmailConfirm = emailConfirm.trim()
         val validationErr = AuthService.validateRegistration(trimmedEmail, trimmedEmailConfirm, pass, passConfirm, nickname)
         if (validationErr != null) {
-            _state.value = _state.value.copy(errorMessage = string(R.string.auth_register_rejected, string(registrationErrorRes(validationErr))))
+            _state.value = _state.value.copy(errorMessage = string(R.string.auth_register_rejected, string(AuthService.registrationErrorRes(validationErr))))
             return
         }
         _state.value = _state.value.copy(isLoading = true, errorMessage = null)
@@ -119,18 +119,6 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 _state.value = _state.value.copy(isLoading = false, errorMessage = msg)
             }
         }
-    }
-
-    private fun registrationErrorRes(error: RegistrationError): Int = when (error) {
-        RegistrationError.NicknameTooShort -> R.string.auth_validation_nickname_short
-        RegistrationError.InvalidEmailFormat -> R.string.auth_validation_invalid_email
-        RegistrationError.EmailMismatch -> R.string.auth_validation_email_mismatch
-        RegistrationError.PasswordTooShort -> R.string.auth_validation_password_short
-        RegistrationError.PasswordNeedsUppercase -> R.string.auth_validation_password_needs_upper
-        RegistrationError.PasswordNeedsLowercase -> R.string.auth_validation_password_needs_lower
-        RegistrationError.PasswordNeedsDigit -> R.string.auth_validation_password_needs_digit
-        RegistrationError.PasswordNeedsSymbol -> R.string.auth_validation_password_needs_symbol
-        RegistrationError.PasswordMismatch -> R.string.auth_validation_password_mismatch
     }
 
     fun continueAsGuest() {

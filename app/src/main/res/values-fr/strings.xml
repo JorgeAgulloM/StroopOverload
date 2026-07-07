@@ -8,6 +8,7 @@
     <string name="common_edit_profile">Modifier le profil</string>
     <string name="common_profile_icon_desc">Profil</string>
     <string name="common_locked">VERROUILLÉ</string>
+    <string name="common_cancel">Annuler</string>
 
     <!-- Stroop colors (shown as the gameplay word/answers) -->
     <string name="color_red">ROUGE</string>
@@ -140,6 +141,26 @@
     <string name="profile_trophies_header">[ TROPHÉES SYNAPTIQUES ]</string>
     <string name="profile_trophies_count">%1$d / %2$d</string>
     <string name="profile_demo_restore_button">[ 📸 ASO // RESTAURER LE PILOTE VIP DÉMO ]</string>
+    <string name="profile_change_password_button">CHANGER LE MOT DE PASSE</string>
+    <string name="profile_change_password_title">[ CHANGER LE MOT DE PASSE ]</string>
+    <string name="profile_change_password_current_label">MOT DE PASSE ACTUEL</string>
+    <string name="profile_change_password_new_label">NOUVEAU MOT DE PASSE</string>
+    <string name="profile_change_password_confirm_label">CONFIRMER LE NOUVEAU MOT DE PASSE</string>
+    <string name="profile_change_password_mismatch">Le nouveau mot de passe et sa confirmation ne correspondent pas.</string>
+    <string name="profile_change_password_success">Mot de passe mis à jour.</string>
+    <string name="profile_change_password_error_wrong_current">Le mot de passe actuel est incorrect.</string>
+    <string name="profile_change_password_error_recent_login">Déconnecte-toi puis reconnecte-toi, ensuite réessaie.</string>
+    <string name="profile_change_password_error_network">Erreur réseau. Réessaie.</string>
+    <string name="profile_change_password_error_generic">Impossible de changer le mot de passe. Réessaie.</string>
+    <string name="profile_delete_account_button">SUPPRIMER MES DONNÉES</string>
+    <string name="profile_delete_account_title">[ SUPPRIMER LE COMPTE ]</string>
+    <string name="profile_delete_account_warning">Ceci supprime définitivement ton profil, tes statistiques, tes succès et ton compte. Action irréversible.</string>
+    <string name="profile_delete_account_password_label">MOT DE PASSE</string>
+    <string name="profile_delete_account_confirm_button">SUPPRIMER DÉFINITIVEMENT</string>
+    <string name="profile_delete_account_error_wrong_password">Le mot de passe est incorrect.</string>
+    <string name="profile_delete_account_error_recent_login">Déconnecte-toi puis reconnecte-toi, ensuite réessaie.</string>
+    <string name="profile_delete_account_error_network">Erreur réseau. Réessaie.</string>
+    <string name="profile_delete_account_error_generic">Impossible de supprimer le compte. Réessaie.</string>
     <string name="profile_sign_out">[ TERMINER LA SESSION NEURALE // DÉCONNEXION ]</string>
     <string name="profile_achievement_hidden_title">\?\?\?</string>
     <string name="profile_achievement_hidden_desc">Trophée synaptique confidentiel</string>

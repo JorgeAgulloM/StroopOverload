@@ -8,6 +8,7 @@
     <string name="common_edit_profile">Editar perfil</string>
     <string name="common_profile_icon_desc">Perfil</string>
     <string name="common_locked">BLOQUEADO</string>
+    <string name="common_cancel">Cancelar</string>
 
     <!-- Stroop colors (shown as the gameplay word/answers) -->
     <string name="color_red">ROJO</string>
@@ -140,6 +141,26 @@
     <string name="profile_trophies_header">[ TROFEOS SINÁPTICOS ]</string>
     <string name="profile_trophies_count">%1$d / %2$d</string>
     <string name="profile_demo_restore_button">[ 📸 ASO // RESTAURAR PILOTO VIP DEMO ]</string>
+    <string name="profile_change_password_button">CAMBIAR CONTRASEÑA</string>
+    <string name="profile_change_password_title">[ CAMBIAR CONTRASEÑA ]</string>
+    <string name="profile_change_password_current_label">CONTRASEÑA ACTUAL</string>
+    <string name="profile_change_password_new_label">NUEVA CONTRASEÑA</string>
+    <string name="profile_change_password_confirm_label">CONFIRMA LA NUEVA CONTRASEÑA</string>
+    <string name="profile_change_password_mismatch">La nueva contraseña y la confirmación no coinciden.</string>
+    <string name="profile_change_password_success">Contraseña actualizada.</string>
+    <string name="profile_change_password_error_wrong_current">La contraseña actual es incorrecta.</string>
+    <string name="profile_change_password_error_recent_login">Cierra sesión y vuelve a entrar, luego inténtalo de nuevo.</string>
+    <string name="profile_change_password_error_network">Error de red. Inténtalo de nuevo.</string>
+    <string name="profile_change_password_error_generic">No se pudo cambiar la contraseña. Inténtalo de nuevo.</string>
+    <string name="profile_delete_account_button">ELIMINAR MIS DATOS</string>
+    <string name="profile_delete_account_title">[ ELIMINAR CUENTA ]</string>
+    <string name="profile_delete_account_warning">Esto elimina permanentemente tu perfil, estadísticas, logros y cuenta. No se puede deshacer.</string>
+    <string name="profile_delete_account_password_label">CONTRASEÑA</string>
+    <string name="profile_delete_account_confirm_button">ELIMINAR PERMANENTEMENTE</string>
+    <string name="profile_delete_account_error_wrong_password">La contraseña es incorrecta.</string>
+    <string name="profile_delete_account_error_recent_login">Cierra sesión y vuelve a entrar, luego inténtalo de nuevo.</string>
+    <string name="profile_delete_account_error_network">Error de red. Inténtalo de nuevo.</string>
+    <string name="profile_delete_account_error_generic">No se pudo eliminar la cuenta. Inténtalo de nuevo.</string>
     <string name="profile_sign_out">[ TERMINAR SESIÓN NEURAL // CERRAR SESIÓN ]</string>
     <string name="profile_achievement_hidden_title">\?\?\?</string>
     <string name="profile_achievement_hidden_desc">Trofeo Sináptico Confidencial</string>

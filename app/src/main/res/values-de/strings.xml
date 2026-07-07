@@ -8,6 +8,7 @@
     <string name="common_edit_profile">Profil bearbeiten</string>
     <string name="common_profile_icon_desc">Profil</string>
     <string name="common_locked">GESPERRT</string>
+    <string name="common_cancel">Abbrechen</string>
 
     <!-- Stroop colors (shown as the gameplay word/answers) -->
     <string name="color_red">ROT</string>
@@ -140,6 +141,26 @@
     <string name="profile_trophies_header">[ SYNAPTISCHE TROPHÄEN ]</string>
     <string name="profile_trophies_count">%1$d / %2$d</string>
     <string name="profile_demo_restore_button">[ 📸 ASO // VIP-DEMO-PILOT WIEDERHERSTELLEN ]</string>
+    <string name="profile_change_password_button">PASSWORT ÄNDERN</string>
+    <string name="profile_change_password_title">[ PASSWORT ÄNDERN ]</string>
+    <string name="profile_change_password_current_label">AKTUELLES PASSWORT</string>
+    <string name="profile_change_password_new_label">NEUES PASSWORT</string>
+    <string name="profile_change_password_confirm_label">NEUES PASSWORT BESTÄTIGEN</string>
+    <string name="profile_change_password_mismatch">Neues Passwort und Bestätigung stimmen nicht überein.</string>
+    <string name="profile_change_password_success">Passwort aktualisiert.</string>
+    <string name="profile_change_password_error_wrong_current">Das aktuelle Passwort ist falsch.</string>
+    <string name="profile_change_password_error_recent_login">Bitte melde dich ab und wieder an, dann versuche es erneut.</string>
+    <string name="profile_change_password_error_network">Netzwerkfehler. Bitte erneut versuchen.</string>
+    <string name="profile_change_password_error_generic">Passwort konnte nicht geändert werden. Bitte erneut versuchen.</string>
+    <string name="profile_delete_account_button">MEINE DATEN LÖSCHEN</string>
+    <string name="profile_delete_account_title">[ KONTO LÖSCHEN ]</string>
+    <string name="profile_delete_account_warning">Dies löscht dauerhaft dein Profil, deine Statistiken, Erfolge und dein Konto. Dies kann nicht rückgängig gemacht werden.</string>
+    <string name="profile_delete_account_password_label">PASSWORT</string>
+    <string name="profile_delete_account_confirm_button">ENDGÜLTIG LÖSCHEN</string>
+    <string name="profile_delete_account_error_wrong_password">Das Passwort ist falsch.</string>
+    <string name="profile_delete_account_error_recent_login">Bitte melde dich ab und wieder an, dann versuche es erneut.</string>
+    <string name="profile_delete_account_error_network">Netzwerkfehler. Bitte erneut versuchen.</string>
+    <string name="profile_delete_account_error_generic">Konto konnte nicht gelöscht werden. Bitte erneut versuchen.</string>
     <string name="profile_sign_out">[ NEURALE SITZUNG BEENDEN // ABMELDEN ]</string>
     <string name="profile_achievement_hidden_title">\?\?\?</string>
     <string name="profile_achievement_hidden_desc">Vertrauliche synaptische Trophäe</string>

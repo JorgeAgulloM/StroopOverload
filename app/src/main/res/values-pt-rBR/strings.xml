@@ -8,6 +8,7 @@
     <string name="common_edit_profile">Editar perfil</string>
     <string name="common_profile_icon_desc">Perfil</string>
     <string name="common_locked">BLOQUEADO</string>
+    <string name="common_cancel">Cancelar</string>
 
     <!-- Stroop colors (shown as the gameplay word/answers) -->
     <string name="color_red">VERMELHO</string>
@@ -140,6 +141,26 @@
     <string name="profile_trophies_header">[ TROFÉUS SINÁPTICOS ]</string>
     <string name="profile_trophies_count">%1$d / %2$d</string>
     <string name="profile_demo_restore_button">[ 📸 ASO // RESTAURAR PILOTO VIP DEMO ]</string>
+    <string name="profile_change_password_button">ALTERAR SENHA</string>
+    <string name="profile_change_password_title">[ ALTERAR SENHA ]</string>
+    <string name="profile_change_password_current_label">SENHA ATUAL</string>
+    <string name="profile_change_password_new_label">NOVA SENHA</string>
+    <string name="profile_change_password_confirm_label">CONFIRME A NOVA SENHA</string>
+    <string name="profile_change_password_mismatch">A nova senha e a confirmação não coincidem.</string>
+    <string name="profile_change_password_success">Senha atualizada.</string>
+    <string name="profile_change_password_error_wrong_current">A senha atual está incorreta.</string>
+    <string name="profile_change_password_error_recent_login">Saia e entre novamente, depois tente de novo.</string>
+    <string name="profile_change_password_error_network">Erro de rede. Tente novamente.</string>
+    <string name="profile_change_password_error_generic">Não foi possível alterar a senha. Tente novamente.</string>
+    <string name="profile_delete_account_button">EXCLUIR MEUS DADOS</string>
+    <string name="profile_delete_account_title">[ EXCLUIR CONTA ]</string>
+    <string name="profile_delete_account_warning">Isso exclui permanentemente seu perfil, estatísticas, conquistas e conta. Essa ação não pode ser desfeita.</string>
+    <string name="profile_delete_account_password_label">SENHA</string>
+    <string name="profile_delete_account_confirm_button">EXCLUIR PERMANENTEMENTE</string>
+    <string name="profile_delete_account_error_wrong_password">A senha está incorreta.</string>
+    <string name="profile_delete_account_error_recent_login">Saia e entre novamente, depois tente de novo.</string>
+    <string name="profile_delete_account_error_network">Erro de rede. Tente novamente.</string>
+    <string name="profile_delete_account_error_generic">Não foi possível excluir a conta. Tente novamente.</string>
     <string name="profile_sign_out">[ ENCERRAR SESSÃO NEURAL // SAIR ]</string>
     <string name="profile_achievement_hidden_title">\?\?\?</string>
     <string name="profile_achievement_hidden_desc">Troféu sináptico confidencial</string>

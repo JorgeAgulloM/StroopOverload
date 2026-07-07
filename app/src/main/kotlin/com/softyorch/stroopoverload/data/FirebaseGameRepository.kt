@@ -175,6 +175,16 @@ class FirebaseGameRepository private constructor(
         profileStore.deleteProfile()
     }
 
+    /**
+     * Wipes this user's cloud document and all local progress. Call before deleting the auth
+     * account. Deliberately does NOT swallow Firestore failures — the caller (account deletion)
+     * must know if the cloud doc survived instead of reporting a false "deleted everything".
+     */
+    suspend fun deleteAllUserData(uid: String) = withContext(Dispatchers.IO) {
+        users?.document(uid)?.delete()?.await()
+        clearLocalProgress()
+    }
+
     suspend fun recordGameResult(result: GameResult, xpEarned: Int): List<Achievement> = withContext(Dispatchers.IO) {
         if (result.correctHits == 0 || result.finalScore <= 0) {
             return@withContext emptyList()

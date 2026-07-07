@@ -8,6 +8,7 @@
     <string name="common_edit_profile">プロフィールを編集</string>
     <string name="common_profile_icon_desc">プロフィール</string>
     <string name="common_locked">ロック中</string>
+    <string name="common_cancel">キャンセル</string>
 
     <!-- Stroop colors (shown as the gameplay word/answers) -->
     <string name="color_red">赤</string>
@@ -140,6 +141,26 @@
     <string name="profile_trophies_header">[ シナプストロフィー ]</string>
     <string name="profile_trophies_count">%1$d / %2$d</string>
     <string name="profile_demo_restore_button">[ 📸 ASO // VIPデモパイロットを復元 ]</string>
+    <string name="profile_change_password_button">パスワード変更</string>
+    <string name="profile_change_password_title">[ パスワード変更 ]</string>
+    <string name="profile_change_password_current_label">現在のパスワード</string>
+    <string name="profile_change_password_new_label">新しいパスワード</string>
+    <string name="profile_change_password_confirm_label">新しいパスワード（確認）</string>
+    <string name="profile_change_password_mismatch">新しいパスワードと確認用が一致しません。</string>
+    <string name="profile_change_password_success">パスワードを更新しました。</string>
+    <string name="profile_change_password_error_wrong_current">現在のパスワードが正しくありません。</string>
+    <string name="profile_change_password_error_recent_login">ログアウトして再度ログインしてから、もう一度お試しください。</string>
+    <string name="profile_change_password_error_network">ネットワークエラーです。もう一度お試しください。</string>
+    <string name="profile_change_password_error_generic">パスワードを変更できませんでした。もう一度お試しください。</string>
+    <string name="profile_delete_account_button">データを削除</string>
+    <string name="profile_delete_account_title">[ アカウント削除 ]</string>
+    <string name="profile_delete_account_warning">プロフィール、キャリア統計、実績、アカウントが完全に削除されます。元に戻せません。</string>
+    <string name="profile_delete_account_password_label">パスワード</string>
+    <string name="profile_delete_account_confirm_button">完全に削除する</string>
+    <string name="profile_delete_account_error_wrong_password">パスワードが正しくありません。</string>
+    <string name="profile_delete_account_error_recent_login">ログアウトして再度ログインしてから、もう一度お試しください。</string>
+    <string name="profile_delete_account_error_network">ネットワークエラーです。もう一度お試しください。</string>
+    <string name="profile_delete_account_error_generic">アカウントを削除できませんでした。もう一度お試しください。</string>
     <string name="profile_sign_out">[ ニューラルセッション終了 // サインアウト ]</string>
     <string name="profile_achievement_hidden_title">\?\?\?</string>
     <string name="profile_achievement_hidden_desc">機密シナプストロフィー</string>

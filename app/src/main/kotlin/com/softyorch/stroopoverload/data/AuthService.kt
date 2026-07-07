@@ -1,8 +1,10 @@
 package com.softyorch.stroopoverload.data
 
 import android.util.Log
+import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
+import com.softyorch.stroopoverload.R
 import kotlinx.coroutines.tasks.await
 
 sealed interface LoginError {
@@ -43,6 +45,57 @@ sealed interface RegistrationError {
 }
 
 class RegistrationValidationException(val reason: RegistrationError) : Exception()
+
+sealed interface ChangePasswordError {
+    object WrongCurrentPassword : ChangePasswordError
+    object RequiresRecentLogin : ChangePasswordError
+    object NetworkError : ChangePasswordError
+    object NotSignedIn : ChangePasswordError
+    data class WeakNewPassword(val reason: RegistrationError) : ChangePasswordError
+    data class Unknown(val message: String) : ChangePasswordError
+
+    companion object {
+        fun fromException(e: Throwable): ChangePasswordError {
+            val msg = e.message ?: return Unknown("Unknown error occurred")
+            return when {
+                msg.contains("INVALID_CREDENTIAL", ignoreCase = true) ||
+                    msg.contains("wrong-password", ignoreCase = true) ||
+                    msg.contains("invalid-password", ignoreCase = true) -> WrongCurrentPassword
+                msg.contains("requires-recent-login", ignoreCase = true) -> RequiresRecentLogin
+                msg.contains("network", ignoreCase = true) ||
+                    msg.contains("timeout", ignoreCase = true) -> NetworkError
+                else -> Unknown(msg)
+            }
+        }
+    }
+}
+
+class ChangePasswordException(val reason: ChangePasswordError) : Exception()
+
+sealed interface DeleteAccountError {
+    object WrongPassword : DeleteAccountError
+    object RequiresRecentLogin : DeleteAccountError
+    object NetworkError : DeleteAccountError
+    object NotSignedIn : DeleteAccountError
+    data class Unknown(val message: String) : DeleteAccountError
+
+    companion object {
+        fun fromException(e: Throwable): DeleteAccountError {
+            val msg = e.message ?: return Unknown("Unknown error occurred")
+            return when {
+                msg.contains("INVALID_CREDENTIAL", ignoreCase = true) ||
+                    msg.contains("wrong-password", ignoreCase = true) ||
+                    msg.contains("invalid-password", ignoreCase = true) -> WrongPassword
+                msg.contains("requires-recent-login", ignoreCase = true) -> RequiresRecentLogin
+                msg.contains("network", ignoreCase = true) ||
+                    msg.contains("timeout", ignoreCase = true) -> NetworkError
+                else -> Unknown(msg)
+            }
+        }
+    }
+}
+
+class DeleteAccountException(val reason: DeleteAccountError) : Exception()
 
 class AuthService(
     private val auth: FirebaseAuth = try { FirebaseAuth.getInstance() } catch (e: Exception) { null } ?: FirebaseAuth.getInstance()
@@ -155,7 +208,91 @@ class AuthService(
         Result.failure(e)
     }
 
+    /** Re-verifies the current user's password. Required by Firebase before updatePassword/delete. */
+    private suspend fun reauthenticate(currentPassword: String): Result<Unit> {
+        val user = auth.currentUser ?: return Result.failure(IllegalStateException("not signed in"))
+        val email = user.email ?: return Result.failure(IllegalStateException("not signed in"))
+        return try {
+            val credential = EmailAuthProvider.getCredential(email, currentPassword)
+            user.reauthenticate(credential).await()
+            Result.success(Unit)
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.w("AuthService", "Reauthenticate error: ${e.message}", e)
+            Result.failure(e)
+        }
+    }
+
+    suspend fun changePassword(currentPassword: String, newPassword: String): Result<Unit> {
+        val user = auth.currentUser ?: return Result.failure(ChangePasswordException(ChangePasswordError.NotSignedIn))
+
+        reauthenticate(currentPassword).onFailure { e ->
+            return Result.failure(ChangePasswordException(ChangePasswordError.fromException(e)))
+        }
+
+        val strengthError = validatePasswordStrength(newPassword)
+        if (strengthError != null) return Result.failure(ChangePasswordException(ChangePasswordError.WeakNewPassword(strengthError)))
+
+        return try {
+            user.updatePassword(newPassword).await()
+            Result.success(Unit)
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.w("AuthService", "Change password error: ${e.message}", e)
+            Result.failure(ChangePasswordException(ChangePasswordError.fromException(e)))
+        }
+    }
+
+    /**
+     * Reauthenticates, then wipes remote/local data via [wipeUserData] (while the session is still
+     * valid, since Firestore rules need request.auth.uid to match), then deletes the Firebase user.
+     */
+    suspend fun deleteAccount(currentPassword: String, wipeUserData: suspend () -> Unit): Result<Unit> {
+        val user = auth.currentUser ?: return Result.failure(DeleteAccountException(DeleteAccountError.NotSignedIn))
+
+        reauthenticate(currentPassword).onFailure { e ->
+            return Result.failure(DeleteAccountException(DeleteAccountError.fromException(e)))
+        }
+
+        return try {
+            wipeUserData()
+            user.delete().await()
+            pendingNickname = null
+            Result.success(Unit)
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.w("AuthService", "Delete account error: ${e.message}", e)
+            Result.failure(DeleteAccountException(DeleteAccountError.fromException(e)))
+        }
+    }
+
     companion object {
+        @androidx.annotation.StringRes
+        fun registrationErrorRes(error: RegistrationError): Int = when (error) {
+            RegistrationError.NicknameTooShort -> R.string.auth_validation_nickname_short
+            RegistrationError.InvalidEmailFormat -> R.string.auth_validation_invalid_email
+            RegistrationError.EmailMismatch -> R.string.auth_validation_email_mismatch
+            RegistrationError.PasswordTooShort -> R.string.auth_validation_password_short
+            RegistrationError.PasswordNeedsUppercase -> R.string.auth_validation_password_needs_upper
+            RegistrationError.PasswordNeedsLowercase -> R.string.auth_validation_password_needs_lower
+            RegistrationError.PasswordNeedsDigit -> R.string.auth_validation_password_needs_digit
+            RegistrationError.PasswordNeedsSymbol -> R.string.auth_validation_password_needs_symbol
+            RegistrationError.PasswordMismatch -> R.string.auth_validation_password_mismatch
+        }
+
+        fun validatePasswordStrength(pass: String): RegistrationError? {
+            if (pass.length < 8) return RegistrationError.PasswordTooShort
+            if (!pass.any { it.isUpperCase() }) return RegistrationError.PasswordNeedsUppercase
+            if (!pass.any { it.isLowerCase() }) return RegistrationError.PasswordNeedsLowercase
+            if (!pass.any { it.isDigit() }) return RegistrationError.PasswordNeedsDigit
+            val symbolRegex = "[^A-Za-z0-9]".toRegex()
+            if (!pass.contains(symbolRegex)) return RegistrationError.PasswordNeedsSymbol
+            return null
+        }
+
         fun validateRegistration(
             email: String,
             emailConfirm: String,
@@ -166,12 +303,7 @@ class AuthService(
             if (nickname.trim().length < 3) return RegistrationError.NicknameTooShort
             if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) return RegistrationError.InvalidEmailFormat
             if (email.trim() != emailConfirm.trim()) return RegistrationError.EmailMismatch
-            if (pass.length < 8) return RegistrationError.PasswordTooShort
-            if (!pass.any { it.isUpperCase() }) return RegistrationError.PasswordNeedsUppercase
-            if (!pass.any { it.isLowerCase() }) return RegistrationError.PasswordNeedsLowercase
-            if (!pass.any { it.isDigit() }) return RegistrationError.PasswordNeedsDigit
-            val symbolRegex = "[^A-Za-z0-9]".toRegex()
-            if (!pass.contains(symbolRegex)) return RegistrationError.PasswordNeedsSymbol
+            validatePasswordStrength(pass)?.let { return it }
             if (pass != passConfirm) return RegistrationError.PasswordMismatch
             return null
         }

@@ -3,6 +3,7 @@ package com.softyorch.stroopoverload.ui.screen.profile
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -16,6 +17,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -35,6 +38,8 @@ fun ProfileScreen(
     val state by viewModel.state.collectAsState()
     val rarity = remember(state.profile.level) { XpSystem.levelRarity(state.profile.level) }
     val achievementPairs = remember(state.achievements) { state.achievements.chunked(2) }
+    var showChangePasswordDialog by remember { mutableStateOf(false) }
+    var showDeleteAccountDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -285,6 +290,18 @@ fun ProfileScreen(
                     }
                     Spacer(modifier = Modifier.height(12.dp))
                 }
+                if (!state.profile.isAnonymous) {
+                    OutlinedButton(
+                        onClick = { showChangePasswordDialog = true },
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.secondary),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.secondary),
+                        shape = RoundedCornerShape(4.dp),
+                        modifier = Modifier.fillMaxWidth().height(48.dp)
+                    ) {
+                        Text(stringResource(R.string.profile_change_password_button), style = MaterialTheme.typography.labelLarge)
+                    }
+                    Spacer(modifier = Modifier.height(12.dp))
+                }
                 OutlinedButton(
                     onClick = { viewModel.signOut(onSignedOut) },
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
@@ -294,10 +311,158 @@ fun ProfileScreen(
                 ) {
                     Text(stringResource(R.string.profile_sign_out), style = MaterialTheme.typography.labelLarge)
                 }
+                if (!state.profile.isAnonymous) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    OutlinedButton(
+                        onClick = { showDeleteAccountDialog = true },
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.5f)),
+                        shape = RoundedCornerShape(4.dp),
+                        modifier = Modifier.fillMaxWidth().height(48.dp)
+                    ) {
+                        Text(stringResource(R.string.profile_delete_account_button), style = MaterialTheme.typography.labelLarge)
+                    }
+                }
                 Spacer(modifier = Modifier.height(32.dp))
             }
         }
     }
+
+    if (showChangePasswordDialog) {
+        ChangePasswordDialog(
+            state = state,
+            onDismiss = {
+                showChangePasswordDialog = false
+                viewModel.clearChangePasswordResult()
+            },
+            onSubmit = { current, new, confirm -> viewModel.changePassword(current, new, confirm) },
+        )
+    }
+
+    if (showDeleteAccountDialog) {
+        DeleteAccountDialog(
+            state = state,
+            onDismiss = {
+                showDeleteAccountDialog = false
+                viewModel.clearDeleteAccountError()
+            },
+            onConfirm = { password -> viewModel.deleteAccount(password, onDeleted = onSignedOut) },
+        )
+    }
+}
+
+@Composable
+private fun ChangePasswordDialog(
+    state: ProfileUiState,
+    onDismiss: () -> Unit,
+    onSubmit: (current: String, new: String, confirm: String) -> Unit,
+) {
+    var currentPassword by remember { mutableStateOf("") }
+    var newPassword by remember { mutableStateOf("") }
+    var confirmPassword by remember { mutableStateOf("") }
+
+    LaunchedEffect(state.changePasswordSuccess) {
+        if (state.changePasswordSuccess) onDismiss()
+    }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.profile_change_password_title), color = MaterialTheme.colorScheme.primary) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedTextField(
+                    value = currentPassword,
+                    onValueChange = { currentPassword = it },
+                    label = { Text(stringResource(R.string.profile_change_password_current_label)) },
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                OutlinedTextField(
+                    value = newPassword,
+                    onValueChange = { newPassword = it },
+                    label = { Text(stringResource(R.string.profile_change_password_new_label)) },
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                OutlinedTextField(
+                    value = confirmPassword,
+                    onValueChange = { confirmPassword = it },
+                    label = { Text(stringResource(R.string.profile_change_password_confirm_label)) },
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                state.changePasswordError?.let {
+                    Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                }
+                if (state.isProcessingAccountAction) {
+                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onSubmit(currentPassword, newPassword, confirmPassword) },
+                enabled = !state.isProcessingAccountAction && currentPassword.isNotBlank() && newPassword.isNotBlank() && confirmPassword.isNotBlank(),
+            ) {
+                Text(stringResource(R.string.profile_change_password_button))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_cancel)) }
+        },
+    )
+}
+
+@Composable
+private fun DeleteAccountDialog(
+    state: ProfileUiState,
+    onDismiss: () -> Unit,
+    onConfirm: (password: String) -> Unit,
+) {
+    var password by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.profile_delete_account_title), color = MaterialTheme.colorScheme.error) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(stringResource(R.string.profile_delete_account_warning), style = MaterialTheme.typography.bodyMedium)
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    label = { Text(stringResource(R.string.profile_delete_account_password_label)) },
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                state.deleteAccountError?.let {
+                    Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
+                }
+                if (state.isProcessingAccountAction) {
+                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                }
+            }
+        },
+        confirmButton = {
+            TextButton(
+                onClick = { onConfirm(password) },
+                enabled = !state.isProcessingAccountAction && password.isNotBlank(),
+                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
+            ) {
+                Text(stringResource(R.string.profile_delete_account_confirm_button))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_cancel)) }
+        },
+    )
 }
 
 @Composable
