@@ -101,7 +101,7 @@ fun ProfileScreen(
                             } else {
                                 Text(
                                     text = state.profile.displayName,
-                                    style = MaterialTheme.typography.headlineLarge,
+                                    style = MaterialTheme.typography.headlineSmall,
                                     color = MaterialTheme.colorScheme.onBackground,
                                     fontWeight = FontWeight.Black,
                                     maxLines = 1,
@@ -167,14 +167,20 @@ fun ProfileScreen(
                     Spacer(modifier = Modifier.height(20.dp))
 
                     // XP Progress
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text(stringResource(R.string.profile_xp_progress_label), style = MaterialTheme.typography.labelMedium, color = Muted)
-                        Text(
-                            stringResource(R.string.profile_xp_progress_value, state.xpInCurrentLevel, state.xpNeededForNextLevel),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onBackground
-                        )
-                    }
+                    Text(
+                        text = stringResource(R.string.profile_xp_progress_label),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = Muted,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Spacer(modifier = Modifier.height(2.dp))
+                    Text(
+                        text = stringResource(R.string.profile_xp_progress_value, state.xpInCurrentLevel, state.xpNeededForNextLevel),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onBackground,
+                        maxLines = 1,
+                    )
                     Spacer(modifier = Modifier.height(8.dp))
                     val progress = if (state.xpNeededForNextLevel > 0) (state.xpInCurrentLevel.toFloat() / state.xpNeededForNextLevel).coerceIn(0f, 1f) else 1f
                     Box(modifier = Modifier.fillMaxWidth().height(8.dp).background(MaterialTheme.colorScheme.outline, RoundedCornerShape(4.dp))) {
@@ -197,10 +203,12 @@ fun ProfileScreen(
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
                         StatBox(stringResource(R.string.profile_stat_total_runs), state.careerStats.totalGamesPlayed.toString(), MaterialTheme.colorScheme.primary, Modifier.weight(1f))
                         StatBox(stringResource(R.string.profile_stat_victories), state.careerStats.totalGamesWon.toString(), MaterialTheme.colorScheme.tertiary, Modifier.weight(1f))
-                        StatBox(stringResource(R.string.profile_stat_flawless), state.careerStats.flawlessGamesCount.toString(), MaterialTheme.colorScheme.secondary, Modifier.weight(1f))
                     }
                     Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
+                        StatBox(stringResource(R.string.profile_stat_flawless), state.careerStats.flawlessGamesCount.toString(), MaterialTheme.colorScheme.secondary, Modifier.weight(1f))
                         StatBox(stringResource(R.string.profile_stat_max_streak_label), stringResource(R.string.profile_stat_max_streak_value, state.careerStats.maxWinStreak), NeonYellow, Modifier.weight(1f))
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
                         StatBox(stringResource(R.string.profile_stat_max_survival_label), stringResource(R.string.profile_stat_max_survival_value, state.careerStats.maxSurvivalTimeMs / 1000), TechAccent, Modifier.weight(1f))
                         StatBox(stringResource(R.string.profile_stat_high_score_label), state.profile.highScore.toString(), Color(0xFFFF8000), Modifier.weight(1f))
                     }
@@ -210,9 +218,28 @@ fun ProfileScreen(
             // Achievements Header
             item {
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                    Text(stringResource(R.string.profile_trophies_header), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.secondary)
+                    Text(
+                        text = stringResource(R.string.profile_trophies_header),
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.secondary,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f, fill = false),
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
                     val unlockedCount = state.achievements.count { it.isUnlocked }
-                    Text(stringResource(R.string.profile_trophies_count, unlockedCount, state.achievements.size), style = MaterialTheme.typography.labelLarge, color = Muted)
+                    Box(
+                        modifier = Modifier
+                            .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(4.dp))
+                            .padding(horizontal = 8.dp, vertical = 4.dp)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.profile_trophies_count, unlockedCount, state.achievements.size),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = Muted,
+                            maxLines = 1,
+                        )
+                    }
                 }
             }
 
@@ -267,22 +294,24 @@ private fun StatBox(label: String, value: String, color: Color, modifier: Modifi
         modifier = modifier
             .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(6.dp))
             .background(MaterialTheme.colorScheme.surface)
-            .padding(12.dp),
+            .heightIn(min = 92.dp)
+            .padding(16.dp),
+        verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
             text = label,
-            style = MaterialTheme.typography.bodySmall,
+            style = MaterialTheme.typography.bodyMedium,
             color = Muted,
-            fontSize = 10.sp,
+            fontSize = 12.sp,
             maxLines = 2,
             overflow = TextOverflow.Ellipsis,
             textAlign = TextAlign.Center,
         )
-        Spacer(modifier = Modifier.height(4.dp))
+        Spacer(modifier = Modifier.height(6.dp))
         Text(
             text = value,
-            style = MaterialTheme.typography.titleMedium,
+            style = MaterialTheme.typography.titleLarge,
             color = color,
             fontWeight = FontWeight.Bold,
             maxLines = 1,

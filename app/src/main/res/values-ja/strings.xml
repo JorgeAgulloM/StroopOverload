@@ -23,10 +23,10 @@
     <string name="home_title_line1">STROOP</string>
     <string name="home_title_line2">OVERLOAD</string>
     <string name="home_subtitle">神経反応シナプステスト</string>
-    <string name="home_play_button">[ ニューラルリンク起動 ]</string>
-    <string name="home_play_button_loading">[ リンク調整中… ]</string>
-    <string name="home_leaderboard_button">🏆 ランキング</string>
-    <string name="home_multiplayer_button">🌐 オンライン対戦</string>
+    <string name="home_play_button">ニューラルリンク起動</string>
+    <string name="home_play_button_loading">リンク調整中…</string>
+    <string name="home_leaderboard_button">ランキング</string>
+    <string name="home_multiplayer_button">オンライン対戦</string>
     <string name="home_footer">SYS_VER: 2.0 // サイバーパンクHUD起動中</string>
 
     <!-- Game screen -->
@@ -76,14 +76,16 @@
     <string name="xp_base_loss">シナプス敗北</string>
 
     <!-- Leaderboard screen -->
-    <string name="leaderboard_title">[ サイバー // ランキング ]</string>
+    <string name="leaderboard_title">ランキング</string>
     <string name="leaderboard_your_rank">あなたのシナプスランク</string>
-    <string name="leaderboard_points">%1$d PT</string>
+    <string name="leaderboard_points">%1$d</string>
+    <string name="leaderboard_points_caption">ランキングPT</string>
+    <string name="leaderboard_highscore_caption">自己ベスト</string>
     <string name="leaderboard_level">LV %1$d</string>
     <string name="leaderboard_top_pilots">[ 世界トップパイロット ]</string>
     <string name="leaderboard_empty">まだ接続したパイロットがいません。</string>
     <string name="leaderboard_you_tag">[ 自分 ]</string>
-    <string name="leaderboard_high_score">ハイスコア：%1$d</string>
+    <string name="leaderboard_high_score">%1$d</string>
 
     <!-- Profile screen -->
     <string name="profile_title">[ ニューラル // プロフィール ]</string>

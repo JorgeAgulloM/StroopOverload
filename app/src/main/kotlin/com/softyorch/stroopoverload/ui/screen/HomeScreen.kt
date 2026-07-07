@@ -126,7 +126,7 @@ fun HomeScreen(
                 enabled = isReady,
                 modifier = Modifier
                     .scale(if (isReady) pulseScale else 1f)
-                    .width(260.dp)
+                    .widthIn(min = 260.dp)
                     .heightIn(min = 60.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.primary,
@@ -136,9 +136,11 @@ fun HomeScreen(
             ) {
                 Text(
                     text = stringResource(if (isReady) R.string.home_play_button else R.string.home_play_button_loading),
-                    style = MaterialTheme.typography.titleMedium,
+                    style = MaterialTheme.typography.titleSmall,
                     color = Background,
-                    fontWeight = FontWeight.Black
+                    fontWeight = FontWeight.Black,
+                    maxLines = 1,
+                    softWrap = false,
                 )
             }
 
@@ -150,9 +152,12 @@ fun HomeScreen(
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.tertiary),
                 border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.tertiary),
                 shape = RoundedCornerShape(4.dp),
-                modifier = Modifier.width(200.dp).heightIn(min = 44.dp)
+                modifier = Modifier.widthIn(min = 200.dp).heightIn(min = 44.dp)
             ) {
-                Text(stringResource(R.string.home_leaderboard_button), style = MaterialTheme.typography.labelLarge)
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("🏆", fontSize = 16.sp)
+                    Text(stringResource(R.string.home_leaderboard_button), style = MaterialTheme.typography.labelLarge, maxLines = 1)
+                }
             }
 
             Spacer(Modifier.height(12.dp))
@@ -162,9 +167,12 @@ fun HomeScreen(
                 colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.secondary),
                 border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.secondary),
                 shape = RoundedCornerShape(4.dp),
-                modifier = Modifier.width(200.dp).heightIn(min = 44.dp)
+                modifier = Modifier.widthIn(min = 200.dp).heightIn(min = 44.dp)
             ) {
-                Text(stringResource(R.string.home_multiplayer_button), style = MaterialTheme.typography.labelLarge)
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text("🌐", fontSize = 16.sp)
+                    Text(stringResource(R.string.home_multiplayer_button), style = MaterialTheme.typography.labelLarge, maxLines = 1)
+                }
             }
         }
 

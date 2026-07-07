@@ -59,9 +59,11 @@ fun LeaderboardScreen(onBack: () -> Unit) {
                 title = {
                     Text(
                         stringResource(R.string.leaderboard_title),
-                        style = MaterialTheme.typography.titleLarge,
+                        style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.primary,
-                        letterSpacing = 2.sp
+                        letterSpacing = 1.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
                 },
                 navigationIcon = {
@@ -116,10 +118,7 @@ fun LeaderboardScreen(onBack: () -> Unit) {
                         }
                     }
                     Spacer(modifier = Modifier.width(12.dp))
-                    Column(horizontalAlignment = Alignment.End) {
-                        Text(stringResource(R.string.leaderboard_points, myProfile.points), style = MaterialTheme.typography.titleMedium, color = NeonYellow, fontWeight = FontWeight.Bold)
-                        Text(stringResource(R.string.leaderboard_level, myProfile.level), style = MaterialTheme.typography.bodySmall, color = TechAccent, fontSize = 11.sp)
-                    }
+                    LeaderboardScoreColumn(points = myProfile.points, highScore = myProfile.highScore, pointsColor = NeonYellow)
                 }
                 Spacer(modifier = Modifier.height(16.dp))
             }
@@ -208,24 +207,15 @@ fun LeaderboardScreen(onBack: () -> Unit) {
                                 }
 
                                 Spacer(modifier = Modifier.width(12.dp))
-                                Column(horizontalAlignment = Alignment.End) {
-                                    Text(
-                                        text = stringResource(R.string.leaderboard_points, user.points),
-                                        style = MaterialTheme.typography.titleMedium,
-                                        color = when (rank) {
-                                            1 -> NeonYellow
-                                            2 -> MaterialTheme.colorScheme.primary
-                                            else -> MaterialTheme.colorScheme.onBackground
-                                        },
-                                        fontWeight = FontWeight.Bold
-                                    )
-                                    Text(
-                                        text = stringResource(R.string.leaderboard_high_score, user.highScore),
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = TechAccent,
-                                        fontSize = 10.sp
-                                    )
-                                }
+                                LeaderboardScoreColumn(
+                                    points = user.points,
+                                    highScore = user.highScore,
+                                    pointsColor = when (rank) {
+                                        1 -> NeonYellow
+                                        2 -> MaterialTheme.colorScheme.primary
+                                        else -> MaterialTheme.colorScheme.onBackground
+                                    },
+                                )
                             }
                         }
                         item {
@@ -235,5 +225,40 @@ fun LeaderboardScreen(onBack: () -> Unit) {
                 }
             }
         }
+    }
+}
+
+@Composable
+private fun LeaderboardScoreColumn(points: Int, highScore: Int, pointsColor: Color) {
+    Column(horizontalAlignment = Alignment.End) {
+        Text(
+            text = stringResource(R.string.leaderboard_points_caption),
+            style = MaterialTheme.typography.bodySmall,
+            color = Muted,
+            fontSize = 9.sp,
+            maxLines = 1,
+        )
+        Text(
+            text = stringResource(R.string.leaderboard_points, points),
+            style = MaterialTheme.typography.titleMedium,
+            color = pointsColor,
+            fontWeight = FontWeight.Bold,
+            maxLines = 1,
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Text(
+            text = stringResource(R.string.leaderboard_highscore_caption),
+            style = MaterialTheme.typography.bodySmall,
+            color = Muted,
+            fontSize = 9.sp,
+            maxLines = 1,
+        )
+        Text(
+            text = stringResource(R.string.leaderboard_high_score, highScore),
+            style = MaterialTheme.typography.bodyMedium,
+            color = TechAccent,
+            fontWeight = FontWeight.Bold,
+            maxLines = 1,
+        )
     }
 }

@@ -23,10 +23,10 @@
     <string name="home_title_line1">STROOP</string>
     <string name="home_title_line2">OVERLOAD</string>
     <string name="home_subtitle">NEURONALER REAKTIONSSYNAPSEN-TEST</string>
-    <string name="home_play_button">[ NEURALEN LINK AKTIVIEREN ]</string>
-    <string name="home_play_button_loading">[ LINK WIRD KALIBRIERT… ]</string>
-    <string name="home_leaderboard_button">🏆 BESTENLISTE</string>
-    <string name="home_multiplayer_button">🌐 ONLINE-SPIEL</string>
+    <string name="home_play_button">NEURALEN LINK AKTIVIEREN</string>
+    <string name="home_play_button_loading">LINK WIRD KALIBRIERT…</string>
+    <string name="home_leaderboard_button">BESTENLISTE</string>
+    <string name="home_multiplayer_button">ONLINE-SPIEL</string>
     <string name="home_footer">SYS_VER: 2.0 // CYBERPUNK-HUD AKTIV</string>
 
     <!-- Game screen -->
@@ -76,14 +76,16 @@
     <string name="xp_base_loss">SYNAPSEN_NIEDERLAGE</string>
 
     <!-- Leaderboard screen -->
-    <string name="leaderboard_title">[ CYBER // BESTENLISTE ]</string>
+    <string name="leaderboard_title">BESTENLISTE</string>
     <string name="leaderboard_your_rank">DEIN SYNAPSEN-RANG</string>
-    <string name="leaderboard_points">%1$d PKT</string>
+    <string name="leaderboard_points">%1$d</string>
+    <string name="leaderboard_points_caption">RANG-PKT</string>
+    <string name="leaderboard_highscore_caption">BESTLEISTUNG</string>
     <string name="leaderboard_level">STF %1$d</string>
     <string name="leaderboard_top_pilots">[ TOP-PILOTEN WELTWEIT ]</string>
     <string name="leaderboard_empty">Noch keine Piloten verbunden.</string>
     <string name="leaderboard_you_tag">[ DU ]</string>
-    <string name="leaderboard_high_score">HÖCHSTWERT: %1$d</string>
+    <string name="leaderboard_high_score">%1$d</string>
 
     <!-- Profile screen -->
     <string name="profile_title">[ NEURAL // PROFIL ]</string>
