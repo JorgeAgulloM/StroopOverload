@@ -107,7 +107,10 @@ class AchievementEngine {
         val newHits = current.totalCorrectHits + game.correctHits
         val newRounds = current.totalRoundsPlayed + game.totalRounds
         val newMaxScore = maxOf(current.maxScoreEver, game.finalScore)
-        val newMaxSurvival = maxOf(current.maxSurvivalTimeMs, game.survivalMs)
+        // TIME mode's survivalMs is just the fixed session clock (see GameConfig.TIME_MODE_DURATION_MS),
+        // not a skill signal like it is in ENDLESS/LIVES -- feeding it in would make the low survival
+        // tiers trivially free and the high tiers mathematically unreachable past that cap.
+        val newMaxSurvival = if (game.mode == GameMode.TIME) current.maxSurvivalTimeMs else maxOf(current.maxSurvivalTimeMs, game.survivalMs)
         val newFlawless = if (game.isFlawless) current.flawlessGamesCount + 1 else current.flawlessGamesCount
         val newWinStreak = if (game.won) current.currentWinStreak + 1 else 0
         val newMaxStreak = maxOf(current.maxWinStreak, newWinStreak)

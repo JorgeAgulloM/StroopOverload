@@ -3,6 +3,7 @@ package com.softyorch.stroopoverload
 import com.softyorch.stroopoverload.domain.AchievementEngine
 import com.softyorch.stroopoverload.domain.AchievementProgress
 import com.softyorch.stroopoverload.domain.CareerStats
+import com.softyorch.stroopoverload.domain.GameMode
 import com.softyorch.stroopoverload.domain.GameResult
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -112,6 +113,32 @@ class AchievementEngineTest {
         assertTrue("survival_expert should unlock", "survival_expert" in newIds)
         assertFalse("survival_master should be blocked", "survival_master" in newIds)
         assertFalse("survival_legend should be blocked", "survival_legend" in newIds)
+    }
+
+    @Test
+    fun `updatedCareerStats ignores TIME mode survivalMs since it's just the fixed session clock`() {
+        val current = CareerStats(maxSurvivalTimeMs = 5_000L)
+        val game = GameResult(
+            finalScore = 500, correctHits = 10, totalRounds = 10,
+            survivalMs = 60_000L, previousHighScore = 0, mode = GameMode.TIME,
+        )
+
+        val updated = engine.updatedCareerStats(current, game)
+
+        assertEquals("TIME mode must not move maxSurvivalTimeMs", 5_000L, updated.maxSurvivalTimeMs)
+    }
+
+    @Test
+    fun `updatedCareerStats still tracks maxSurvivalTimeMs for ENDLESS and LIVES`() {
+        val current = CareerStats(maxSurvivalTimeMs = 5_000L)
+        val endless = GameResult(
+            finalScore = 500, correctHits = 10, totalRounds = 10,
+            survivalMs = 40_000L, previousHighScore = 0, mode = GameMode.ENDLESS,
+        )
+        val lives = endless.copy(mode = GameMode.LIVES, survivalMs = 45_000L)
+
+        assertEquals(40_000L, engine.updatedCareerStats(current, endless).maxSurvivalTimeMs)
+        assertEquals(45_000L, engine.updatedCareerStats(current, lives).maxSurvivalTimeMs)
     }
 
     @Test

@@ -1,6 +1,7 @@
 package com.softyorch.stroopoverload
 
 import com.softyorch.stroopoverload.R
+import com.softyorch.stroopoverload.domain.GameMode
 import com.softyorch.stroopoverload.domain.GameResult
 import com.softyorch.stroopoverload.domain.Rarity
 import com.softyorch.stroopoverload.domain.XpSystem
@@ -79,5 +80,35 @@ class XpSystemTest {
         assertEquals(30, breakdown.streakBonus)
         assertEquals(60, breakdown.dailyStreakBonus)
         assertEquals(1.5, breakdown.multiplier, 0.001)
+    }
+
+    @Test
+    fun `calculateGameXp gives no survival time bonus in TIME mode`() {
+        // TIME mode's survivalMs is just the fixed session clock, not a skill signal --
+        // every completed run would otherwise trivially clear both thresholds.
+        val res = GameResult(
+            finalScore = 1200,
+            correctHits = 10,
+            totalRounds = 10,
+            survivalMs = 60_000L,
+            previousHighScore = 1000,
+            won = true,
+            mode = GameMode.TIME,
+        )
+        val breakdown = XpSystem.calculateGameXp(res, dailyStreak = 0, currentWinStreak = 0)
+
+        assertEquals(0, breakdown.timeBonus)
+    }
+
+    @Test
+    fun `calculateGameXp still gives the survival time bonus in ENDLESS and LIVES`() {
+        val endless = GameResult(
+            finalScore = 1200, correctHits = 10, totalRounds = 10,
+            survivalMs = 25_000L, previousHighScore = 0, won = true, mode = GameMode.ENDLESS,
+        )
+        val lives = endless.copy(mode = GameMode.LIVES)
+
+        assertEquals(100, XpSystem.calculateGameXp(endless, dailyStreak = 0, currentWinStreak = 0).timeBonus)
+        assertEquals(100, XpSystem.calculateGameXp(lives, dailyStreak = 0, currentWinStreak = 0).timeBonus)
     }
 }

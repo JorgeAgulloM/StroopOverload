@@ -115,7 +115,10 @@ object XpSystem {
         val baseLabelRes = if (result.won) R.string.xp_base_win else R.string.xp_base_loss
 
         val perfectBonus = if (result.isFlawless) 100 else 0
-        val timeBonus = when {
+        // TIME mode's survivalMs is just the fixed session clock counting down, not a skill
+        // signal -- nearly every completed run would trivially clear both thresholds regardless
+        // of performance, so the survival-time bonus only applies to ENDLESS/LIVES.
+        val timeBonus = if (result.mode == GameMode.TIME) 0 else when {
             result.survivalMs >= 20_000L -> 100
             result.survivalMs >= 10_000L -> 50
             else -> 0
