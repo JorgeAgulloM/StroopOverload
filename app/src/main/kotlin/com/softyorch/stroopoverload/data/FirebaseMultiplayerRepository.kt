@@ -57,6 +57,11 @@ class FirebaseMultiplayerRepository(
         awaitClose { registration.remove() }
     }
 
+    override suspend fun deleteMyMultiplayerData(): Result<Unit> = runCatching {
+        functions.getHttpsCallable("deleteMyMultiplayerData").call().await()
+        Unit
+    }
+
     override fun trackPresence(roomId: String, uid: String) {
         val presenceRef = database.getReference("presence/$roomId/$uid")
         val offlineValue = mapOf("state" to "offline", "lastChanged" to ServerValue.TIMESTAMP)

@@ -11,4 +11,5 @@ interface MultiplayerRepository {
     suspend fun submitAnswer(roomId: String, selectedColor: StroopColor): Result<Unit>
     fun observeRoom(roomId: String): Flow<MultiplayerRoom>
     fun trackPresence(roomId: String, uid: String)
+    suspend fun deleteMyMultiplayerData(): Result<Unit>
 }

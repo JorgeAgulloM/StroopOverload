@@ -6,8 +6,27 @@ import { CallableRequest } from "firebase-functions/v2/https";
 import { Request as TaskRequest } from "firebase-functions/v2/tasks";
 import { DatabaseEvent, DataSnapshot } from "firebase-functions/v2/database";
 import { Change } from "firebase-functions/v2/core";
-import { createRoom, joinRoom, startGame, submitAnswer, resolveTimeout, onPresenceChanged } from "./index";
+import {
+  createRoom,
+  joinRoom,
+  startGame,
+  submitAnswer,
+  resolveTimeout,
+  onPresenceChanged,
+  deleteMyMultiplayerData,
+} from "./index";
 import * as resolveRoundModule from "./resolveRound";
+
+// deleteMyMultiplayerData also removes each deleted room's Realtime Database
+// presence node. There's no RTDB emulator in this test run (only Firestore,
+// per package.json's `firebase emulators:exec --only firestore`), so
+// firebase-admin/database is mocked here the same way ./taskQueue is mocked
+// above -- this suite exercises the Firestore query/delete logic, not RTDB
+// infrastructure that isn't under test.
+const mockDbRemove = jest.fn().mockResolvedValue(undefined);
+jest.mock("firebase-admin/database", () => ({
+  getDatabase: () => ({ ref: () => ({ remove: mockDbRemove }) }),
+}));
 
 // startGame() and (via resolveRound()) submitAnswer()/resolveTimeout()/
 // onPresenceChanged() all schedule a next-round timeout check through Cloud
@@ -427,5 +446,50 @@ describe("onPresenceChanged", () => {
 
     spy.mockRestore();
     consoleErrorSpy.mockRestore();
+  });
+});
+
+describe("deleteMyMultiplayerData", () => {
+  test("rejects unauthenticated callers", async () => {
+    await expect(deleteMyMultiplayerData.run(buildRequest({}, undefined))).rejects.toMatchObject({
+      code: "unauthenticated",
+    });
+  });
+
+  test("deletes every room the caller is a player in and removes its presence node, leaving unrelated rooms untouched", async () => {
+    await seedRoom(); // "room-1", player "host-uid"
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await context.firestore().collection("rooms").doc("room-2").set({
+        code: "FGHIJ",
+        status: "waiting",
+        hostUid: "someone-else",
+        players: {
+          "someone-else": { uid: "someone-else", displayName: "Other", avatarIndex: 0, alive: true, order: 0, joinedAtMs: 0 },
+        },
+        turnOrder: ["someone-else"],
+        turnIndex: 0,
+        round: 0,
+        stimulus: null,
+        deadlineAtMs: null,
+        winnerUid: null,
+        createdAtMs: Date.now(),
+      });
+    });
+
+    const result = await deleteMyMultiplayerData.run(buildRequest({}, "host-uid"));
+
+    expect(result).toEqual({ roomsDeleted: 1 });
+    expect(await getRoom("room-1")).toBeUndefined();
+    expect(await getRoom("room-2")).toBeDefined();
+    expect(mockDbRemove).toHaveBeenCalledTimes(1);
+  });
+
+  test("is a no-op (zero rooms deleted) when the caller never played any room", async () => {
+    await seedRoom(); // "room-1", player "host-uid" only
+
+    const result = await deleteMyMultiplayerData.run(buildRequest({}, "never-played-uid"));
+
+    expect(result).toEqual({ roomsDeleted: 0 });
+    expect(await getRoom("room-1")).toBeDefined();
   });
 });

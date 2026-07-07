@@ -10,6 +10,8 @@ import com.softyorch.stroopoverload.data.ChangePasswordException
 import com.softyorch.stroopoverload.data.DeleteAccountError
 import com.softyorch.stroopoverload.data.DeleteAccountException
 import com.softyorch.stroopoverload.data.FirebaseGameRepository
+import com.softyorch.stroopoverload.data.FirebaseMultiplayerRepository
+import com.softyorch.stroopoverload.data.MultiplayerRepository
 import com.softyorch.stroopoverload.domain.Achievement
 import com.softyorch.stroopoverload.domain.CareerStats
 import com.softyorch.stroopoverload.domain.UserProfile
@@ -38,6 +40,7 @@ data class ProfileUiState(
 class ProfileViewModel(application: Application) : AndroidViewModel(application) {
     private val repository = FirebaseGameRepository.getInstance(application)
     private val authService = AuthService()
+    private val multiplayerRepository: MultiplayerRepository = FirebaseMultiplayerRepository()
 
     private val _state = MutableStateFlow(ProfileUiState())
     val state: StateFlow<ProfileUiState> = _state.asStateFlow()
@@ -127,7 +130,13 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         }
         _state.value = _state.value.copy(isProcessingAccountAction = true, deleteAccountError = null)
         viewModelScope.launch {
-            authService.deleteAccount(password, wipeUserData = { repository.deleteAllUserData(uid) })
+            authService.deleteAccount(
+                password,
+                wipeUserData = {
+                    repository.deleteAllUserData(uid)
+                    multiplayerRepository.deleteMyMultiplayerData().getOrThrow()
+                },
+            )
                 .onSuccess {
                     _state.value = _state.value.copy(isProcessingAccountAction = false)
                     onDeleted()

@@ -1,5 +1,6 @@
 import { initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
+import { getDatabase } from "firebase-admin/database";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { onTaskDispatched } from "firebase-functions/v2/tasks";
 import { onValueWritten } from "firebase-functions/v2/database";
@@ -167,6 +168,37 @@ export const submitAnswer = onCall(async (request) => {
     if (err instanceof HttpsError) throw err;
     console.error(`submitAnswer failed for uid ${uid}, room ${roomId}`, err);
     throw new HttpsError("internal", "No se pudo registrar la respuesta.");
+  }
+});
+
+// Deletes every room this account ever played in (host or guest --
+// createRoom always seeds the host into `players` too, so one field-path
+// query against the map catches both) plus that room's presence node, as
+// part of account deletion. Rooms are ephemeral match sessions, not
+// retained history, so wiping the whole doc is safe: it removes this
+// user's uid/nickname without needing to special-case "redact vs delete"
+// for the other player's copy of a finished match.
+export const deleteMyMultiplayerData = onCall(async (request) => {
+  const uid = request.auth?.uid;
+  if (!uid) throw new HttpsError("unauthenticated", "Debes iniciar sesión.");
+
+  try {
+    const snap = await roomsCol().where(`players.${uid}.uid`, "==", uid).get();
+    const db = getDatabase();
+    await Promise.all(
+      snap.docs.map(async (doc) => {
+        await doc.ref.delete();
+        try {
+          await db.ref(`presence/${doc.id}`).remove();
+        } catch (err) {
+          console.error(`deleteMyMultiplayerData: failed to remove presence for room ${doc.id}`, err);
+        }
+      })
+    );
+    return { roomsDeleted: snap.size };
+  } catch (err) {
+    console.error(`deleteMyMultiplayerData failed for uid ${uid}`, err);
+    throw new HttpsError("internal", "No se pudieron eliminar los datos multijugador.");
   }
 });
 

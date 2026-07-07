@@ -54,4 +54,6 @@ class FakeMultiplayerRepository : MultiplayerRepository {
     override fun trackPresence(roomId: String, uid: String) {
         presenceTracked = true
     }
+
+    override suspend fun deleteMyMultiplayerData(): Result<Unit> = Result.success(Unit)
 }
