@@ -19,6 +19,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -26,6 +27,7 @@ import androidx.compose.ui.unit.sp
 import com.softyorch.stroopoverload.R
 import com.softyorch.stroopoverload.domain.Achievement
 import com.softyorch.stroopoverload.domain.XpSystem
+import com.softyorch.stroopoverload.ui.screen.auth.PasswordVisibilityToggle
 import com.softyorch.stroopoverload.ui.theme.*
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -360,6 +362,9 @@ private fun ChangePasswordDialog(
     var currentPassword by remember { mutableStateOf("") }
     var newPassword by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
+    var currentPasswordVisible by remember { mutableStateOf(false) }
+    var newPasswordVisible by remember { mutableStateOf(false) }
+    var confirmPasswordVisible by remember { mutableStateOf(false) }
 
     LaunchedEffect(state.changePasswordSuccess) {
         if (state.changePasswordSuccess) onDismiss()
@@ -375,8 +380,11 @@ private fun ChangePasswordDialog(
                     onValueChange = { currentPassword = it },
                     label = { Text(stringResource(R.string.profile_change_password_current_label)) },
                     singleLine = true,
-                    visualTransformation = PasswordVisualTransformation(),
+                    visualTransformation = if (currentPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    trailingIcon = {
+                        PasswordVisibilityToggle(visible = currentPasswordVisible, onToggle = { currentPasswordVisible = !currentPasswordVisible })
+                    },
                     modifier = Modifier.fillMaxWidth(),
                 )
                 OutlinedTextField(
@@ -384,8 +392,11 @@ private fun ChangePasswordDialog(
                     onValueChange = { newPassword = it },
                     label = { Text(stringResource(R.string.profile_change_password_new_label)) },
                     singleLine = true,
-                    visualTransformation = PasswordVisualTransformation(),
+                    visualTransformation = if (newPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    trailingIcon = {
+                        PasswordVisibilityToggle(visible = newPasswordVisible, onToggle = { newPasswordVisible = !newPasswordVisible })
+                    },
                     modifier = Modifier.fillMaxWidth(),
                 )
                 OutlinedTextField(
@@ -393,8 +404,11 @@ private fun ChangePasswordDialog(
                     onValueChange = { confirmPassword = it },
                     label = { Text(stringResource(R.string.profile_change_password_confirm_label)) },
                     singleLine = true,
-                    visualTransformation = PasswordVisualTransformation(),
+                    visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    trailingIcon = {
+                        PasswordVisibilityToggle(visible = confirmPasswordVisible, onToggle = { confirmPasswordVisible = !confirmPasswordVisible })
+                    },
                     modifier = Modifier.fillMaxWidth(),
                 )
                 state.changePasswordError?.let {
@@ -426,6 +440,7 @@ private fun DeleteAccountDialog(
     onConfirm: (password: String) -> Unit,
 ) {
     var password by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
 
     AlertDialog(
         onDismissRequest = onDismiss,
@@ -438,8 +453,11 @@ private fun DeleteAccountDialog(
                     onValueChange = { password = it },
                     label = { Text(stringResource(R.string.profile_delete_account_password_label)) },
                     singleLine = true,
-                    visualTransformation = PasswordVisualTransformation(),
+                    visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                    trailingIcon = {
+                        PasswordVisibilityToggle(visible = passwordVisible, onToggle = { passwordVisible = !passwordVisible })
+                    },
                     modifier = Modifier.fillMaxWidth(),
                 )
                 state.deleteAccountError?.let {

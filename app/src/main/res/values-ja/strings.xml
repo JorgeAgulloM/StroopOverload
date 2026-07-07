@@ -9,6 +9,8 @@
     <string name="common_profile_icon_desc">プロフィール</string>
     <string name="common_locked">ロック中</string>
     <string name="common_cancel">キャンセル</string>
+    <string name="common_show_password">パスワードを表示</string>
+    <string name="common_hide_password">パスワードを隠す</string>
 
     <!-- Stroop colors (shown as the gameplay word/answers) -->
     <string name="color_red">赤</string>

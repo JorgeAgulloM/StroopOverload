@@ -15,9 +15,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.softyorch.stroopoverload.R
@@ -36,6 +39,8 @@ fun AuthScreen(
     var emailConfirm by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordConfirm by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
+    var passwordConfirmVisible by remember { mutableStateOf(false) }
     var nickname by remember { mutableStateOf("") }
     var forgotEmail by remember { mutableStateOf("") }
 
@@ -268,8 +273,11 @@ fun AuthScreen(
                         onValueChange = { password = it },
                         label = { Text(stringResource(R.string.auth_password_label), color = Muted) },
                         singleLine = true,
-                        visualTransformation = PasswordVisualTransformation(),
+                        visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                        trailingIcon = {
+                            PasswordVisibilityToggle(visible = passwordVisible, onToggle = { passwordVisible = !passwordVisible })
+                        },
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = if (isRegisterTab) MaterialTheme.colorScheme.secondary else MaterialTheme.colorScheme.primary,
                             unfocusedBorderColor = MaterialTheme.colorScheme.outline,
@@ -287,8 +295,11 @@ fun AuthScreen(
                                 onValueChange = { passwordConfirm = it },
                                 label = { Text(stringResource(R.string.auth_password_confirm_label), color = Muted) },
                                 singleLine = true,
-                                visualTransformation = PasswordVisualTransformation(),
+                                visualTransformation = if (passwordConfirmVisible) VisualTransformation.None else PasswordVisualTransformation(),
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
+                                trailingIcon = {
+                                    PasswordVisibilityToggle(visible = passwordConfirmVisible, onToggle = { passwordConfirmVisible = !passwordConfirmVisible })
+                                },
                                 colors = OutlinedTextFieldDefaults.colors(
                                     focusedBorderColor = MaterialTheme.colorScheme.secondary,
                                     unfocusedBorderColor = MaterialTheme.colorScheme.outline,
@@ -383,6 +394,17 @@ fun AuthScreen(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun PasswordVisibilityToggle(visible: Boolean, onToggle: () -> Unit) {
+    val description = stringResource(if (visible) R.string.common_hide_password else R.string.common_show_password)
+    IconButton(
+        onClick = onToggle,
+        modifier = Modifier.semantics { contentDescription = description },
+    ) {
+        Text(text = if (visible) "🙈" else "👁️", fontSize = 18.sp)
     }
 }
 

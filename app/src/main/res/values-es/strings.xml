@@ -9,6 +9,8 @@
     <string name="common_profile_icon_desc">Perfil</string>
     <string name="common_locked">BLOQUEADO</string>
     <string name="common_cancel">Cancelar</string>
+    <string name="common_show_password">Mostrar contraseña</string>
+    <string name="common_hide_password">Ocultar contraseña</string>
 
     <!-- Stroop colors (shown as the gameplay word/answers) -->
     <string name="color_red">ROJO</string>
