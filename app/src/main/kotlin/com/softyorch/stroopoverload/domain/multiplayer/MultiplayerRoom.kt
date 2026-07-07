@@ -3,10 +3,11 @@ package com.softyorch.stroopoverload.domain.multiplayer
 import com.softyorch.stroopoverload.core.StroopColor
 
 enum class RoomStatus {
-    WAITING, PLAYING, FINISHED;
+    WAITING, STARTING, PLAYING, FINISHED;
 
     companion object {
         fun fromFirestoreValue(raw: String?): RoomStatus = when (raw) {
+            "starting" -> STARTING
             "playing" -> PLAYING
             "finished" -> FINISHED
             else -> WAITING
@@ -42,6 +43,7 @@ data class MultiplayerRoom(
     val stimulus: MultiplayerStimulus? = null,
     val deadlineAtMs: Long? = null,
     val winnerUid: String? = null,
+    val startsAtMs: Long? = null,
 ) {
     val currentTurnUid: String? get() = turnOrder.getOrNull(turnIndex)
     fun isMyTurn(uid: String): Boolean = currentTurnUid == uid

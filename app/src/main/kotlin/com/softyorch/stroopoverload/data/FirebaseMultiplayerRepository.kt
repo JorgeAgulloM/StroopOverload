@@ -117,6 +117,7 @@ class FirebaseMultiplayerRepository(
             stimulus = stimulus,
             deadlineAtMs = data["deadlineAtMs"] as? Long,
             winnerUid = data["winnerUid"] as? String,
+            startsAtMs = data["startsAtMs"] as? Long,
         )
     }
 

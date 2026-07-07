@@ -9,12 +9,17 @@ import { ResolutionReason, RoomDoc, RoomPlayerDoc } from "./types";
 import { generateStimulus } from "./stimulus";
 import { timeLimitMsForRound } from "./turnLogic";
 import { resolveRound } from "./resolveRound";
-import { scheduleTimeoutCheck } from "./taskQueue";
+import { scheduleTimeoutCheck, scheduleGameStart } from "./taskQueue";
 
 initializeApp();
 
 const MAX_PLAYERS_PER_ROOM = 4;
 const MAX_DISPLAY_NAME_LENGTH = 16;
+// Cosmetic "3, 2, 1, GO" window shown on every client while status is
+// "starting". Round 1's real deadline is computed by beginRound when this
+// elapses server-side -- not by startGame -- so this duration only affects
+// how long the countdown animation plays, never match fairness.
+const STARTING_COUNTDOWN_MS = 4000;
 
 export const createRoom = onCall(async (request) => {
   const uid = request.auth?.uid;
@@ -47,6 +52,7 @@ export const createRoom = onCall(async (request) => {
       deadlineAtMs: null,
       winnerUid: null,
       createdAtMs: Date.now(),
+      startsAtMs: null,
     };
     await roomRef.set(room);
     return { roomId: roomRef.id, code };
@@ -114,6 +120,7 @@ export const startGame = onCall(async (request) => {
 
   try {
     const roomRef = roomsCol().doc(roomId);
+    const startsAtMs = Date.now() + STARTING_COUNTDOWN_MS;
     await getFirestore().runTransaction(async (tx) => {
       const doc = await tx.get(roomRef);
       if (!doc.exists) throw new HttpsError("not-found", "Sala no existe.");
@@ -122,19 +129,53 @@ export const startGame = onCall(async (request) => {
       if (room.status !== "waiting") throw new HttpsError("failed-precondition", "La partida ya empezó.");
       if (room.turnOrder.length < 2) throw new HttpsError("failed-precondition", "Se necesitan al menos 2 jugadores.");
 
-      const stimulus = generateStimulus();
-      const deadlineAtMs = Date.now() + timeLimitMsForRound(1);
-      tx.update(roomRef, { status: "playing", round: 1, turnIndex: 0, stimulus, deadlineAtMs });
+      tx.update(roomRef, { status: "starting", startsAtMs, stimulus: null, deadlineAtMs: null });
     });
 
-    await scheduleTimeoutCheck(roomId, 1, timeLimitMsForRound(1));
-    return { started: true };
+    await scheduleGameStart(roomId, STARTING_COUNTDOWN_MS);
+    return { startsAtMs };
   } catch (err) {
     if (err instanceof HttpsError) throw err;
     console.error(`startGame failed for uid ${uid}, room ${roomId}`, err);
     throw new HttpsError("internal", "No se pudo iniciar la partida.");
   }
 });
+
+// Fired by a Cloud Task scheduled from startGame, timed to run at the room's
+// startsAtMs. This is what actually computes round 1's stimulus/deadlineAtMs
+// -- at the real synchronized start instant, not whenever startGame's
+// synchronous call happened -- so every client's answer window is the full
+// configured duration regardless of how long their local countdown/render took.
+export const beginRound = onTaskDispatched<{ roomId: string }>(
+  { retryConfig: { maxAttempts: 5, minBackoffSeconds: 1 } },
+  async (req) => {
+    const { roomId } = req.data;
+    try {
+      const roomRef = roomsCol().doc(roomId);
+      let scheduled: { round: number; deadlineAtMs: number } | null = null;
+
+      await getFirestore().runTransaction(async (tx) => {
+        const doc = await tx.get(roomRef);
+        if (!doc.exists) return;
+        const room = doc.data() as RoomDoc;
+        if (room.status !== "starting") return; // stale/already handled
+
+        const stimulus = generateStimulus();
+        const deadlineAtMs = Date.now() + timeLimitMsForRound(1);
+        tx.update(roomRef, { status: "playing", round: 1, turnIndex: 0, stimulus, deadlineAtMs });
+        scheduled = { round: 1, deadlineAtMs };
+      });
+
+      if (scheduled) {
+        const { round, deadlineAtMs } = scheduled as { round: number; deadlineAtMs: number };
+        await scheduleTimeoutCheck(roomId, round, deadlineAtMs - Date.now());
+      }
+    } catch (err) {
+      console.error(`beginRound failed for room ${roomId}`, err);
+      throw err;
+    }
+  }
+);
 
 export const submitAnswer = onCall(async (request) => {
   const uid = request.auth?.uid;

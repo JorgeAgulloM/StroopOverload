@@ -1,6 +1,6 @@
 import { Stimulus } from "./stimulus";
 
-export type RoomStatus = "waiting" | "playing" | "finished";
+export type RoomStatus = "waiting" | "starting" | "playing" | "finished";
 
 export interface RoomPlayerDoc {
   uid: string;
@@ -25,6 +25,12 @@ export interface RoomDoc {
   deadlineAtMs: number | null;
   winnerUid: string | null;
   createdAtMs: number;
+  // Absolute server timestamp the "starting" countdown ends at. Round 1's real
+  // stimulus/deadlineAtMs are only computed once beginRound fires at this
+  // instant -- never at the moment startGame was called -- so every client's
+  // answer window is the same full duration regardless of how long their
+  // local countdown animation/render took.
+  startsAtMs: number | null;
 }
 
 export type ResolutionReason = "correct" | "wrong" | "timeout" | "disconnect";

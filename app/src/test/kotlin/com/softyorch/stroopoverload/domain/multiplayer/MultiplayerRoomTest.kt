@@ -24,6 +24,7 @@ class MultiplayerRoomTest {
     @Test
     fun `RoomStatus fromFirestoreValue maps raw strings correctly`() {
         assertEquals(RoomStatus.WAITING, RoomStatus.fromFirestoreValue("waiting"))
+        assertEquals(RoomStatus.STARTING, RoomStatus.fromFirestoreValue("starting"))
         assertEquals(RoomStatus.PLAYING, RoomStatus.fromFirestoreValue("playing"))
         assertEquals(RoomStatus.FINISHED, RoomStatus.fromFirestoreValue("finished"))
         assertEquals(RoomStatus.WAITING, RoomStatus.fromFirestoreValue(null))

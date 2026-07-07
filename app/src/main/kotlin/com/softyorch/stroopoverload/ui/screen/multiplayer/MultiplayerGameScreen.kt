@@ -121,7 +121,10 @@ fun MultiplayerGameScreen(
                     style = MaterialTheme.typography.headlineMedium,
                 )
             }
-            RoomStatus.WAITING -> Text(stringResource(R.string.mp_game_waiting))
+            // Neither reachable here: MultiplayerScreen routes WAITING/STARTING to their
+            // own screens before this composable is ever shown. Kept only so the `when`
+            // stays exhaustive against RoomStatus.
+            RoomStatus.WAITING, RoomStatus.STARTING -> Text(stringResource(R.string.mp_game_waiting))
         }
 
         Spacer(Modifier.weight(1f))

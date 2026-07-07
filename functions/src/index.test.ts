@@ -10,6 +10,7 @@ import {
   createRoom,
   joinRoom,
   startGame,
+  beginRound,
   submitAnswer,
   resolveTimeout,
   onPresenceChanged,
@@ -42,6 +43,7 @@ jest.mock("firebase-admin/database", () => ({
 // unrelated infrastructure that isn't under test.
 jest.mock("./taskQueue", () => ({
   scheduleTimeoutCheck: jest.fn().mockResolvedValue(undefined),
+  scheduleGameStart: jest.fn().mockResolvedValue(undefined),
 }));
 
 let testEnv: RulesTestEnvironment;
@@ -135,10 +137,10 @@ interface ResolveTimeoutTaskData {
 
 // Builds a minimal Request<T>-shaped object (TaskContext & { data: T }) for
 // invoking an onTaskDispatched handler directly via TaskQueueFunction.run().
-// Only `data` is meaningful to resolveTimeout's handler; the TaskContext
-// fields are required by the type but unused by the handler logic, so they
-// are stubbed with plausible values.
-function buildTaskRequest(data: ResolveTimeoutTaskData): TaskRequest<ResolveTimeoutTaskData> {
+// Only `data` is meaningful to the handlers under test (resolveTimeout,
+// beginRound); the TaskContext fields are required by the type but unused by
+// the handler logic, so they are stubbed with plausible values.
+function buildTaskRequest<T>(data: T): TaskRequest<T> {
   return {
     data,
     queueName: "resolveTimeout",
@@ -289,26 +291,60 @@ describe("startGame", () => {
     ).rejects.toMatchObject({ code: "failed-precondition" });
   });
 
-  test("succeeds for the host with 2+ players", async () => {
+  test("moves the room to 'starting' with a future startsAtMs, not straight to 'playing'", async () => {
     await seedTwoPlayerWaitingRoom();
     const beforeCall = Date.now();
 
     const result = await startGame.run(buildRequest({ roomId: "room-1" }, "host-uid"));
-    expect(result).toEqual({ started: true });
+    expect(result).toEqual({ startsAtMs: expect.any(Number) });
+    expect((result as { startsAtMs: number }).startsAtMs).toBeGreaterThan(beforeCall);
+
+    // The real fix under test: round 1's stimulus/deadline must NOT exist yet.
+    // They're only computed by beginRound once startsAtMs is actually reached,
+    // so a slow-rendering client can never lose time off round 1's window.
+    const room = await getRoom("room-1");
+    expect(room.status).toBe("starting");
+    expect(room.startsAtMs).toBe((result as { startsAtMs: number }).startsAtMs);
+    expect(room.stimulus).toBeNull();
+    expect(room.deadlineAtMs).toBeNull();
+  });
+});
+
+describe("beginRound", () => {
+  test("transitions 'starting' to 'playing' and computes round 1's stimulus/deadline fresh", async () => {
+    await seedRoom({
+      status: "starting",
+      startsAtMs: Date.now() + 4000,
+      players: {
+        "host-uid": { uid: "host-uid", displayName: "Host", avatarIndex: 0, alive: true, order: 0, joinedAtMs: 0 },
+        "joiner-uid": { uid: "joiner-uid", displayName: "Joiner", avatarIndex: 0, alive: true, order: 1, joinedAtMs: 0 },
+      },
+      turnOrder: ["host-uid", "joiner-uid"],
+    });
+    const beforeCall = Date.now();
+
+    await beginRound.run(buildTaskRequest<{ roomId: string }>({ roomId: "room-1" }));
 
     const room = await getRoom("room-1");
     expect(room.status).toBe("playing");
     expect(room.round).toBe(1);
     expect(room.turnIndex).toBe(0);
-    expect(room.stimulus).not.toBeNull();
     expect(room.stimulus).toEqual(
-      expect.objectContaining({
-        wordLabel: expect.any(String),
-        inkColor: expect.any(String),
-        options: expect.any(Array),
-      })
+      expect.objectContaining({ wordLabel: expect.any(String), inkColor: expect.any(String), options: expect.any(Array) })
     );
+    // Computed at beginRound's execution time, not startGame's call time --
+    // this is what actually fixes the desync bug.
     expect(room.deadlineAtMs).toBeGreaterThan(beforeCall);
+  });
+
+  test("no-ops when the room already moved past 'starting' (stale/duplicate task run)", async () => {
+    await seedPlayingRoom({ round: 3 }); // already playing, not "starting"
+
+    await beginRound.run(buildTaskRequest<{ roomId: string }>({ roomId: "room-1" }));
+
+    const room = await getRoom("room-1");
+    expect(room.status).toBe("playing");
+    expect(room.round).toBe(3); // untouched
   });
 });
 

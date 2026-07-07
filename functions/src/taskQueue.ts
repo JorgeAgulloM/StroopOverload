@@ -5,3 +5,9 @@ export async function scheduleTimeoutCheck(roomId: string, round: number, delayM
   const scheduleDelaySeconds = Math.max(1, Math.ceil((delayMs + 500) / 1000));
   await queue.enqueue({ roomId, round }, { scheduleDelaySeconds });
 }
+
+export async function scheduleGameStart(roomId: string, delayMs: number): Promise<void> {
+  const queue = getFunctions().taskQueue("beginRound");
+  const scheduleDelaySeconds = Math.max(1, Math.ceil(delayMs / 1000));
+  await queue.enqueue({ roomId }, { scheduleDelaySeconds });
+}
