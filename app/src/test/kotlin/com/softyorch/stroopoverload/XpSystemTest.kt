@@ -1,5 +1,6 @@
 package com.softyorch.stroopoverload
 
+import com.softyorch.stroopoverload.R
 import com.softyorch.stroopoverload.domain.GameResult
 import com.softyorch.stroopoverload.domain.Rarity
 import com.softyorch.stroopoverload.domain.XpSystem
@@ -41,6 +42,22 @@ class XpSystemTest {
         assertEquals(Rarity.RARE, XpSystem.levelRarity(25))
         assertEquals(Rarity.EPIC, XpSystem.levelRarity(50))
         assertEquals(Rarity.LEGENDARY, XpSystem.levelRarity(99))
+    }
+
+    @Test
+    fun `titleResForLevel maps every 10 levels to the next tier`() {
+        assertEquals(R.string.level_title_tier_01, XpSystem.titleResForLevel(1))
+        assertEquals(R.string.level_title_tier_01, XpSystem.titleResForLevel(10))
+        assertEquals(R.string.level_title_tier_02, XpSystem.titleResForLevel(11))
+        assertEquals(R.string.level_title_tier_02, XpSystem.titleResForLevel(20))
+        assertEquals(R.string.level_title_tier_03, XpSystem.titleResForLevel(21))
+    }
+
+    @Test
+    fun `titleResForLevel clamps to the last tier beyond level 200`() {
+        assertEquals(R.string.level_title_tier_20, XpSystem.titleResForLevel(191))
+        assertEquals(R.string.level_title_tier_20, XpSystem.titleResForLevel(200))
+        assertEquals(R.string.level_title_tier_20, XpSystem.titleResForLevel(500))
     }
 
     @Test

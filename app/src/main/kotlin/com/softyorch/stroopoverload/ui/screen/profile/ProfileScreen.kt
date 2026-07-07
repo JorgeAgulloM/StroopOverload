@@ -128,17 +128,29 @@ fun ProfileScreen(
                         }
                         Spacer(modifier = Modifier.width(12.dp))
                         // Rarity Badge
-                        Box(
+                        Column(
                             modifier = Modifier
                                 .background(Color(rarity.composeColorArgb).copy(alpha = 0.2f), RoundedCornerShape(4.dp))
                                 .border(1.dp, Color(rarity.composeColorArgb), RoundedCornerShape(4.dp))
                                 .padding(horizontal = 12.dp, vertical = 6.dp)
+                                .widthIn(max = 120.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
                         ) {
                             Text(
                                 text = stringResource(R.string.leaderboard_level, state.profile.level),
                                 color = Color(rarity.composeColorArgb),
                                 style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1,
+                            )
+                            Text(
+                                text = stringResource(XpSystem.titleResForLevel(state.profile.level)),
+                                color = Color(rarity.composeColorArgb),
+                                style = MaterialTheme.typography.labelSmall,
+                                fontSize = 9.sp,
+                                maxLines = 2,
+                                overflow = TextOverflow.Ellipsis,
+                                textAlign = TextAlign.Center,
                             )
                         }
                     }

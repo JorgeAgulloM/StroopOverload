@@ -29,6 +29,28 @@
     <string name="home_multiplayer_button">ONLINE MATCH</string>
     <string name="home_footer">SYS_VER: 2.0 // CYBERPUNK HUD ACTIVE</string>
 
+    <!-- Level tier titles, every 10 levels (1-10, 11-20, ... 191-200+) -->
+    <string name="level_title_tier_01">Neural Initiate</string>
+    <string name="level_title_tier_02">Synapse Cadet</string>
+    <string name="level_title_tier_03">Reflex Trainee</string>
+    <string name="level_title_tier_04">Chromatic Operative</string>
+    <string name="level_title_tier_05">Ink Runner</string>
+    <string name="level_title_tier_06">Overload Adept</string>
+    <string name="level_title_tier_07">Cortex Specialist</string>
+    <string name="level_title_tier_08">Synapse Breaker</string>
+    <string name="level_title_tier_09">Neural Phantom</string>
+    <string name="level_title_tier_10">Reflex Vanguard</string>
+    <string name="level_title_tier_11">Cyber Duelist</string>
+    <string name="level_title_tier_12">Chromatic Warlord</string>
+    <string name="level_title_tier_13">Overload Sentinel</string>
+    <string name="level_title_tier_14">Synaptic Oracle</string>
+    <string name="level_title_tier_15">Neural Ascendant</string>
+    <string name="level_title_tier_16">Cortex Overlord</string>
+    <string name="level_title_tier_17">Quantum Synapse</string>
+    <string name="level_title_tier_18">Void Reflex</string>
+    <string name="level_title_tier_19">Singularity Mind</string>
+    <string name="level_title_tier_20">Overload Deity</string>
+
     <!-- Game screen -->
     <string name="game_hud_score">SCORE</string>
     <string name="game_hud_streak">STREAK</string>

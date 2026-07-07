@@ -29,6 +29,28 @@
     <string name="home_multiplayer_button">オンライン対戦</string>
     <string name="home_footer">SYS_VER: 2.0 // サイバーパンクHUD起動中</string>
 
+    <!-- Level tier titles, every 10 levels (1-10, 11-20, ... 191-200+) -->
+    <string name="level_title_tier_01">ニューラル・イニシエイト</string>
+    <string name="level_title_tier_02">シナプス・カデット</string>
+    <string name="level_title_tier_03">反射見習い</string>
+    <string name="level_title_tier_04">色彩オペレーター</string>
+    <string name="level_title_tier_05">インクランナー</string>
+    <string name="level_title_tier_06">オーバーロード・アデプト</string>
+    <string name="level_title_tier_07">コーテックス・スペシャリスト</string>
+    <string name="level_title_tier_08">シナプスブレイカー</string>
+    <string name="level_title_tier_09">ニューラルファントム</string>
+    <string name="level_title_tier_10">反射ヴァンガード</string>
+    <string name="level_title_tier_11">サイバーデュエリスト</string>
+    <string name="level_title_tier_12">色彩の戦主</string>
+    <string name="level_title_tier_13">オーバーロード・センチネル</string>
+    <string name="level_title_tier_14">シナプティック・オラクル</string>
+    <string name="level_title_tier_15">ニューラル・アセンダント</string>
+    <string name="level_title_tier_16">コーテックス・オーバーロード</string>
+    <string name="level_title_tier_17">量子シナプス</string>
+    <string name="level_title_tier_18">虚無の反射</string>
+    <string name="level_title_tier_19">特異点の心</string>
+    <string name="level_title_tier_20">オーバーロード・デイティ</string>
+
     <!-- Game screen -->
     <string name="game_hud_score">スコア</string>
     <string name="game_hud_streak">連続正解</string>

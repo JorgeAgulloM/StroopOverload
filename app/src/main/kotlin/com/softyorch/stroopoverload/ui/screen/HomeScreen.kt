@@ -75,6 +75,13 @@ fun HomeScreen(
                     fontWeight = FontWeight.Bold
                 )
             }
+            Text(
+                text = stringResource(XpSystem.titleResForLevel(profile.level)),
+                color = Muted,
+                style = MaterialTheme.typography.bodySmall,
+                fontSize = 10.sp,
+                maxLines = 1,
+            )
             Spacer(Modifier.height(4.dp))
             Row(
                 verticalAlignment = Alignment.CenterVertically,

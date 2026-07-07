@@ -29,6 +29,28 @@
     <string name="home_multiplayer_button">PARTIDA ONLINE</string>
     <string name="home_footer">SYS_VER: 2.0 // HUD CYBERPUNK ATIVO</string>
 
+    <!-- Level tier titles, every 10 levels (1-10, 11-20, ... 191-200+) -->
+    <string name="level_title_tier_01">Iniciado Neural</string>
+    <string name="level_title_tier_02">Cadete Sináptico</string>
+    <string name="level_title_tier_03">Aprendiz de Reflexos</string>
+    <string name="level_title_tier_04">Operativo Cromático</string>
+    <string name="level_title_tier_05">Corredor de Tinta</string>
+    <string name="level_title_tier_06">Adepto do Overload</string>
+    <string name="level_title_tier_07">Especialista em Córtex</string>
+    <string name="level_title_tier_08">Quebra-Sinapses</string>
+    <string name="level_title_tier_09">Fantasma Neural</string>
+    <string name="level_title_tier_10">Vanguarda de Reflexos</string>
+    <string name="level_title_tier_11">Duelista Cyber</string>
+    <string name="level_title_tier_12">Senhor da Guerra Cromático</string>
+    <string name="level_title_tier_13">Sentinela do Overload</string>
+    <string name="level_title_tier_14">Oráculo Sináptico</string>
+    <string name="level_title_tier_15">Ascendente Neural</string>
+    <string name="level_title_tier_16">Soberano do Córtex</string>
+    <string name="level_title_tier_17">Sinapse Quântica</string>
+    <string name="level_title_tier_18">Reflexo do Vazio</string>
+    <string name="level_title_tier_19">Mente Singular</string>
+    <string name="level_title_tier_20">Divindade do Overload</string>
+
     <!-- Game screen -->
     <string name="game_hud_score">PONTOS</string>
     <string name="game_hud_streak">SEQUÊNCIA</string>

@@ -29,6 +29,28 @@
     <string name="home_multiplayer_button">PARTIE EN LIGNE</string>
     <string name="home_footer">SYS_VER : 2.0 // HUD CYBERPUNK ACTIF</string>
 
+    <!-- Level tier titles, every 10 levels (1-10, 11-20, ... 191-200+) -->
+    <string name="level_title_tier_01">Initié Neural</string>
+    <string name="level_title_tier_02">Cadet Synaptique</string>
+    <string name="level_title_tier_03">Apprenti Réflexe</string>
+    <string name="level_title_tier_04">Opérateur Chromatique</string>
+    <string name="level_title_tier_05">Coureur d\'Encre</string>
+    <string name="level_title_tier_06">Adepte de l\'Overload</string>
+    <string name="level_title_tier_07">Spécialiste du Cortex</string>
+    <string name="level_title_tier_08">Briseur de Synapses</string>
+    <string name="level_title_tier_09">Fantôme Neural</string>
+    <string name="level_title_tier_10">Avant-garde Réflexe</string>
+    <string name="level_title_tier_11">Duelliste Cyber</string>
+    <string name="level_title_tier_12">Seigneur de Guerre Chromatique</string>
+    <string name="level_title_tier_13">Sentinelle de l\'Overload</string>
+    <string name="level_title_tier_14">Oracle Synaptique</string>
+    <string name="level_title_tier_15">Ascendant Neural</string>
+    <string name="level_title_tier_16">Suzerain du Cortex</string>
+    <string name="level_title_tier_17">Synapse Quantique</string>
+    <string name="level_title_tier_18">Réflexe du Vide</string>
+    <string name="level_title_tier_19">Esprit Singulier</string>
+    <string name="level_title_tier_20">Divinité de l\'Overload</string>
+
     <!-- Game screen -->
     <string name="game_hud_score">SCORE</string>
     <string name="game_hud_streak">SÉRIE</string>

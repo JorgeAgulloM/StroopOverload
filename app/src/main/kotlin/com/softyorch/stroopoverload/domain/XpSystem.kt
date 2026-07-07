@@ -25,6 +25,36 @@ data class XpBreakdown(
 )
 
 object XpSystem {
+    /** Tier title shown every 10 levels. Levels beyond the last tier keep the final title. */
+    private val LEVEL_TITLES = intArrayOf(
+        R.string.level_title_tier_01,
+        R.string.level_title_tier_02,
+        R.string.level_title_tier_03,
+        R.string.level_title_tier_04,
+        R.string.level_title_tier_05,
+        R.string.level_title_tier_06,
+        R.string.level_title_tier_07,
+        R.string.level_title_tier_08,
+        R.string.level_title_tier_09,
+        R.string.level_title_tier_10,
+        R.string.level_title_tier_11,
+        R.string.level_title_tier_12,
+        R.string.level_title_tier_13,
+        R.string.level_title_tier_14,
+        R.string.level_title_tier_15,
+        R.string.level_title_tier_16,
+        R.string.level_title_tier_17,
+        R.string.level_title_tier_18,
+        R.string.level_title_tier_19,
+        R.string.level_title_tier_20,
+    )
+
+    @StringRes
+    fun titleResForLevel(level: Int): Int {
+        val tier = ((level - 1) / 10).coerceIn(0, LEVEL_TITLES.size - 1)
+        return LEVEL_TITLES[tier]
+    }
+
     /** XP needed to go from level (n-1) to level n. Uncapped: leveling continues forever. */
     fun xpForLevel(level: Int): Int = level * (400 + 16 * level) / 5
 

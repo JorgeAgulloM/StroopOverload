@@ -29,6 +29,28 @@
     <string name="home_multiplayer_button">ONLINE-SPIEL</string>
     <string name="home_footer">SYS_VER: 2.0 // CYBERPUNK-HUD AKTIV</string>
 
+    <!-- Level tier titles, every 10 levels (1-10, 11-20, ... 191-200+) -->
+    <string name="level_title_tier_01">Neuraler Neuling</string>
+    <string name="level_title_tier_02">Synapsen-Kadett</string>
+    <string name="level_title_tier_03">Reflex-Lehrling</string>
+    <string name="level_title_tier_04">Chromatischer Agent</string>
+    <string name="level_title_tier_05">Tintenläufer</string>
+    <string name="level_title_tier_06">Overload-Adept</string>
+    <string name="level_title_tier_07">Kortex-Spezialist</string>
+    <string name="level_title_tier_08">Synapsenbrecher</string>
+    <string name="level_title_tier_09">Neuraler Phantom</string>
+    <string name="level_title_tier_10">Reflex-Vorhut</string>
+    <string name="level_title_tier_11">Cyber-Duellant</string>
+    <string name="level_title_tier_12">Chromatischer Kriegsherr</string>
+    <string name="level_title_tier_13">Overload-Wächter</string>
+    <string name="level_title_tier_14">Synaptisches Orakel</string>
+    <string name="level_title_tier_15">Neuraler Aufsteiger</string>
+    <string name="level_title_tier_16">Kortex-Herrscher</string>
+    <string name="level_title_tier_17">Quantensynapse</string>
+    <string name="level_title_tier_18">Leerenreflex</string>
+    <string name="level_title_tier_19">Singularitätsgeist</string>
+    <string name="level_title_tier_20">Overload-Gottheit</string>
+
     <!-- Game screen -->
     <string name="game_hud_score">PUNKTE</string>
     <string name="game_hud_streak">SERIE</string>
