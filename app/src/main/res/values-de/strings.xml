@@ -51,12 +51,23 @@
     <string name="level_title_tier_19">Singularitätsgeist</string>
     <string name="level_title_tier_20">Overload-Gottheit</string>
 
+    <!-- Game mode select screen -->
+    <string name="game_mode_select_title">[ PROTOKOLL WÄHLEN ]</string>
+    <string name="game_mode_endless_title">ENDLOS</string>
+    <string name="game_mode_endless_desc">Ein Fehler beendet den Lauf. Reines Überleben.</string>
+    <string name="game_mode_lives_title">LEBEN</string>
+    <string name="game_mode_lives_desc">3 Leben. Ein Fehler blinkt die richtige Antwort und kostet ein Leben.</string>
+    <string name="game_mode_time_title">ZEITANGRIFF</string>
+    <string name="game_mode_time_desc">60s auf der Uhr. Fehler blinken nur — die Zeit läuft weiter.</string>
+
     <!-- Game screen -->
     <string name="game_hud_score">PUNKTE</string>
     <string name="game_hud_streak">SERIE</string>
     <string name="game_hud_round">RUNDE</string>
     <string name="game_hud_level">STUFE</string>
     <string name="game_hud_level_value">STF %1$d</string>
+    <string name="game_hud_lives">LEBEN</string>
+    <string name="game_hud_time">ZEIT</string>
     <string name="game_stimulus_hint">[ SYNAPSENZIEL // FARBE DER TINTE ZUORDNEN ]</string>
 
     <!-- Countdown overlay (local + online game start) -->

@@ -51,12 +51,23 @@
     <string name="level_title_tier_19">Singularity Mind</string>
     <string name="level_title_tier_20">Overload Deity</string>
 
+    <!-- Game mode select screen -->
+    <string name="game_mode_select_title">[ SELECT PROTOCOL ]</string>
+    <string name="game_mode_endless_title">ENDLESS</string>
+    <string name="game_mode_endless_desc">One miss ends the run. Pure survival.</string>
+    <string name="game_mode_lives_title">LIVES</string>
+    <string name="game_mode_lives_desc">3 lives. A miss flashes the answer and costs one life.</string>
+    <string name="game_mode_time_title">TIME ATTACK</string>
+    <string name="game_mode_time_desc">60s on the clock. Misses just flash — the clock doesn\'t stop.</string>
+
     <!-- Game screen -->
     <string name="game_hud_score">SCORE</string>
     <string name="game_hud_streak">STREAK</string>
     <string name="game_hud_round">ROUND</string>
     <string name="game_hud_level">LEVEL</string>
     <string name="game_hud_level_value">LVL %1$d</string>
+    <string name="game_hud_lives">LIVES</string>
+    <string name="game_hud_time">TIME</string>
     <string name="game_stimulus_hint">[ SYNAPSE TARGET // MATCH INK COLOR ]</string>
 
     <!-- Countdown overlay (local + online game start) -->

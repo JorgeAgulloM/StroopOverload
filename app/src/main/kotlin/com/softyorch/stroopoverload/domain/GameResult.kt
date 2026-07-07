@@ -21,6 +21,7 @@ data class GameResult(
     val moveCount: Int = totalRounds,
     val newLevel: Int = 0,
     val isDraw: Boolean = false,
+    val mode: GameMode = GameMode.ENDLESS,
 ) {
     val accuracy: Int get() =
         if (totalRounds == 0) 0 else ((correctHits.toFloat() / totalRounds) * 100).toInt()

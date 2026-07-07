@@ -11,12 +11,14 @@ import com.softyorch.stroopoverload.data.AsoDemoSeeder
 import com.softyorch.stroopoverload.data.AuthService
 import com.softyorch.stroopoverload.data.FirebaseGameRepository
 import com.softyorch.stroopoverload.domain.Achievement
+import com.softyorch.stroopoverload.domain.GameMode
 import com.softyorch.stroopoverload.domain.GameResult
 import com.softyorch.stroopoverload.domain.UserProfile
 import com.softyorch.stroopoverload.domain.XpBreakdown
 import com.softyorch.stroopoverload.domain.XpSystem
 import com.softyorch.stroopoverload.game.GameState
 import com.softyorch.stroopoverload.game.GameViewModel
+import com.softyorch.stroopoverload.ui.screen.GameModeSelectScreen
 import com.softyorch.stroopoverload.ui.screen.GameOverScreen
 import com.softyorch.stroopoverload.ui.screen.GameScreen
 import com.softyorch.stroopoverload.ui.screen.HomeScreen
@@ -30,6 +32,7 @@ import kotlinx.coroutines.launch
 
 private const val ROUTE_AUTH = "auth"
 private const val ROUTE_HOME = "home"
+private const val ROUTE_GAME_MODE_SELECT = "game_mode_select"
 private const val ROUTE_GAME = "game"
 private const val ROUTE_GAME_OVER = "game_over"
 private const val ROUTE_LEADERBOARD = "leaderboard"
@@ -47,6 +50,7 @@ fun StroopNavGraph() {
 
     var currentProfile by remember { mutableStateOf(UserProfile()) }
     var previousHighScore by remember { mutableIntStateOf(0) }
+    var selectedGameMode by remember { mutableStateOf(GameMode.ENDLESS) }
     var lastResult by remember { mutableStateOf<GameResult?>(null) }
     var lastXpBreakdown by remember { mutableStateOf<XpBreakdown?>(null) }
     var lastNewAchievements by remember { mutableStateOf<List<Achievement>>(emptyList()) }
@@ -83,17 +87,26 @@ fun StroopNavGraph() {
             HomeScreen(
                 profile = currentProfile,
                 isReady = true,
-                onPlay = { navController.navigate(ROUTE_GAME) },
+                onPlay = { navController.navigate(ROUTE_GAME_MODE_SELECT) },
                 onLeaderboard = { navController.navigate(ROUTE_LEADERBOARD) },
                 onMultiplayer = { navController.navigate(ROUTE_MULTIPLAYER) },
                 onProfile = { navController.navigate(ROUTE_PROFILE) },
             )
         }
+        composable(ROUTE_GAME_MODE_SELECT) {
+            GameModeSelectScreen(
+                onBack = { navController.popBackStack() },
+                onModeSelected = { mode ->
+                    selectedGameMode = mode
+                    navController.navigate(ROUTE_GAME)
+                },
+            )
+        }
         composable(ROUTE_GAME) {
             val gameVm: GameViewModel = viewModel()
             val gameState by gameVm.state.collectAsState()
-            LaunchedEffect(Unit) { gameVm.startGame(previousHighScore) }
-            
+            LaunchedEffect(Unit) { gameVm.startGame(selectedGameMode, previousHighScore) }
+
             GameScreen(
                 viewModel = gameVm,
                 onGameOver = { result ->

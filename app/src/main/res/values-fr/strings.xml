@@ -51,12 +51,23 @@
     <string name="level_title_tier_19">Esprit Singulier</string>
     <string name="level_title_tier_20">Divinité de l\'Overload</string>
 
+    <!-- Game mode select screen -->
+    <string name="game_mode_select_title">[ CHOISIR LE PROTOCOLE ]</string>
+    <string name="game_mode_endless_title">SANS LIMITE</string>
+    <string name="game_mode_endless_desc">Une erreur termine la partie. Survie pure.</string>
+    <string name="game_mode_lives_title">VIES</string>
+    <string name="game_mode_lives_desc">3 vies. Une erreur fait clignoter la bonne réponse et coûte une vie.</string>
+    <string name="game_mode_time_title">CONTRE-LA-MONTRE</string>
+    <string name="game_mode_time_desc">60s au compteur. Les erreurs clignotent seulement — le temps continue.</string>
+
     <!-- Game screen -->
     <string name="game_hud_score">SCORE</string>
     <string name="game_hud_streak">SÉRIE</string>
     <string name="game_hud_round">MANCHE</string>
     <string name="game_hud_level">NIVEAU</string>
     <string name="game_hud_level_value">NIV %1$d</string>
+    <string name="game_hud_lives">VIES</string>
+    <string name="game_hud_time">TEMPS</string>
     <string name="game_stimulus_hint">[ CIBLE SYNAPTIQUE // FAITES CORRESPONDRE LA COULEUR DE L\'ENCRE ]</string>
 
     <!-- Countdown overlay (local + online game start) -->

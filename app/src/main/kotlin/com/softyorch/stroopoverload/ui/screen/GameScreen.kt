@@ -1,6 +1,14 @@
 package com.softyorch.stroopoverload.ui.screen
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -23,6 +31,7 @@ import androidx.compose.ui.unit.sp
 import com.softyorch.stroopoverload.R
 import com.softyorch.stroopoverload.audio.AudioPlayer
 import com.softyorch.stroopoverload.core.StroopColor
+import com.softyorch.stroopoverload.domain.GameMode
 import com.softyorch.stroopoverload.domain.GameResult
 import com.softyorch.stroopoverload.game.GameState
 import com.softyorch.stroopoverload.game.GameViewModel
@@ -78,13 +87,31 @@ fun GameScreen(
                     Text(playingState?.score?.toString() ?: "0", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Black)
                 }
                 Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(stringResource(R.string.game_hud_streak), style = MaterialTheme.typography.bodySmall, color = Muted, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    val streak = playingState?.currentStreak ?: 0
-                    Text("$streak 🔥", style = MaterialTheme.typography.titleMedium, color = if (streak >= 5) NeonYellow else MaterialTheme.colorScheme.onBackground)
+                    if (playingState?.mode == GameMode.LIVES) {
+                        Text(stringResource(R.string.game_hud_lives), style = MaterialTheme.typography.bodySmall, color = Muted, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        AnimatedContent(
+                            targetState = playingState.livesRemaining,
+                            transitionSpec = {
+                                (scaleIn(initialScale = 1.6f) + fadeIn()) togetherWith (scaleOut(targetScale = 0.4f) + fadeOut())
+                            },
+                            label = "lives",
+                        ) { lives ->
+                            Text("$lives ❤️", style = MaterialTheme.typography.titleMedium, color = if (lives <= 1) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onBackground)
+                        }
+                    } else {
+                        Text(stringResource(R.string.game_hud_streak), style = MaterialTheme.typography.bodySmall, color = Muted, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        val streak = playingState?.currentStreak ?: 0
+                        Text("$streak 🔥", style = MaterialTheme.typography.titleMedium, color = if (streak >= 5) NeonYellow else MaterialTheme.colorScheme.onBackground)
+                    }
                 }
                 Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(stringResource(R.string.game_hud_round), style = MaterialTheme.typography.bodySmall, color = Muted, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text(playingState?.totalRounds?.toString() ?: "0", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
+                    if (playingState?.mode == GameMode.TIME) {
+                        Text(stringResource(R.string.game_hud_time), style = MaterialTheme.typography.bodySmall, color = Muted, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(formatMillisAsClock(playingState.timeRemainingMs), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
+                    } else {
+                        Text(stringResource(R.string.game_hud_round), style = MaterialTheme.typography.bodySmall, color = Muted, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(playingState?.totalRounds?.toString() ?: "0", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
+                    }
                 }
                 Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.End) {
                     Text(stringResource(R.string.game_hud_level), style = MaterialTheme.typography.bodySmall, color = Muted, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -139,23 +166,24 @@ fun GameScreen(
             Spacer(modifier = Modifier.height(10.dp))
 
             // Cyber Quadrant Pad Grid
+            val missFlashColor = playingState?.missFlashColor
             Column(
                 modifier = Modifier.weight(1.2f).fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 Row(modifier = Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    QuadrantBox(color = StroopColor.RED, modifier = Modifier.weight(1f).fillMaxHeight()) {
+                    QuadrantBox(color = StroopColor.RED, isFlashing = missFlashColor == StroopColor.RED, modifier = Modifier.weight(1f).fillMaxHeight()) {
                         viewModel.onColorTapped(StroopColor.RED)
                     }
-                    QuadrantBox(color = StroopColor.GREEN, modifier = Modifier.weight(1f).fillMaxHeight()) {
+                    QuadrantBox(color = StroopColor.GREEN, isFlashing = missFlashColor == StroopColor.GREEN, modifier = Modifier.weight(1f).fillMaxHeight()) {
                         viewModel.onColorTapped(StroopColor.GREEN)
                     }
                 }
                 Row(modifier = Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    QuadrantBox(color = StroopColor.BLUE, modifier = Modifier.weight(1f).fillMaxHeight()) {
+                    QuadrantBox(color = StroopColor.BLUE, isFlashing = missFlashColor == StroopColor.BLUE, modifier = Modifier.weight(1f).fillMaxHeight()) {
                         viewModel.onColorTapped(StroopColor.BLUE)
                     }
-                    QuadrantBox(color = StroopColor.YELLOW, modifier = Modifier.weight(1f).fillMaxHeight()) {
+                    QuadrantBox(color = StroopColor.YELLOW, isFlashing = missFlashColor == StroopColor.YELLOW, modifier = Modifier.weight(1f).fillMaxHeight()) {
                         viewModel.onColorTapped(StroopColor.YELLOW)
                     }
                 }
@@ -168,9 +196,21 @@ fun GameScreen(
     }
 }
 
+private fun formatMillisAsClock(millis: Long): String {
+    val totalSeconds = (millis / 1000L).coerceAtLeast(0L)
+    val minutes = totalSeconds / 60
+    val seconds = totalSeconds % 60
+    return "%d:%02d".format(minutes, seconds)
+}
+
 @Composable
-private fun QuadrantBox(color: StroopColor, modifier: Modifier, onTap: () -> Unit) {
+private fun QuadrantBox(color: StroopColor, isFlashing: Boolean, modifier: Modifier, onTap: () -> Unit) {
     val bgAlpha = remember { mutableFloatStateOf(0.15f) }
+    val flashAlpha by animateFloatAsState(
+        targetValue = if (isFlashing) 0.85f else 0f,
+        animationSpec = tween(if (isFlashing) 120 else 400),
+        label = "quadrantFlash",
+    )
 
     Box(
         modifier = modifier
@@ -189,6 +229,9 @@ private fun QuadrantBox(color: StroopColor, modifier: Modifier, onTap: () -> Uni
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
+        if (flashAlpha > 0f) {
+            Box(modifier = Modifier.fillMaxSize().background(Color.White.copy(alpha = flashAlpha)))
+        }
     }
 }
 

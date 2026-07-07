@@ -51,12 +51,23 @@
     <string name="level_title_tier_19">特異点の心</string>
     <string name="level_title_tier_20">オーバーロード・デイティ</string>
 
+    <!-- Game mode select screen -->
+    <string name="game_mode_select_title">[ プロトコル選択 ]</string>
+    <string name="game_mode_endless_title">エンドレス</string>
+    <string name="game_mode_endless_desc">1回のミスで終了。純粋なサバイバル。</string>
+    <string name="game_mode_lives_title">ライフ制</string>
+    <string name="game_mode_lives_desc">ライフ3つ。ミスすると正解が点滅しライフが1つ減る。</string>
+    <string name="game_mode_time_title">タイムアタック</string>
+    <string name="game_mode_time_desc">制限時間60秒。ミスしても正解が点滅するだけで時間は止まらない。</string>
+
     <!-- Game screen -->
     <string name="game_hud_score">スコア</string>
     <string name="game_hud_streak">連続正解</string>
     <string name="game_hud_round">ラウンド</string>
     <string name="game_hud_level">レベル</string>
     <string name="game_hud_level_value">LV %1$d</string>
+    <string name="game_hud_lives">ライフ</string>
+    <string name="game_hud_time">残り時間</string>
     <string name="game_stimulus_hint">[ シナプスターゲット // インクの色を選べ ]</string>
 
     <!-- Countdown overlay (local + online game start) -->

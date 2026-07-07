@@ -51,12 +51,23 @@
     <string name="level_title_tier_19">Mente Singular</string>
     <string name="level_title_tier_20">Divindade do Overload</string>
 
+    <!-- Game mode select screen -->
+    <string name="game_mode_select_title">[ SELECIONE O PROTOCOLO ]</string>
+    <string name="game_mode_endless_title">SEM LIMITE</string>
+    <string name="game_mode_endless_desc">Um erro encerra a partida. Sobrevivência pura.</string>
+    <string name="game_mode_lives_title">VIDAS</string>
+    <string name="game_mode_lives_desc">3 vidas. Um erro pisca a resposta certa e custa uma vida.</string>
+    <string name="game_mode_time_title">CONTRA O TEMPO</string>
+    <string name="game_mode_time_desc">60s no relógio. Erros só piscam — o tempo não para.</string>
+
     <!-- Game screen -->
     <string name="game_hud_score">PONTOS</string>
     <string name="game_hud_streak">SEQUÊNCIA</string>
     <string name="game_hud_round">RODADA</string>
     <string name="game_hud_level">NÍVEL</string>
     <string name="game_hud_level_value">NVL %1$d</string>
+    <string name="game_hud_lives">VIDAS</string>
+    <string name="game_hud_time">TEMPO</string>
     <string name="game_stimulus_hint">[ ALVO SINÁPTICO // COMBINE A COR DA TINTA ]</string>
 
     <!-- Countdown overlay (local + online game start) -->

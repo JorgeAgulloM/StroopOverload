@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.softyorch.stroopoverload.R
 import com.softyorch.stroopoverload.domain.Achievement
+import com.softyorch.stroopoverload.domain.GameMode
 import com.softyorch.stroopoverload.domain.GameResult
 import com.softyorch.stroopoverload.domain.XpBreakdown
 import com.softyorch.stroopoverload.ui.theme.*
@@ -95,7 +96,11 @@ fun GameOverScreen(
                 ) {
                     Text(stringResource(R.string.game_over_telemetry_header), style = MaterialTheme.typography.labelMedium, color = TechAccent)
                     StatRow(stringResource(R.string.game_over_final_score), result.finalScore.toString(), MaterialTheme.colorScheme.primary)
-                    StatRow(stringResource(R.string.game_over_accuracy), "${result.accuracy}%", if (result.accuracy >= 80) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onBackground)
+                    // Accuracy only means something when misses don't end the run outright
+                    // (ENDLESS/LIVES structurally trend toward ~100% until the run-ending miss).
+                    if (result.mode == GameMode.TIME) {
+                        StatRow(stringResource(R.string.game_over_accuracy), "${result.accuracy}%", if (result.accuracy >= 80) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onBackground)
+                    }
                     StatRow(stringResource(R.string.game_over_rounds_survived), result.totalRounds.toString(), MaterialTheme.colorScheme.onBackground)
                     StatRow(stringResource(R.string.game_over_time_elapsed), "${result.durationSeconds}s", MaterialTheme.colorScheme.onBackground)
                     if (result.isFlawless) {
