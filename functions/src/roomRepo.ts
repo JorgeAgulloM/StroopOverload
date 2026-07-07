@@ -1,6 +1,6 @@
-import { CollectionReference } from "firebase-admin/firestore";
+import { CollectionReference, DocumentReference } from "firebase-admin/firestore";
 import { getFirestore } from "firebase-admin/firestore";
-import { RoomDoc } from "./types";
+import { RoomBombDoc, RoomDoc } from "./types";
 
 export const ROOMS_COLLECTION = "rooms";
 const CODE_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
@@ -8,6 +8,13 @@ const MAX_CODE_GENERATION_ATTEMPTS = 5;
 
 export function roomsCol(): CollectionReference<RoomDoc> {
   return getFirestore().collection(ROOMS_COLLECTION) as CollectionReference<RoomDoc>;
+}
+
+// Only reachable via the Admin SDK -- firestore.rules denies all client
+// access to rooms/{roomId}/private/**. Use this for anything a player must
+// never be able to read ahead of time (e.g. Patata Caliente's bomb deadline).
+export function privateBombDoc(roomId: string): DocumentReference<RoomBombDoc> {
+  return roomsCol().doc(roomId).collection("private").doc("bomb") as DocumentReference<RoomBombDoc>;
 }
 
 export function generateRoomCode(): string {

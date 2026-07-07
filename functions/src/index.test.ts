@@ -1,4 +1,4 @@
-import { initializeTestEnvironment, RulesTestEnvironment } from "@firebase/rules-unit-testing";
+import { assertFails, assertSucceeds, initializeTestEnvironment, RulesTestEnvironment } from "@firebase/rules-unit-testing";
 import { readFileSync } from "fs";
 import * as path from "path";
 import * as admin from "firebase-admin";
@@ -527,5 +527,31 @@ describe("deleteMyMultiplayerData", () => {
 
     expect(result).toEqual({ roomsDeleted: 0 });
     expect(await getRoom("room-1")).toBeDefined();
+  });
+});
+
+describe("firestore.rules: rooms/{roomId}/private", () => {
+  async function seedPrivateBombDoc(roomId: string, bombAtMs: number): Promise<void> {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await context.firestore().collection("rooms").doc(roomId).collection("private").doc("bomb").set({ bombAtMs });
+    });
+  }
+
+  test("a room member can read the room doc but not the hidden bomb subdocument", async () => {
+    await seedRoom(); // "room-1", player "host-uid"
+    await seedPrivateBombDoc("room-1", Date.now() + 60_000);
+
+    const memberDb = testEnv.authenticatedContext("host-uid").firestore();
+    await assertSucceeds(memberDb.collection("rooms").doc("room-1").get());
+    await assertFails(memberDb.collection("rooms").doc("room-1").collection("private").doc("bomb").get());
+  });
+
+  test("a non-member can read neither the room doc nor the hidden bomb subdocument", async () => {
+    await seedRoom(); // "room-1", player "host-uid" only
+    await seedPrivateBombDoc("room-1", Date.now() + 60_000);
+
+    const strangerDb = testEnv.authenticatedContext("stranger-uid").firestore();
+    await assertFails(strangerDb.collection("rooms").doc("room-1").get());
+    await assertFails(strangerDb.collection("rooms").doc("room-1").collection("private").doc("bomb").get());
   });
 });

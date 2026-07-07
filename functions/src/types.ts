@@ -34,3 +34,11 @@ export interface RoomDoc {
 }
 
 export type ResolutionReason = "correct" | "wrong" | "timeout" | "disconnect";
+
+// Lives at rooms/{roomId}/private/bomb, blocked from all client reads by
+// firestore.rules -- see the comment there. Patata Caliente's loss condition
+// (whoever holds the turn when bombAtMs is reached) only works if no client
+// can ever learn this value ahead of time.
+export interface RoomBombDoc {
+  bombAtMs: number;
+}
