@@ -17,6 +17,7 @@ import {
   deleteMyMultiplayerData,
 } from "./index";
 import * as resolveRoundModule from "./resolveRound";
+import { scheduleBombExplosion } from "./taskQueue";
 
 // deleteMyMultiplayerData also removes each deleted room's Realtime Database
 // presence node. There's no RTDB emulator in this test run (only Firestore,
@@ -44,6 +45,7 @@ jest.mock("firebase-admin/database", () => ({
 jest.mock("./taskQueue", () => ({
   scheduleTimeoutCheck: jest.fn().mockResolvedValue(undefined),
   scheduleGameStart: jest.fn().mockResolvedValue(undefined),
+  scheduleBombExplosion: jest.fn().mockResolvedValue(undefined),
 }));
 
 let testEnv: RulesTestEnvironment;
@@ -224,6 +226,24 @@ describe("createRoom", () => {
     const room = await getRoom(result.roomId);
     expect(room.players["host-uid"].displayName).toBe("Pilot");
   });
+
+  test("defaults to 'mistake' mode when none is requested", async () => {
+    const result = await createRoom.run(buildRequest({ displayName: "Ace" }, "host-uid"));
+    const room = await getRoom(result.roomId);
+    expect(room.mode).toBe("mistake");
+  });
+
+  test("honors an explicitly requested valid mode", async () => {
+    const result = await createRoom.run(buildRequest({ displayName: "Ace", mode: "hot_potato" }, "host-uid"));
+    const room = await getRoom(result.roomId);
+    expect(room.mode).toBe("hot_potato");
+  });
+
+  test("falls back to 'mistake' for an unrecognized mode value instead of trusting client input", async () => {
+    const result = await createRoom.run(buildRequest({ displayName: "Ace", mode: "cheat_mode" }, "host-uid"));
+    const room = await getRoom(result.roomId);
+    expect(room.mode).toBe("mistake");
+  });
 });
 
 describe("joinRoom", () => {
@@ -337,6 +357,39 @@ describe("beginRound", () => {
     expect(room.deadlineAtMs).toBeGreaterThan(beforeCall);
   });
 
+  test("arms a hidden bomb when the room's mode is 'hot_potato'", async () => {
+    await seedRoom({
+      status: "starting",
+      mode: "hot_potato",
+      startsAtMs: Date.now() + 4000,
+      players: {
+        "host-uid": { uid: "host-uid", displayName: "Host", avatarIndex: 0, alive: true, order: 0, joinedAtMs: 0 },
+        "joiner-uid": { uid: "joiner-uid", displayName: "Joiner", avatarIndex: 0, alive: true, order: 1, joinedAtMs: 0 },
+      },
+      turnOrder: ["host-uid", "joiner-uid"],
+    });
+
+    await beginRound.run(buildTaskRequest<{ roomId: string }>({ roomId: "room-1" }));
+
+    expect(scheduleBombExplosion).toHaveBeenCalledWith("room-1", expect.any(Number));
+  });
+
+  test("does not arm a bomb for the default 'mistake' mode", async () => {
+    await seedRoom({
+      status: "starting",
+      startsAtMs: Date.now() + 4000,
+      players: {
+        "host-uid": { uid: "host-uid", displayName: "Host", avatarIndex: 0, alive: true, order: 0, joinedAtMs: 0 },
+        "joiner-uid": { uid: "joiner-uid", displayName: "Joiner", avatarIndex: 0, alive: true, order: 1, joinedAtMs: 0 },
+      },
+      turnOrder: ["host-uid", "joiner-uid"],
+    });
+
+    await beginRound.run(buildTaskRequest<{ roomId: string }>({ roomId: "room-1" }));
+
+    expect(scheduleBombExplosion).not.toHaveBeenCalled();
+  });
+
   test("no-ops when the room already moved past 'starting' (stale/duplicate task run)", async () => {
     await seedPlayingRoom({ round: 3 }); // already playing, not "starting"
 
@@ -380,6 +433,25 @@ describe("submitAnswer", () => {
     expect(result).toEqual({ accepted: true, reason: "wrong" });
     const room = await getRoom("room-1");
     expect(room.players.a.alive).toBe(false);
+  });
+
+  test("dispatches to the hot-potato resolver for 'hot_potato' rooms: wrong answer does NOT eliminate", async () => {
+    await seedPlayingRoom({ mode: "hot_potato" }); // stimulus.inkColor === "BLUE"
+    const result = await submitAnswer.run(buildRequest({ roomId: "room-1", selectedColor: "RED" }, "a"));
+
+    expect(result).toEqual({ accepted: true, reason: "wrong" });
+    const room = await getRoom("room-1");
+    expect(room.players.a.alive).toBe(true); // hot_potato never eliminates on a wrong answer
+    expect(room.turnIndex).toBe(0); // still "a" -- turn only passes on correct in this mode
+  });
+
+  test("dispatches to the hot-potato resolver for 'hot_potato' rooms: correct answer passes the turn", async () => {
+    await seedPlayingRoom({ mode: "hot_potato" }); // stimulus.inkColor === "BLUE"
+    const result = await submitAnswer.run(buildRequest({ roomId: "room-1", selectedColor: "BLUE" }, "a"));
+
+    expect(result).toEqual({ accepted: true, reason: "correct" });
+    const room = await getRoom("room-1");
+    expect(room.turnIndex).toBe(1); // moved to "b"
   });
 
   test("returns deadline-exceeded when resolveRound reports the round was already resolved by a racing timeout", async () => {
@@ -466,6 +538,15 @@ describe("onPresenceChanged", () => {
     // A bystander's disconnect must not disturb the active player's turn.
     expect(room.turnIndex).toBe(0);
     expect(room.round).toBe(1);
+  });
+
+  test("does NOT eliminate on disconnect in 'hot_potato' mode -- the bomb is the only loss condition", async () => {
+    await seedPlayingRoom({ mode: "hot_potato" });
+
+    await onPresenceChanged.run(buildPresenceEvent("room-1", "c", { state: "offline" }));
+
+    const room = await getRoom("room-1");
+    expect(room.players.c.alive).toBe(true);
   });
 
   test("swallows and logs when resolveRound throws instead of rejecting", async () => {

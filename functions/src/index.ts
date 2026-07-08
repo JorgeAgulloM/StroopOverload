@@ -5,16 +5,18 @@ import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { onTaskDispatched } from "firebase-functions/v2/tasks";
 import { onValueWritten } from "firebase-functions/v2/database";
 import { generateUniqueRoomCode, findJoinableRoomByCode, roomsCol } from "./roomRepo";
-import { ResolutionReason, RoomDoc, RoomPlayerDoc } from "./types";
+import { GameModeId, ResolutionReason, RoomDoc, RoomPlayerDoc } from "./types";
 import { generateStimulus } from "./stimulus";
 import { timeLimitMsForRound } from "./turnLogic";
 import { resolveRound } from "./resolveRound";
+import { armBomb, explodeBomb as explodeBombFn, resolveHotPotatoTurn } from "./resolveHotPotato";
 import { scheduleTimeoutCheck, scheduleGameStart } from "./taskQueue";
 
 initializeApp();
 
 const MAX_PLAYERS_PER_ROOM = 4;
 const MAX_DISPLAY_NAME_LENGTH = 16;
+const VALID_GAME_MODES: readonly GameModeId[] = ["mistake", "hot_potato", "solo_survival"];
 // Cosmetic "3, 2, 1, GO" window shown on every client while status is
 // "starting". Round 1's real deadline is computed by beginRound when this
 // elapses server-side -- not by startGame -- so this duration only affects
@@ -28,6 +30,8 @@ export const createRoom = onCall(async (request) => {
     String(request.data?.displayName ?? "")
       .trim()
       .slice(0, MAX_DISPLAY_NAME_LENGTH) || "Pilot";
+  const requestedMode = request.data?.mode;
+  const mode: GameModeId = VALID_GAME_MODES.includes(requestedMode) ? requestedMode : "mistake";
 
   try {
     const code = await generateUniqueRoomCode();
@@ -43,6 +47,7 @@ export const createRoom = onCall(async (request) => {
     const room: RoomDoc = {
       code,
       status: "waiting",
+      mode,
       hostUid: uid,
       players: { [uid]: hostPlayer },
       turnOrder: [uid],
@@ -153,6 +158,7 @@ export const beginRound = onTaskDispatched<{ roomId: string }>(
     try {
       const roomRef = roomsCol().doc(roomId);
       let scheduled: { round: number; deadlineAtMs: number } | null = null;
+      let mode: GameModeId | null = null;
 
       await getFirestore().runTransaction(async (tx) => {
         const doc = await tx.get(roomRef);
@@ -164,14 +170,32 @@ export const beginRound = onTaskDispatched<{ roomId: string }>(
         const deadlineAtMs = Date.now() + timeLimitMsForRound(1);
         tx.update(roomRef, { status: "playing", round: 1, turnIndex: 0, stimulus, deadlineAtMs });
         scheduled = { round: 1, deadlineAtMs };
+        mode = room.mode;
       });
 
       if (scheduled) {
         const { round, deadlineAtMs } = scheduled as { round: number; deadlineAtMs: number };
         await scheduleTimeoutCheck(roomId, round, deadlineAtMs - Date.now());
+        if (mode === "hot_potato") {
+          await armBomb(roomId);
+        }
       }
     } catch (err) {
       console.error(`beginRound failed for room ${roomId}`, err);
+      throw err;
+    }
+  }
+);
+
+// Fired by the Cloud Task armBomb schedules. See resolveHotPotato.ts for the logic.
+export const explodeBomb = onTaskDispatched<{ roomId: string }>(
+  { retryConfig: { maxAttempts: 5, minBackoffSeconds: 1 } },
+  async (req) => {
+    const { roomId } = req.data;
+    try {
+      await explodeBombFn(roomId);
+    } catch (err) {
+      console.error(`explodeBomb failed for room ${roomId}`, err);
       throw err;
     }
   }
@@ -202,7 +226,10 @@ export const submitAnswer = onCall(async (request) => {
     // semantics for an invalid answer. No separate allow-list validation
     // against StroopColorId is needed here.
     const reason: ResolutionReason = selectedColor === room.stimulus.inkColor ? "correct" : "wrong";
-    const applied = await resolveRound(roomId, uid, reason, room.round);
+    const applied =
+      room.mode === "hot_potato"
+        ? await resolveHotPotatoTurn(roomId, uid, reason, room.round)
+        : await resolveRound(roomId, uid, reason, room.round);
     if (!applied) throw new HttpsError("deadline-exceeded", "La ronda ya se resolvió (probablemente por timeout).");
     return { accepted: true, reason };
   } catch (err) {
@@ -261,7 +288,11 @@ export const resolveTimeout = onTaskDispatched<ResolveTimeoutTaskData>(
       if (!room.deadlineAtMs || Date.now() < room.deadlineAtMs) return; // hasn't reached its deadline yet
 
       const timedOutUid = room.turnOrder[room.turnIndex];
-      await resolveRound(roomId, timedOutUid, "timeout", round);
+      if (room.mode === "hot_potato") {
+        await resolveHotPotatoTurn(roomId, timedOutUid, "timeout", round);
+      } else {
+        await resolveRound(roomId, timedOutUid, "timeout", round);
+      }
     } catch (err) {
       console.error(`resolveTimeout failed for room ${roomId}, round ${round}`, err);
       throw err;
@@ -281,6 +312,12 @@ export const onPresenceChanged = onValueWritten("presence/{roomId}/{uid}", async
     if (!doc.exists) return;
     const room = doc.data() as RoomDoc;
     if (room.status !== "playing" || !room.players[uid]?.alive) return;
+    // Patata Caliente's only elimination path is the hidden bomb -- a
+    // disconnect here doesn't eliminate anyone. If the disconnected player is
+    // holding the turn, play just stalls on them until either they reconnect
+    // or the bomb goes off (which resolves correctly either way, since the
+    // bomb only checks who currently holds the turn).
+    if (room.mode === "hot_potato") return;
 
     await resolveRound(roomId, uid, "disconnect", room.round);
   } catch (err) {
