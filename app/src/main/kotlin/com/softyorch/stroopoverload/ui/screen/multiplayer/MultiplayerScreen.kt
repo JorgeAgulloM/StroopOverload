@@ -14,6 +14,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.softyorch.stroopoverload.domain.multiplayer.RoomMode
 import com.softyorch.stroopoverload.domain.multiplayer.RoomStatus
 import com.softyorch.stroopoverload.ui.components.CountdownOverlay
 
@@ -54,11 +55,19 @@ fun MultiplayerScreen(myUid: String) {
             // long their own countdown animation/render took -- no more racing a
             // deadline that started ticking before they could see the board.
             RoomStatus.STARTING -> MultiplayerStartingScreen()
-            RoomStatus.PLAYING, RoomStatus.FINISHED -> MultiplayerGameScreen(
-                room = current.room,
-                myUid = myUid,
-                onColorTapped = { viewModel.submitAnswer(it) },
-            )
+            RoomStatus.PLAYING, RoomStatus.FINISHED -> if (current.room.mode == RoomMode.SOLO_SURVIVAL) {
+                SoloSurvivalGameScreen(
+                    room = current.room,
+                    myUid = myUid,
+                    onColorTapped = { viewModel.submitAnswer(it) },
+                )
+            } else {
+                MultiplayerGameScreen(
+                    room = current.room,
+                    myUid = myUid,
+                    onColorTapped = { viewModel.submitAnswer(it) },
+                )
+            }
         }
     }
 }

@@ -237,6 +237,8 @@
     <string name="mp_mode_mistake_desc">Un fallo y estás fuera. Gana el último piloto en pie.</string>
     <string name="mp_mode_hot_potato_title">PATATA CALIENTE</string>
     <string name="mp_mode_hot_potato_desc">Acertar pasa el turno; fallar o tardar solo te da un nuevo estímulo. Una bomba oculta puede estallar en cualquier momento: quien la tenga en el turno queda eliminado.</string>
+    <string name="mp_mode_solo_survival_title">SUPERVIVENCIA EN SOLITARIO</string>
+    <string name="mp_mode_solo_survival_desc">Sin turnos: todos juegan su propia partida a la vez contra un reloj compartido. Un fallo acaba tu partida, pero la sala sigue para el resto. Gana quien tenga más puntos cuando se acabe el tiempo.</string>
 
     <!-- Multiplayer waiting room -->
     <string name="mp_waiting_title">[ SALA DE ESPERA ]</string>
@@ -258,6 +260,16 @@
     <string name="mp_game_won_by">Ganó %1$s</string>
     <string name="mp_game_waiting">Esperando…</string>
     <string name="mp_game_unknown_player">…</string>
+
+    <!-- Multiplayer solo_survival screen -->
+    <string name="mp_solo_time_left">%1$ds RESTANTES</string>
+    <string name="mp_solo_score_label">PUNTOS</string>
+    <string name="mp_solo_you_tag">TÚ</string>
+    <string name="mp_solo_busted_title">HAS CAÍDO</string>
+    <string name="mp_solo_busted_subtitle">Puntuación final: %1$d — la partida continúa sin ti.</string>
+    <string name="mp_solo_leaderboard_title">CLASIFICACIÓN</string>
+    <string name="mp_solo_you_won">¡GANASTE!</string>
+    <string name="mp_solo_won_by">%1$s gana con %2$d pts</string>
 
     <!-- Multiplayer error fallbacks (shown only when the backend gives no detail message) -->
     <string name="mp_error_create_room">No se pudo crear la sala.</string>

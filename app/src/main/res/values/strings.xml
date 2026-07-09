@@ -237,6 +237,8 @@
     <string name="mp_mode_mistake_desc">One wrong tap and you\'re out. Last pilot standing wins.</string>
     <string name="mp_mode_hot_potato_title">HOT POTATO</string>
     <string name="mp_mode_hot_potato_desc">A correct answer passes the turn — wrong or slow just gets you a fresh one. A hidden bomb can go off any time; whoever\'s holding it is eliminated.</string>
+    <string name="mp_mode_solo_survival_title">SOLO SURVIVAL</string>
+    <string name="mp_mode_solo_survival_desc">No turns — everyone plays their own run at once against a shared clock. One mistake ends your run, but the match keeps going for everyone else. Highest score when time runs out wins.</string>
 
     <!-- Multiplayer waiting room -->
     <string name="mp_waiting_title">[ WAITING ROOM ]</string>
@@ -258,6 +260,16 @@
     <string name="mp_game_won_by">%1$s won</string>
     <string name="mp_game_waiting">Waiting…</string>
     <string name="mp_game_unknown_player">…</string>
+
+    <!-- Multiplayer solo_survival screen -->
+    <string name="mp_solo_time_left">%1$ds LEFT</string>
+    <string name="mp_solo_score_label">SCORE</string>
+    <string name="mp_solo_you_tag">YOU</string>
+    <string name="mp_solo_busted_title">YOU\'RE OUT</string>
+    <string name="mp_solo_busted_subtitle">Final score: %1$d — the match continues without you.</string>
+    <string name="mp_solo_leaderboard_title">LEADERBOARD</string>
+    <string name="mp_solo_you_won">YOU WIN!</string>
+    <string name="mp_solo_won_by">%1$s wins with %2$d pts</string>
 
     <!-- Multiplayer error fallbacks (shown only when the backend gives no detail message) -->
     <string name="mp_error_create_room">Could not create the room.</string>

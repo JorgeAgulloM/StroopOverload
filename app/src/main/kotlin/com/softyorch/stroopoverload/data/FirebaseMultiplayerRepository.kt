@@ -78,31 +78,23 @@ class FirebaseMultiplayerRepository(
         @Suppress("UNCHECKED_CAST")
         val playersMap = data["players"] as? Map<String, Map<String, Any?>> ?: emptyMap()
         val players = playersMap.values.map { p ->
+            @Suppress("UNCHECKED_CAST")
+            val soloStimulusMap = p["soloStimulus"] as? Map<String, Any?>
             RoomPlayer(
                 uid = p["uid"] as? String ?: "",
                 displayName = p["displayName"] as? String ?: "Pilot",
                 avatarIndex = (p["avatarIndex"] as? Long)?.toInt() ?: 0,
                 alive = p["alive"] as? Boolean ?: true,
                 order = (p["order"] as? Long)?.toInt() ?: 0,
+                soloScore = (p["soloScore"] as? Long)?.toInt() ?: 0,
+                soloRound = (p["soloRound"] as? Long)?.toInt() ?: 0,
+                soloStimulus = parseStimulus(soloStimulusMap),
+                soloDeadlineAtMs = p["soloDeadlineAtMs"] as? Long,
             )
         }.sortedBy { it.order }
 
         @Suppress("UNCHECKED_CAST")
-        val stimulusMap = data["stimulus"] as? Map<String, Any?>
-        val stimulus = stimulusMap?.let {
-            @Suppress("UNCHECKED_CAST")
-            val rawOptions = it["options"] as? List<String> ?: emptyList()
-            val options = rawOptions.mapNotNull { raw ->
-                StroopColor.entries.find { color -> color.name == raw }.also { parsed ->
-                    if (parsed == null) Log.w("MultiplayerRepo", "Unrecognized stimulus option color: $raw")
-                }
-            }
-            MultiplayerStimulus(
-                wordLabel = parseStroopColor(it["wordLabel"] as? String, fallback = StroopColor.RED),
-                inkColor = parseStroopColor(it["inkColor"] as? String, fallback = StroopColor.RED),
-                options = options.ifEmpty { StroopColor.entries.toList() },
-            )
-        }
+        val stimulus = parseStimulus(data["stimulus"] as? Map<String, Any?>)
 
         @Suppress("UNCHECKED_CAST")
         val turnOrder = data["turnOrder"] as? List<String> ?: emptyList()
@@ -121,6 +113,21 @@ class FirebaseMultiplayerRepository(
             deadlineAtMs = data["deadlineAtMs"] as? Long,
             winnerUid = data["winnerUid"] as? String,
             startsAtMs = data["startsAtMs"] as? Long,
+        )
+    }
+
+    private fun parseStimulus(stimulusMap: Map<String, Any?>?): MultiplayerStimulus? = stimulusMap?.let {
+        @Suppress("UNCHECKED_CAST")
+        val rawOptions = it["options"] as? List<String> ?: emptyList()
+        val options = rawOptions.mapNotNull { raw ->
+            StroopColor.entries.find { color -> color.name == raw }.also { parsed ->
+                if (parsed == null) Log.w("MultiplayerRepo", "Unrecognized stimulus option color: $raw")
+            }
+        }
+        MultiplayerStimulus(
+            wordLabel = parseStroopColor(it["wordLabel"] as? String, fallback = StroopColor.RED),
+            inkColor = parseStroopColor(it["inkColor"] as? String, fallback = StroopColor.RED),
+            options = options.ifEmpty { StroopColor.entries.toList() },
         )
     }
 

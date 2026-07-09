@@ -55,7 +55,7 @@ class MultiplayerViewModel(
 
     fun submitAnswer(color: StroopColor) {
         val current = _state.value as? MultiplayerUiState.InRoom ?: return
-        if (!current.room.isMyTurn(current.myUid)) return
+        if (!current.room.canAnswer(current.myUid)) return
         viewModelScope.launch {
             repository.submitAnswer(current.room.roomId, color)
         }

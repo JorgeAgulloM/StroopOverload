@@ -165,6 +165,60 @@ class MultiplayerViewModelTest {
     }
 
     @Test
+    fun `submitAnswer ignores turn order in SOLO_SURVIVAL -- any alive player may answer`() = runTest {
+        val fake = FakeMultiplayerRepository()
+        val viewModel = MultiplayerViewModel(fake)
+
+        // "player-2" is uid at turnIndex 1, i.e. NOT the shared-turn holder -- would be
+        // rejected in MISTAKE/HOT_POTATO, but solo_survival has no shared turn at all.
+        viewModel.createRoom(uid = "player-2", displayName = "Trinity")
+        dispatcher.scheduler.advanceUntilIdle()
+        fake.emitRoom(
+            MultiplayerRoom(
+                roomId = "room-1",
+                status = RoomStatus.PLAYING,
+                mode = RoomMode.SOLO_SURVIVAL,
+                players = listOf(
+                    RoomPlayer(uid = "player-1", displayName = "Neo", alive = true),
+                    RoomPlayer(uid = "player-2", displayName = "Trinity", alive = true),
+                ),
+                turnOrder = listOf("player-1", "player-2"),
+                turnIndex = 0,
+            )
+        )
+        dispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.submitAnswer(StroopColor.RED)
+        dispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(1, fake.submitAnswerCallCount)
+    }
+
+    @Test
+    fun `submitAnswer is ignored in SOLO_SURVIVAL once the acting player has busted`() = runTest {
+        val fake = FakeMultiplayerRepository()
+        val viewModel = MultiplayerViewModel(fake)
+
+        viewModel.createRoom(uid = "player-1", displayName = "Neo")
+        dispatcher.scheduler.advanceUntilIdle()
+        fake.emitRoom(
+            MultiplayerRoom(
+                roomId = "room-1",
+                status = RoomStatus.PLAYING,
+                mode = RoomMode.SOLO_SURVIVAL,
+                players = listOf(RoomPlayer(uid = "player-1", displayName = "Neo", alive = false)),
+                turnOrder = listOf("player-1"),
+            )
+        )
+        dispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.submitAnswer(StroopColor.RED)
+        dispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(0, fake.submitAnswerCallCount)
+    }
+
+    @Test
     fun `createRoom is a no-op while already in a room, original room keeps being observed`() = runTest {
         val fake = FakeMultiplayerRepository()
         val viewModel = MultiplayerViewModel(fake)

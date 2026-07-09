@@ -17,24 +17,22 @@ enum class RoomStatus {
     }
 }
 
-/**
- * Mirrors the Cloud Functions side's GameModeId. "solo_survival" is
- * deliberately not exposed here -- the backend accepts it as a valid value
- * but has no dedicated engine for it yet (falls through to the "mistake"
- * rules), so it isn't a real, selectable mode from the client's point of view.
- */
+/** Mirrors the Cloud Functions side's GameModeId. */
 enum class RoomMode(@StringRes val titleRes: Int, @StringRes val descriptionRes: Int) {
     MISTAKE(R.string.mp_mode_mistake_title, R.string.mp_mode_mistake_desc),
-    HOT_POTATO(R.string.mp_mode_hot_potato_title, R.string.mp_mode_hot_potato_desc);
+    HOT_POTATO(R.string.mp_mode_hot_potato_title, R.string.mp_mode_hot_potato_desc),
+    SOLO_SURVIVAL(R.string.mp_mode_solo_survival_title, R.string.mp_mode_solo_survival_desc);
 
     fun toFirestoreValue(): String = when (this) {
         MISTAKE -> "mistake"
         HOT_POTATO -> "hot_potato"
+        SOLO_SURVIVAL -> "solo_survival"
     }
 
     companion object {
         fun fromFirestoreValue(raw: String?): RoomMode = when (raw) {
             "hot_potato" -> HOT_POTATO
+            "solo_survival" -> SOLO_SURVIVAL
             else -> MISTAKE
         }
     }
@@ -46,6 +44,13 @@ data class RoomPlayer(
     val avatarIndex: Int = 0,
     val alive: Boolean = true,
     val order: Int = 0,
+    // solo_survival only -- unused (left at defaults) in mistake/hot_potato. Each
+    // player runs their own independent Stroop session against their own
+    // stimulus/deadline instead of the room's shared turn state.
+    val soloScore: Int = 0,
+    val soloRound: Int = 0,
+    val soloStimulus: MultiplayerStimulus? = null,
+    val soloDeadlineAtMs: Long? = null,
 )
 
 data class MultiplayerStimulus(
@@ -74,4 +79,15 @@ data class MultiplayerRoom(
     val currentTurnUid: String? get() = turnOrder.getOrNull(turnIndex)
     fun isMyTurn(uid: String): Boolean = currentTurnUid == uid
     fun player(uid: String): RoomPlayer? = players.find { it.uid == uid }
+
+    /**
+     * Whether [uid] may submit an answer right now. In the turn-based modes
+     * that means holding the shared turn; in solo_survival there is no shared
+     * turn at all -- any player who hasn't busted yet can always answer
+     * against their own stimulus.
+     */
+    fun canAnswer(uid: String): Boolean = when (mode) {
+        RoomMode.SOLO_SURVIVAL -> player(uid)?.alive == true
+        RoomMode.MISTAKE, RoomMode.HOT_POTATO -> isMyTurn(uid)
+    }
 }

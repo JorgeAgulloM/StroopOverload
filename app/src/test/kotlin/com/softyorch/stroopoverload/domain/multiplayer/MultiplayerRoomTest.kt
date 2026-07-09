@@ -35,8 +35,8 @@ class MultiplayerRoomTest {
     fun `RoomMode fromFirestoreValue maps raw strings correctly, defaulting to MISTAKE`() {
         assertEquals(RoomMode.MISTAKE, RoomMode.fromFirestoreValue("mistake"))
         assertEquals(RoomMode.HOT_POTATO, RoomMode.fromFirestoreValue("hot_potato"))
+        assertEquals(RoomMode.SOLO_SURVIVAL, RoomMode.fromFirestoreValue("solo_survival"))
         assertEquals(RoomMode.MISTAKE, RoomMode.fromFirestoreValue(null))
-        assertEquals(RoomMode.MISTAKE, RoomMode.fromFirestoreValue("solo_survival"))
         assertEquals(RoomMode.MISTAKE, RoomMode.fromFirestoreValue("garbage"))
     }
 
@@ -44,6 +44,34 @@ class MultiplayerRoomTest {
     fun `RoomMode toFirestoreValue round-trips through fromFirestoreValue`() {
         assertEquals(RoomMode.MISTAKE, RoomMode.fromFirestoreValue(RoomMode.MISTAKE.toFirestoreValue()))
         assertEquals(RoomMode.HOT_POTATO, RoomMode.fromFirestoreValue(RoomMode.HOT_POTATO.toFirestoreValue()))
+        assertEquals(RoomMode.SOLO_SURVIVAL, RoomMode.fromFirestoreValue(RoomMode.SOLO_SURVIVAL.toFirestoreValue()))
+    }
+
+    @Test
+    fun `canAnswer follows the shared turn in MISTAKE and HOT_POTATO`() {
+        val room = MultiplayerRoom(mode = RoomMode.MISTAKE, turnOrder = listOf("a", "b"), turnIndex = 0)
+        assertTrue(room.canAnswer("a"))
+        assertFalse(room.canAnswer("b"))
+
+        val hotPotatoRoom = room.copy(mode = RoomMode.HOT_POTATO)
+        assertTrue(hotPotatoRoom.canAnswer("a"))
+        assertFalse(hotPotatoRoom.canAnswer("b"))
+    }
+
+    @Test
+    fun `canAnswer ignores turn order in SOLO_SURVIVAL -- any alive player may answer`() {
+        val room = MultiplayerRoom(
+            mode = RoomMode.SOLO_SURVIVAL,
+            turnOrder = listOf("a", "b"),
+            turnIndex = 0, // would only ever allow "a" under the turn-based rule
+            players = listOf(
+                RoomPlayer(uid = "a", displayName = "A", alive = true),
+                RoomPlayer(uid = "b", displayName = "B", alive = false),
+            ),
+        )
+        assertTrue(room.canAnswer("a"))
+        assertFalse(room.canAnswer("b")) // busted
+        assertFalse(room.canAnswer("stranger")) // not even in the room
     }
 
     @Test

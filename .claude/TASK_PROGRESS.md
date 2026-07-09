@@ -440,3 +440,115 @@ correctness fix.
   eliminates someone and the match ends correctly with 2+ players remaining after an explosion.
 - Client changes (everything except the jest.config.js fix) still uncommitted — same repo,
   otherwise clean working tree at time of writing.
+
+---
+
+## Side thread, interrupted: TIME-mode survival achievements (2026-07-10, NOT STARTED)
+
+User reported TIME mode (contrarreloj) can never earn the `survival_expert`/`master`/`legend`/`god`
+achievements. Confirmed in code: `AchievementEngine.updatedCareerStats` (line ~110-113) and
+`XpSystem.kt` (line ~118-123) both deliberately zero out TIME mode's contribution to
+`maxSurvivalTimeMs`/survival XP bonus — a prior session's fix for TIME's fixed 60s clock making the
+low tiers trivial and the high tiers unreachable, with the side effect of making that whole 4-tier
+achievement track (29200 XP) 100% unreachable for TIME-only players. Asked the user to scope the
+fix (TIME-only parallel achievement track vs. splitting every achievement track by mode) via
+AskUserQuestion — **user did not answer that question**, instead pivoted to asking about the
+missing 3rd online mode (which became the solo_survival work below). **This is still open, nothing
+implemented.** Resume by re-asking the scope question or picking the "TIME-only parallel track"
+recommendation and implementing it.
+
+---
+
+## Sub-task: solo_survival online mode (2026-07-10)
+
+User recalled being told about 3 online modes but only had 2 (mistake, hot_potato). Confirmed:
+`functions/src/types.ts`'s `GameModeId` always included `"solo_survival"` ("reserved for the future
+per-player simultaneous mode"), accepted by `createRoom`'s `VALID_GAME_MODES`, but never had an
+engine and was deliberately excluded from the client's `RoomMode` enum (see the Patata Caliente
+sub-task above). Asked the user how it should work (AskUserQuestion): chose **"Sesiones
+independientes, mismo cronómetro"** — every player plays their own single-player-style Stroop run
+in parallel, one mistake/timeout busts only that player (not the room), under one shared room-level
+session clock; highest score when the clock runs out wins.
+
+### Backend (`functions/`)
+- `types.ts`: `RoomPlayerDoc` gained solo_survival-only optional fields (`soloScore`, `soloRound`,
+  `soloStreak`, `soloStimulus`, `soloDeadlineAtMs`). `RoomDoc.deadlineAtMs`/`stimulus` are
+  semantically repurposed for this mode (deadlineAtMs = shared session-end clock, stimulus stays
+  null; each player's own stimulus/deadline lives on their player doc instead).
+- New `soloSurvival.ts`: mirrors the Android client's single-player ENDLESS scoring/difficulty
+  formula (100 pts/hit + streak bonus capped at 100, level-up every 5 rounds via
+  `SOLO_LEVELS_PER_DIFFICULTY`) but reuses `turnLogic.ts`'s existing `timeLimitMsForRound` decay
+  formula fed a *level* number instead of a raw round (same formula shape, different granularity —
+  avoided duplicating the INITIAL/DECAY/MIN magic numbers a second time).
+  - `beginSoloSurvivalMatch`: seeds every player with their own round-0 stimulus/deadline, arms the
+    shared session clock.
+  - `resolveSoloAnswer`: resolves one player's answer/timeout/disconnect against only their own
+    state — no shared turn to pass. A bust that leaves every player busted finishes the match early
+    instead of waiting out the rest of the session clock.
+  - `finishSoloSurvivalSession`: fired by the session-clock timeout task; picks the highest
+    `soloScore` as winner (tie-break: lowest `order`, i.e. earliest joiner). No-ops if the match
+    already finished early via the all-busted path.
+- `index.ts` wiring: `beginRound` branches on mode before the generic transaction (solo_survival
+  never touches `RoomDoc.round`/`turnIndex`/`stimulus` at all); `submitAnswer` has a parallel
+  solo_survival guard block (no `currentTurnUid` check, checks the *acting player's own*
+  `soloStimulus`/`soloDeadlineAtMs` instead); `resolveTimeout` (the room-level task) branches to
+  `finishSoloSurvivalSession` -- solo_survival is always scheduled/checked with round 0 as a
+  sentinel since it never advances `RoomDoc.round`, so the existing round-match guard (`room.round
+  !== round`) naturally passes without modification; new `resolveSoloPlayerTimeout` task (keyed by
+  `roomId, uid, round` unlike the room-level task) handles each player's own per-stimulus timeout;
+  `onPresenceChanged` busts just the disconnecting player (their run ends, room continues).
+- `taskQueue.ts`: new `scheduleSoloPlayerTimeoutCheck(roomId, uid, round, delayMs)` — every player
+  needs their own scheduled Cloud Task, unlike the turn-based modes' single shared one.
+- No `firestore.rules` changes needed — no field-level schema validation exists there, only
+  path-level read/write rules, and those are already mode-agnostic.
+- Tests: new `soloSurvival.test.ts` (16 tests: level/time-limit formula, seeding, correct/wrong/
+  timeout resolution, streak-bonus capping, all-busted early finish, stale-round rejection,
+  already-busted rejection, session-clock finish + tie-break, idempotent no-op). `index.test.ts`
+  gained solo_survival dispatch coverage across `createRoom`/`beginRound`/`submitAnswer`/
+  `resolveTimeout`/the new `resolveSoloPlayerTimeout`/`onPresenceChanged`. All 6 suites / 98 tests
+  green (JDK 21 + the earlier `maxWorkers: 1` fix both load-bearing here).
+
+### Client (`app/`)
+- `RoomMode` gained `SOLO_SURVIVAL` (title/desc string resources, `toFirestoreValue`/
+  `fromFirestoreValue` — no longer a 2-entry enum).
+- `RoomPlayer` gained the same solo_survival-only fields as the backend's `RoomPlayerDoc`
+  (`soloScore`, `soloRound`, `soloStimulus`, `soloDeadlineAtMs` — `soloStreak` intentionally NOT
+  mirrored client-side, the client only displays score, it doesn't recompute it).
+- `MultiplayerRoom` gained `canAnswer(uid)`: turn-based modes delegate to the existing `isMyTurn`,
+  solo_survival instead checks "does this uid have a player entry that's still alive" — no shared
+  turn to check. `MultiplayerViewModel.submitAnswer` now calls `canAnswer` instead of `isMyTurn`
+  directly.
+- `FirebaseMultiplayerRepository.mapRoom`: extracted the existing stimulus-parsing block into a
+  reusable `parseStimulus()` helper (was inline, now called once for the room-level stimulus and
+  once per player for `soloStimulus`) rather than duplicating the option/color parsing logic a
+  second time.
+- New `SoloSurvivalGameScreen.kt`: unlike hot_potato, this genuinely needed a dedicated screen —
+  MultiplayerGameScreen's whole layout centers on "whose turn is it," which doesn't exist here.
+  Shows MY OWN stimulus/score/answer buttons (or a "YOU'RE OUT" state once busted, since the room
+  keeps going without me), a shared session countdown ticking every 200ms via `LaunchedEffect`, and
+  a live leaderboard (name, score, busted badge, "YOU" tag on my own row) so busted players can
+  still watch how the match plays out.
+- `MultiplayerScreen.kt`: routes PLAYING/FINISHED to `SoloSurvivalGameScreen` instead of
+  `MultiplayerGameScreen` when `room.mode == RoomMode.SOLO_SURVIVAL`.
+- `LobbyScreen`'s mode picker and `WaitingRoomScreen`'s mode badge needed **zero code changes** —
+  both already iterate/read `RoomMode` generically, so adding the enum entry was enough.
+- 8 new string keys × 6 locales (`mp_mode_solo_survival_title/desc`, `mp_solo_time_left`,
+  `mp_solo_score_label`, `mp_solo_you_tag`, `mp_solo_busted_title/subtitle`,
+  `mp_solo_leaderboard_title`, `mp_solo_you_won`, `mp_solo_won_by`).
+- Tests: `MultiplayerRoomTest` gained `RoomMode.SOLO_SURVIVAL` round-trip cases + `canAnswer` cases
+  for all 3 modes (including the "turnIndex says no but solo_survival ignores it anyway" case).
+  `MultiplayerViewModelTest` gained 2 cases: submitAnswer accepted despite not holding the nominal
+  turn index, and rejected once busted.
+
+Verified: `compileDevDebugKotlin`/`compileDemoDebugKotlin`/`compileProdDebugKotlin` all green,
+`testDevDebugUnitTest` green (Android). `npx tsc --noEmit` clean + full `npm test` (6 suites / 98
+tests) green (functions). Not yet verified on a real device/emulator. Not committed yet.
+
+### Not yet done
+- Deploy to production — same open item as Patata Caliente above, backend has never been deployed
+  since 2026-07-04/05, now two full modes behind. Ask before deploying.
+- On-device manual pass: create a solo_survival room with 2+ players, verify independent
+  stimulus/scoring, verify one player busting doesn't affect the other's run, verify the leaderboard
+  updates live, verify the match finishes correctly both via the session clock and via an
+  all-players-busted early finish.
+- The TIME-mode survival-achievements side thread above is still fully open.

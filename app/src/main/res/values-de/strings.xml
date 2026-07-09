@@ -237,6 +237,8 @@
     <string name="mp_mode_mistake_desc">Ein Fehler und du bist raus. Der letzte verbliebene Pilot gewinnt.</string>
     <string name="mp_mode_hot_potato_title">HEISSE KARTOFFEL</string>
     <string name="mp_mode_hot_potato_desc">Eine richtige Antwort gibt den Zug weiter; falsch oder zu langsam bringt nur einen neuen Reiz. Eine versteckte Bombe kann jederzeit explodieren — wer sie gerade hält, scheidet aus.</string>
+    <string name="mp_mode_solo_survival_title">SOLO-ÜBERLEBEN</string>
+    <string name="mp_mode_solo_survival_desc">Keine Züge — alle spielen gleichzeitig ihre eigene Runde gegen eine gemeinsame Uhr. Ein Fehler beendet deinen Lauf, das Match läuft aber für die anderen weiter. Wer bei Ablauf der Zeit die meisten Punkte hat, gewinnt.</string>
 
     <!-- Multiplayer waiting room -->
     <string name="mp_waiting_title">[ WARTERAUM ]</string>
@@ -258,6 +260,16 @@
     <string name="mp_game_won_by">%1$s hat gewonnen</string>
     <string name="mp_game_waiting">Warten…</string>
     <string name="mp_game_unknown_player">…</string>
+
+    <!-- Multiplayer solo_survival screen -->
+    <string name="mp_solo_time_left">NOCH %1$ds</string>
+    <string name="mp_solo_score_label">PUNKTE</string>
+    <string name="mp_solo_you_tag">DU</string>
+    <string name="mp_solo_busted_title">DU BIST RAUS</string>
+    <string name="mp_solo_busted_subtitle">Endpunktzahl: %1$d — das Match läuft ohne dich weiter.</string>
+    <string name="mp_solo_leaderboard_title">BESTENLISTE</string>
+    <string name="mp_solo_you_won">DU GEWINNST!</string>
+    <string name="mp_solo_won_by">%1$s gewinnt mit %2$d Punkten</string>
 
     <!-- Multiplayer error fallbacks (shown only when the backend gives no detail message) -->
     <string name="mp_error_create_room">Der Raum konnte nicht erstellt werden.</string>

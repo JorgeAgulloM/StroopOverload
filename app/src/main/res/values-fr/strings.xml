@@ -237,6 +237,8 @@
     <string name="mp_mode_mistake_desc">Une erreur et vous êtes éliminé. Le dernier pilote en lice gagne.</string>
     <string name="mp_mode_hot_potato_title">PATATE CHAUDE</string>
     <string name="mp_mode_hot_potato_desc">Une bonne réponse fait passer le tour ; une erreur ou une réponse trop lente relance juste un nouvel essai. Une bombe cachée peut exploser à tout moment — celui qui a la main à ce moment-là est éliminé.</string>
+    <string name="mp_mode_solo_survival_title">SURVIE EN SOLO</string>
+    <string name="mp_mode_solo_survival_desc">Pas de tour de jeu : chacun joue sa propre partie en même temps, contre une horloge partagée. Une erreur met fin à ta partie, mais le match continue pour les autres. Le meilleur score quand le temps est écoulé remporte la victoire.</string>
 
     <!-- Multiplayer waiting room -->
     <string name="mp_waiting_title">[ SALLE D\'ATTENTE ]</string>
@@ -258,6 +260,16 @@
     <string name="mp_game_won_by">%1$s a gagné</string>
     <string name="mp_game_waiting">En attente…</string>
     <string name="mp_game_unknown_player">…</string>
+
+    <!-- Multiplayer solo_survival screen -->
+    <string name="mp_solo_time_left">%1$ds RESTANTES</string>
+    <string name="mp_solo_score_label">SCORE</string>
+    <string name="mp_solo_you_tag">TOI</string>
+    <string name="mp_solo_busted_title">TU ES ÉLIMINÉ</string>
+    <string name="mp_solo_busted_subtitle">Score final : %1$d — la partie continue sans toi.</string>
+    <string name="mp_solo_leaderboard_title">CLASSEMENT</string>
+    <string name="mp_solo_you_won">VICTOIRE !</string>
+    <string name="mp_solo_won_by">%1$s gagne avec %2$d pts</string>
 
     <!-- Multiplayer error fallbacks (shown only when the backend gives no detail message) -->
     <string name="mp_error_create_room">Impossible de créer la salle.</string>
