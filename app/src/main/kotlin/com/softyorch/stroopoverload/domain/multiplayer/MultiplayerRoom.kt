@@ -1,5 +1,7 @@
 package com.softyorch.stroopoverload.domain.multiplayer
 
+import androidx.annotation.StringRes
+import com.softyorch.stroopoverload.R
 import com.softyorch.stroopoverload.core.StroopColor
 
 enum class RoomStatus {
@@ -11,6 +13,29 @@ enum class RoomStatus {
             "playing" -> PLAYING
             "finished" -> FINISHED
             else -> WAITING
+        }
+    }
+}
+
+/**
+ * Mirrors the Cloud Functions side's GameModeId. "solo_survival" is
+ * deliberately not exposed here -- the backend accepts it as a valid value
+ * but has no dedicated engine for it yet (falls through to the "mistake"
+ * rules), so it isn't a real, selectable mode from the client's point of view.
+ */
+enum class RoomMode(@StringRes val titleRes: Int, @StringRes val descriptionRes: Int) {
+    MISTAKE(R.string.mp_mode_mistake_title, R.string.mp_mode_mistake_desc),
+    HOT_POTATO(R.string.mp_mode_hot_potato_title, R.string.mp_mode_hot_potato_desc);
+
+    fun toFirestoreValue(): String = when (this) {
+        MISTAKE -> "mistake"
+        HOT_POTATO -> "hot_potato"
+    }
+
+    companion object {
+        fun fromFirestoreValue(raw: String?): RoomMode = when (raw) {
+            "hot_potato" -> HOT_POTATO
+            else -> MISTAKE
         }
     }
 }
@@ -35,6 +60,7 @@ data class MultiplayerRoom(
     val roomId: String = "",
     val code: String = "",
     val status: RoomStatus = RoomStatus.WAITING,
+    val mode: RoomMode = RoomMode.MISTAKE,
     val hostUid: String = "",
     val players: List<RoomPlayer> = emptyList(),
     val turnOrder: List<String> = emptyList(),

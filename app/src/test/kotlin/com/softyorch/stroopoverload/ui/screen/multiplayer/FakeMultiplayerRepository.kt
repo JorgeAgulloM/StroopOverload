@@ -3,6 +3,7 @@ package com.softyorch.stroopoverload.ui.screen.multiplayer
 import com.softyorch.stroopoverload.core.StroopColor
 import com.softyorch.stroopoverload.data.MultiplayerRepository
 import com.softyorch.stroopoverload.domain.multiplayer.MultiplayerRoom
+import com.softyorch.stroopoverload.domain.multiplayer.RoomMode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 
@@ -20,6 +21,8 @@ class FakeMultiplayerRepository : MultiplayerRepository {
         private set
     var startGameCallCount = 0
         private set
+    var lastCreateRoomMode: RoomMode? = null
+        private set
 
     var createRoomResult: Result<Pair<String, String>> = Result.success("room-1" to "ABCDE")
     var joinRoomResult: Result<String> = Result.success("room-1")
@@ -35,7 +38,10 @@ class FakeMultiplayerRepository : MultiplayerRepository {
 
     suspend fun emitRoom(room: MultiplayerRoom) = roomFlow.emit(room)
 
-    override suspend fun createRoom(displayName: String): Result<Pair<String, String>> = createRoomResult
+    override suspend fun createRoom(displayName: String, mode: RoomMode): Result<Pair<String, String>> {
+        lastCreateRoomMode = mode
+        return createRoomResult
+    }
 
     override suspend fun joinRoom(code: String, displayName: String): Result<String> = joinRoomResult
 

@@ -232,6 +232,11 @@
     <string name="mp_lobby_room_code_label">Raumcode</string>
     <string name="mp_lobby_join_room">RAUM BEITRETEN</string>
     <string name="mp_lobby_default_name">Pilot</string>
+    <string name="mp_lobby_mode_label">SPIELMODUS</string>
+    <string name="mp_mode_mistake_title">FEHLER-MODUS</string>
+    <string name="mp_mode_mistake_desc">Ein Fehler und du bist raus. Der letzte verbliebene Pilot gewinnt.</string>
+    <string name="mp_mode_hot_potato_title">HEISSE KARTOFFEL</string>
+    <string name="mp_mode_hot_potato_desc">Eine richtige Antwort gibt den Zug weiter; falsch oder zu langsam bringt nur einen neuen Reiz. Eine versteckte Bombe kann jederzeit explodieren — wer sie gerade hält, scheidet aus.</string>
 
     <!-- Multiplayer waiting room -->
     <string name="mp_waiting_title">[ WARTERAUM ]</string>

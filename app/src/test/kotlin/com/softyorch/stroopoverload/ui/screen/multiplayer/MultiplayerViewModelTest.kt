@@ -3,6 +3,7 @@ package com.softyorch.stroopoverload.ui.screen.multiplayer
 import app.cash.turbine.test
 import com.softyorch.stroopoverload.core.StroopColor
 import com.softyorch.stroopoverload.domain.multiplayer.MultiplayerRoom
+import com.softyorch.stroopoverload.domain.multiplayer.RoomMode
 import com.softyorch.stroopoverload.domain.multiplayer.RoomPlayer
 import com.softyorch.stroopoverload.domain.multiplayer.RoomStatus
 import kotlinx.coroutines.Dispatchers
@@ -56,6 +57,26 @@ class MultiplayerViewModelTest {
             assertEquals("room-1", inRoom.room.roomId)
             assertTrue(fake.presenceTracked)
         }
+    }
+
+    @Test
+    fun `createRoom defaults to MISTAKE mode and forwards an explicit mode to the repository`() = runTest {
+        val fake = FakeMultiplayerRepository()
+        val viewModel = MultiplayerViewModel(fake)
+
+        viewModel.createRoom(uid = "host-1", displayName = "Neo")
+        dispatcher.scheduler.advanceUntilIdle()
+        assertEquals(RoomMode.MISTAKE, fake.lastCreateRoomMode)
+    }
+
+    @Test
+    fun `createRoom forwards HOT_POTATO mode to the repository`() = runTest {
+        val fake = FakeMultiplayerRepository()
+        val viewModel = MultiplayerViewModel(fake)
+
+        viewModel.createRoom(uid = "host-1", displayName = "Neo", mode = RoomMode.HOT_POTATO)
+        dispatcher.scheduler.advanceUntilIdle()
+        assertEquals(RoomMode.HOT_POTATO, fake.lastCreateRoomMode)
     }
 
     @Test

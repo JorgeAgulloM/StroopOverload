@@ -24,19 +24,19 @@ fun MultiplayerScreen(myUid: String) {
 
     when (val current = state) {
         is MultiplayerUiState.Idle -> LobbyScreen(
-            onCreateRoom = { name -> viewModel.createRoom(myUid, name) },
+            onCreateRoom = { name, mode -> viewModel.createRoom(myUid, name, mode) },
             onJoinRoom = { code, name -> viewModel.joinRoom(myUid, code, name) },
             errorReason = null,
             isConnecting = false,
         )
         is MultiplayerUiState.Connecting -> LobbyScreen(
-            onCreateRoom = { name -> viewModel.createRoom(myUid, name) },
+            onCreateRoom = { name, mode -> viewModel.createRoom(myUid, name, mode) },
             onJoinRoom = { code, name -> viewModel.joinRoom(myUid, code, name) },
             errorReason = null,
             isConnecting = true,
         )
         is MultiplayerUiState.Error -> LobbyScreen(
-            onCreateRoom = { name -> viewModel.createRoom(myUid, name) },
+            onCreateRoom = { name, mode -> viewModel.createRoom(myUid, name, mode) },
             onJoinRoom = { code, name -> viewModel.joinRoom(myUid, code, name) },
             errorReason = current.reason,
             isConnecting = false,

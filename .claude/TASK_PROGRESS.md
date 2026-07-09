@@ -377,3 +377,66 @@ endless-survival mode with no win-and-stop condition.
 - F9's Firestore rule intentionally allows broad *read* on `users` (needed for the existing
   leaderboard query across all users) while restricting *write* to the owning uid — not a blanket
   `allow read, write: if true`.
+
+---
+
+## Sub-task: Patata Caliente (hot-seat hot potato) client + jest race fix (2026-07-09)
+
+Resumed from commit `cece746` ("implement Patata Caliente backend engine"), whose own message
+flagged it as backend-only: "not reachable from the app yet since there's no client mode picker
+... or hot-potato-aware game screen."
+
+**First: JDK 21 became available on this machine** (`C:\Program Files\Java\jdk-21.0.10`, `java` on
+PATH still resolves to 17 — must prepend the JDK 21 `bin` to `PATH` per-session). This unblocked
+`functions/src/resolveHotPotato.test.ts`'s Firestore-emulator suite for the first time (previously
+undeployable on JDK 17, per that commit's own message). Running it exposed a real test-isolation
+bug, not a product bug: all 5 `functions/` test files share one hardcoded emulator `projectId`
+(`"stroopoverload-test"`) and one shared Firestore emulator instance; Jest's default parallel
+workers let one file's `afterEach(testEnv.clearFirestore())` wipe out a room another file had just
+seeded mid-transaction. Confirmed by running `resolveHotPotato.test.ts` alone — 11/11 pass. Fixed
+by adding `maxWorkers: 1` to `functions/jest.config.js` (serializes suites against the shared
+emulator). All 5 suites / 75 tests now pass together. Committed: `8421f7e`.
+
+**Then: client wiring**, since mechanically the existing generic `MultiplayerGameScreen` already
+handled hot-potato's data shape (same `turnIndex`/`stimulus`/`deadlineAtMs`/`players[].alive`
+fields) — no separate hot-potato game screen was needed, only a way to pick the mode at room
+creation and surface it after that:
+- `domain/multiplayer/MultiplayerRoom.kt`: new `RoomMode` enum (`MISTAKE`/`HOT_POTATO`, with
+  `titleRes`/`descriptionRes` `@StringRes` fields per this project's i18n convention, plus
+  `toFirestoreValue()`/`fromFirestoreValue()` mirroring `RoomStatus`'s existing pattern).
+  `solo_survival` deliberately not exposed — backend accepts it as a valid `GameModeId` value but
+  has no dedicated engine yet (falls through to "mistake" rules), so it isn't a real client-facing
+  mode.
+  `MultiplayerRoom` gained a `mode: RoomMode = RoomMode.MISTAKE` field.
+- `data/MultiplayerRepository.kt` / `FirebaseMultiplayerRepository.kt`: `createRoom(displayName,
+  mode = RoomMode.MISTAKE)` now sends `"mode" to mode.toFirestoreValue()` in the callable payload;
+  `mapRoom()` parses `data["mode"]` back via `RoomMode.fromFirestoreValue()`.
+- `MultiplayerViewModel.createRoom(uid, displayName, mode = RoomMode.MISTAKE)` threads it through.
+- `LobbyScreen`: new mode picker (two selectable `ModeCard`s, styled like the existing
+  single-player `GameModeSelectScreen`'s card pattern) shown only on the create-room side — joiners
+  don't pick a mode, they inherit whatever the host chose. Wrapped the lobby column in
+  `verticalScroll` since the picker pushed content height past some screen sizes.
+- `MultiplayerScreen.kt`: updated `onCreateRoom` wiring for the new `(name, mode) -> Unit` shape.
+- `WaitingRoomScreen`: added a mode badge (`room.mode.titleRes`) under the room code so joiners —
+  who never see the picker — know which mode they're about to play.
+- 6-locale strings added (`mp_lobby_mode_label`, `mp_mode_mistake_title/desc`,
+  `mp_mode_hot_potato_title/desc`) across `values/values-{es,ja,fr,de,pt-rBR}/strings.xml`.
+- Tests: `MultiplayerRoomTest` gained `RoomMode.fromFirestoreValue`/`toFirestoreValue` cases;
+  `FakeMultiplayerRepository` now captures `lastCreateRoomMode`; `MultiplayerViewModelTest` gained
+  two new cases (default-mode + explicit-HOT_POTATO forwarding).
+
+Verified: `compileDevDebugKotlin`/`compileDemoDebugKotlin`/`compileProdDebugKotlin` all green,
+`testDevDebugUnitTest` green. Not yet verified on-device. Not committed yet (client changes) —
+`jest.config.js` race fix already committed separately since it was an independent, self-contained
+correctness fix.
+
+### Not yet done
+- Deploy the Patata Caliente backend (`cece746` + anything since) to production — last confirmed
+  prod deploy was 2026-07-04/05, before this feature. Needs `firebase deploy --only functions`
+  (and possibly `firestore:rules`/`firestore:indexes` if those changed) from repo root, user must
+  be logged in via `firebase login`. **Ask before deploying** — affects shared/live infrastructure.
+- On-device manual pass: create a Patata Caliente room, verify the mode badge shows in the waiting
+  room, verify wrong answers re-prompt instead of eliminating, verify the bomb eventually
+  eliminates someone and the match ends correctly with 2+ players remaining after an explosion.
+- Client changes (everything except the jest.config.js fix) still uncommitted — same repo,
+  otherwise clean working tree at time of writing.

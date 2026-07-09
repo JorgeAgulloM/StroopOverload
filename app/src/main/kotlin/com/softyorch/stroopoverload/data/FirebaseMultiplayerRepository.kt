@@ -8,6 +8,7 @@ import com.google.firebase.functions.FirebaseFunctions
 import com.softyorch.stroopoverload.core.StroopColor
 import com.softyorch.stroopoverload.domain.multiplayer.MultiplayerRoom
 import com.softyorch.stroopoverload.domain.multiplayer.MultiplayerStimulus
+import com.softyorch.stroopoverload.domain.multiplayer.RoomMode
 import com.softyorch.stroopoverload.domain.multiplayer.RoomPlayer
 import com.softyorch.stroopoverload.domain.multiplayer.RoomStatus
 import kotlinx.coroutines.channels.awaitClose
@@ -21,8 +22,9 @@ class FirebaseMultiplayerRepository(
     private val database: FirebaseDatabase = FirebaseDatabase.getInstance(),
 ) : MultiplayerRepository {
 
-    override suspend fun createRoom(displayName: String): Result<Pair<String, String>> = runCatching {
-        val result = functions.getHttpsCallable("createRoom").call(mapOf("displayName" to displayName)).await()
+    override suspend fun createRoom(displayName: String, mode: RoomMode): Result<Pair<String, String>> = runCatching {
+        val data = mapOf("displayName" to displayName, "mode" to mode.toFirestoreValue())
+        val result = functions.getHttpsCallable("createRoom").call(data).await()
         val map = result.data as Map<*, *>
         (map["roomId"] as String) to (map["code"] as String)
     }
@@ -109,6 +111,7 @@ class FirebaseMultiplayerRepository(
             roomId = roomId,
             code = data["code"] as? String ?: "",
             status = RoomStatus.fromFirestoreValue(data["status"] as? String),
+            mode = RoomMode.fromFirestoreValue(data["mode"] as? String),
             hostUid = data["hostUid"] as? String ?: "",
             players = players,
             turnOrder = turnOrder,

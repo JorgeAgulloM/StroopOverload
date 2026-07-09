@@ -32,6 +32,21 @@ class MultiplayerRoomTest {
     }
 
     @Test
+    fun `RoomMode fromFirestoreValue maps raw strings correctly, defaulting to MISTAKE`() {
+        assertEquals(RoomMode.MISTAKE, RoomMode.fromFirestoreValue("mistake"))
+        assertEquals(RoomMode.HOT_POTATO, RoomMode.fromFirestoreValue("hot_potato"))
+        assertEquals(RoomMode.MISTAKE, RoomMode.fromFirestoreValue(null))
+        assertEquals(RoomMode.MISTAKE, RoomMode.fromFirestoreValue("solo_survival"))
+        assertEquals(RoomMode.MISTAKE, RoomMode.fromFirestoreValue("garbage"))
+    }
+
+    @Test
+    fun `RoomMode toFirestoreValue round-trips through fromFirestoreValue`() {
+        assertEquals(RoomMode.MISTAKE, RoomMode.fromFirestoreValue(RoomMode.MISTAKE.toFirestoreValue()))
+        assertEquals(RoomMode.HOT_POTATO, RoomMode.fromFirestoreValue(RoomMode.HOT_POTATO.toFirestoreValue()))
+    }
+
+    @Test
     fun `player looks up a room player by uid, or returns null`() {
         val room = MultiplayerRoom(players = listOf(RoomPlayer(uid = "a", displayName = "Neo")))
         assertEquals("Neo", room.player("a")?.displayName)

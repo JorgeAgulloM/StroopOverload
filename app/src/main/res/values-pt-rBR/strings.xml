@@ -232,6 +232,11 @@
     <string name="mp_lobby_room_code_label">Código da sala</string>
     <string name="mp_lobby_join_room">ENTRAR NA SALA</string>
     <string name="mp_lobby_default_name">Piloto</string>
+    <string name="mp_lobby_mode_label">MODO DE JOGO</string>
+    <string name="mp_mode_mistake_title">MODO ERRO</string>
+    <string name="mp_mode_mistake_desc">Um erro e você está fora. Vence o último piloto de pé.</string>
+    <string name="mp_mode_hot_potato_title">BATATA QUENTE</string>
+    <string name="mp_mode_hot_potato_desc">Acertar passa a vez; errar ou demorar só te dá um novo estímulo. Uma bomba escondida pode explodir a qualquer momento — quem estiver com a vez é eliminado.</string>
 
     <!-- Multiplayer waiting room -->
     <string name="mp_waiting_title">[ SALA DE ESPERA ]</string>

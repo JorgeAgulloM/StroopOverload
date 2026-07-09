@@ -232,6 +232,11 @@
     <string name="mp_lobby_room_code_label">Code de la salle</string>
     <string name="mp_lobby_join_room">REJOINDRE UNE SALLE</string>
     <string name="mp_lobby_default_name">Pilote</string>
+    <string name="mp_lobby_mode_label">MODE DE JEU</string>
+    <string name="mp_mode_mistake_title">MODE ERREUR</string>
+    <string name="mp_mode_mistake_desc">Une erreur et vous êtes éliminé. Le dernier pilote en lice gagne.</string>
+    <string name="mp_mode_hot_potato_title">PATATE CHAUDE</string>
+    <string name="mp_mode_hot_potato_desc">Une bonne réponse fait passer le tour ; une erreur ou une réponse trop lente relance juste un nouvel essai. Une bombe cachée peut exploser à tout moment — celui qui a la main à ce moment-là est éliminé.</string>
 
     <!-- Multiplayer waiting room -->
     <string name="mp_waiting_title">[ SALLE D\'ATTENTE ]</string>

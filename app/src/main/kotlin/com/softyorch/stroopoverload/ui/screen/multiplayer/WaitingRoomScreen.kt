@@ -99,6 +99,17 @@ fun WaitingRoomScreen(
                 )
             }
 
+            Spacer(Modifier.height(12.dp))
+
+            Text(
+                text = stringResource(room.mode.titleRes),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.tertiary,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 1.sp,
+                modifier = Modifier.align(Alignment.CenterHorizontally),
+            )
+
             Spacer(Modifier.height(24.dp))
 
             Text(

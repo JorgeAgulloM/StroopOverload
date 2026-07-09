@@ -232,6 +232,11 @@
     <string name="mp_lobby_room_code_label">Código de sala</string>
     <string name="mp_lobby_join_room">UNIRSE A SALA</string>
     <string name="mp_lobby_default_name">Piloto</string>
+    <string name="mp_lobby_mode_label">MODO DE JUEGO</string>
+    <string name="mp_mode_mistake_title">MODO ERROR</string>
+    <string name="mp_mode_mistake_desc">Un fallo y estás fuera. Gana el último piloto en pie.</string>
+    <string name="mp_mode_hot_potato_title">PATATA CALIENTE</string>
+    <string name="mp_mode_hot_potato_desc">Acertar pasa el turno; fallar o tardar solo te da un nuevo estímulo. Una bomba oculta puede estallar en cualquier momento: quien la tenga en el turno queda eliminado.</string>
 
     <!-- Multiplayer waiting room -->
     <string name="mp_waiting_title">[ SALA DE ESPERA ]</string>

@@ -232,6 +232,11 @@
     <string name="mp_lobby_room_code_label">ルームコード</string>
     <string name="mp_lobby_join_room">ルームに参加</string>
     <string name="mp_lobby_default_name">パイロット</string>
+    <string name="mp_lobby_mode_label">ゲームモード</string>
+    <string name="mp_mode_mistake_title">ミスモード</string>
+    <string name="mp_mode_mistake_desc">一度でも間違えると脱落。最後まで残ったパイロットの勝利。</string>
+    <string name="mp_mode_hot_potato_title">ホットポテト</string>
+    <string name="mp_mode_hot_potato_desc">正解すると手番が回ります。間違えても遅くても新しい問題が出るだけです。隠されたボムがいつ爆発するかは分かりません。その瞬間に手番を持っているパイロットが脱落します。</string>
 
     <!-- Multiplayer waiting room -->
     <string name="mp_waiting_title">[ 待機ルーム ]</string>

@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.softyorch.stroopoverload.core.StroopColor
 import com.softyorch.stroopoverload.data.FirebaseMultiplayerRepository
 import com.softyorch.stroopoverload.data.MultiplayerRepository
+import com.softyorch.stroopoverload.domain.multiplayer.RoomMode
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,12 +23,12 @@ class MultiplayerViewModel(
     private var myUid: String = ""
     private var observeRoomJob: Job? = null
 
-    fun createRoom(uid: String, displayName: String) {
+    fun createRoom(uid: String, displayName: String, mode: RoomMode = RoomMode.MISTAKE) {
         if (_state.value !is MultiplayerUiState.Idle && _state.value !is MultiplayerUiState.Error) return
         myUid = uid
         _state.value = MultiplayerUiState.Connecting
         viewModelScope.launch {
-            repository.createRoom(displayName)
+            repository.createRoom(displayName, mode)
                 .onSuccess { (roomId, _) -> observeRoom(roomId) }
                 .onFailure { _state.value = MultiplayerUiState.Error(MultiplayerErrorReason.CreateRoomFailed(it.message)) }
         }

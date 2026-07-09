@@ -232,6 +232,11 @@
     <string name="mp_lobby_room_code_label">Room code</string>
     <string name="mp_lobby_join_room">JOIN ROOM</string>
     <string name="mp_lobby_default_name">Pilot</string>
+    <string name="mp_lobby_mode_label">GAME MODE</string>
+    <string name="mp_mode_mistake_title">MISTAKE MODE</string>
+    <string name="mp_mode_mistake_desc">One wrong tap and you\'re out. Last pilot standing wins.</string>
+    <string name="mp_mode_hot_potato_title">HOT POTATO</string>
+    <string name="mp_mode_hot_potato_desc">A correct answer passes the turn — wrong or slow just gets you a fresh one. A hidden bomb can go off any time; whoever\'s holding it is eliminated.</string>
 
     <!-- Multiplayer waiting room -->
     <string name="mp_waiting_title">[ WAITING ROOM ]</string>
