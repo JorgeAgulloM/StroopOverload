@@ -13,11 +13,12 @@ import {
   beginRound,
   submitAnswer,
   resolveTimeout,
+  resolveSoloPlayerTimeout,
   onPresenceChanged,
   deleteMyMultiplayerData,
 } from "./index";
 import * as resolveRoundModule from "./resolveRound";
-import { scheduleBombExplosion } from "./taskQueue";
+import { scheduleBombExplosion, scheduleSoloPlayerTimeoutCheck, scheduleTimeoutCheck } from "./taskQueue";
 
 // deleteMyMultiplayerData also removes each deleted room's Realtime Database
 // presence node. There's no RTDB emulator in this test run (only Firestore,
@@ -46,6 +47,7 @@ jest.mock("./taskQueue", () => ({
   scheduleTimeoutCheck: jest.fn().mockResolvedValue(undefined),
   scheduleGameStart: jest.fn().mockResolvedValue(undefined),
   scheduleBombExplosion: jest.fn().mockResolvedValue(undefined),
+  scheduleSoloPlayerTimeoutCheck: jest.fn().mockResolvedValue(undefined),
 }));
 
 let testEnv: RulesTestEnvironment;
@@ -201,6 +203,51 @@ async function seedPlayingRoom(overrides: Record<string, unknown> = {}): Promise
   });
 }
 
+// solo_survival's per-player equivalent of seedPlayingRoom: no shared
+// turn/stimulus, each player carries their own soloRound/soloStimulus/
+// soloDeadlineAtMs instead.
+async function seedSoloPlayingRoom(overrides: Record<string, unknown> = {}): Promise<void> {
+  await seedRoom({
+    mode: "solo_survival",
+    status: "playing",
+    hostUid: "a",
+    players: {
+      a: {
+        uid: "a",
+        displayName: "A",
+        avatarIndex: 0,
+        alive: true,
+        order: 0,
+        joinedAtMs: 0,
+        soloScore: 0,
+        soloRound: 0,
+        soloStreak: 0,
+        soloStimulus: { wordLabel: "RED", inkColor: "BLUE", options: ["RED", "GREEN", "BLUE", "YELLOW"] },
+        soloDeadlineAtMs: Date.now() + 3000,
+      },
+      b: {
+        uid: "b",
+        displayName: "B",
+        avatarIndex: 0,
+        alive: true,
+        order: 1,
+        joinedAtMs: 0,
+        soloScore: 0,
+        soloRound: 0,
+        soloStreak: 0,
+        soloStimulus: { wordLabel: "GREEN", inkColor: "YELLOW", options: ["RED", "GREEN", "BLUE", "YELLOW"] },
+        soloDeadlineAtMs: Date.now() + 3000,
+      },
+    },
+    turnOrder: ["a", "b"],
+    turnIndex: 0,
+    round: 0,
+    stimulus: null,
+    deadlineAtMs: Date.now() + 60_000,
+    ...overrides,
+  });
+}
+
 describe("createRoom", () => {
   test("rejects an unauthenticated call", async () => {
     await expect(createRoom.run(buildRequest({ displayName: "Ace" }, undefined))).rejects.toMatchObject({
@@ -237,6 +284,12 @@ describe("createRoom", () => {
     const result = await createRoom.run(buildRequest({ displayName: "Ace", mode: "hot_potato" }, "host-uid"));
     const room = await getRoom(result.roomId);
     expect(room.mode).toBe("hot_potato");
+  });
+
+  test("honors solo_survival as a requested mode", async () => {
+    const result = await createRoom.run(buildRequest({ displayName: "Ace", mode: "solo_survival" }, "host-uid"));
+    const room = await getRoom(result.roomId);
+    expect(room.mode).toBe("solo_survival");
   });
 
   test("falls back to 'mistake' for an unrecognized mode value instead of trusting client input", async () => {
@@ -399,6 +452,31 @@ describe("beginRound", () => {
     expect(room.status).toBe("playing");
     expect(room.round).toBe(3); // untouched
   });
+
+  test("for 'solo_survival' rooms, seeds every player with their own stimulus and schedules per-player + session timeouts", async () => {
+    await seedRoom({
+      mode: "solo_survival",
+      status: "starting",
+      startsAtMs: Date.now() + 4000,
+      players: {
+        "host-uid": { uid: "host-uid", displayName: "Host", avatarIndex: 0, alive: true, order: 0, joinedAtMs: 0 },
+        "joiner-uid": { uid: "joiner-uid", displayName: "Joiner", avatarIndex: 0, alive: true, order: 1, joinedAtMs: 0 },
+      },
+      turnOrder: ["host-uid", "joiner-uid"],
+    });
+
+    await beginRound.run(buildTaskRequest<{ roomId: string }>({ roomId: "room-1" }));
+
+    const room = await getRoom("room-1");
+    expect(room.status).toBe("playing");
+    expect(room.stimulus).toBeNull(); // room-level stimulus stays unused for this mode
+    expect(room.players["host-uid"].soloStimulus).toBeTruthy();
+    expect(room.players["joiner-uid"].soloStimulus).toBeTruthy();
+    expect(scheduleSoloPlayerTimeoutCheck).toHaveBeenCalledWith("room-1", "host-uid", 0, expect.any(Number));
+    expect(scheduleSoloPlayerTimeoutCheck).toHaveBeenCalledWith("room-1", "joiner-uid", 0, expect.any(Number));
+    expect(scheduleTimeoutCheck).toHaveBeenCalledWith("room-1", 0, 60_000); // shared session-end clock
+    expect(scheduleBombExplosion).not.toHaveBeenCalled();
+  });
 });
 
 describe("submitAnswer", () => {
@@ -470,6 +548,64 @@ describe("submitAnswer", () => {
 
     spy.mockRestore();
   });
+
+  test("dispatches to the solo_survival resolver: a correct answer only advances the acting player's own round", async () => {
+    await seedSoloPlayingRoom(); // "a"'s soloStimulus.inkColor === "BLUE"
+    const result = await submitAnswer.run(buildRequest({ roomId: "room-1", selectedColor: "BLUE" }, "a"));
+
+    expect(result).toEqual({ accepted: true, reason: "correct" });
+    const room = await getRoom("room-1");
+    expect(room.players.a.soloRound).toBe(1);
+    expect(room.players.b.soloRound).toBe(0); // untouched -- no shared turn in this mode
+  });
+
+  test("dispatches to the solo_survival resolver: a wrong answer busts only the acting player", async () => {
+    await seedSoloPlayingRoom(); // "a"'s soloStimulus.inkColor === "BLUE"
+    const result = await submitAnswer.run(buildRequest({ roomId: "room-1", selectedColor: "RED" }, "a"));
+
+    expect(result).toEqual({ accepted: true, reason: "wrong" });
+    const room = await getRoom("room-1");
+    expect(room.players.a.alive).toBe(false);
+    expect(room.players.b.alive).toBe(true); // untouched
+    expect(room.status).toBe("playing"); // "b" is still in it
+  });
+
+  test("solo_survival rejects a caller who has already busted", async () => {
+    await seedSoloPlayingRoom({
+      players: {
+        a: {
+          uid: "a",
+          displayName: "A",
+          avatarIndex: 0,
+          alive: false,
+          order: 0,
+          joinedAtMs: 0,
+          soloScore: 100,
+          soloRound: 1,
+          soloStreak: 0,
+          soloStimulus: null,
+          soloDeadlineAtMs: null,
+        },
+        b: {
+          uid: "b",
+          displayName: "B",
+          avatarIndex: 0,
+          alive: true,
+          order: 1,
+          joinedAtMs: 0,
+          soloScore: 0,
+          soloRound: 0,
+          soloStreak: 0,
+          soloStimulus: { wordLabel: "GREEN", inkColor: "YELLOW", options: ["RED", "GREEN", "BLUE", "YELLOW"] },
+          soloDeadlineAtMs: Date.now() + 3000,
+        },
+      },
+    });
+
+    await expect(
+      submitAnswer.run(buildRequest({ roomId: "room-1", selectedColor: "BLUE" }, "a"))
+    ).rejects.toMatchObject({ code: "failed-precondition" });
+  });
 });
 
 describe("resolveTimeout", () => {
@@ -514,6 +650,84 @@ describe("resolveTimeout", () => {
     spy.mockRestore();
     consoleErrorSpy.mockRestore();
   });
+
+  test("for 'solo_survival' rooms, finishes the whole match once the shared session clock expires", async () => {
+    // solo_survival never advances RoomDoc.round, so it's always scheduled/checked with round 0 (see beginRound).
+    await seedSoloPlayingRoom({ round: 0, deadlineAtMs: Date.now() - 1000 });
+
+    await resolveTimeout.run(buildTaskRequest({ roomId: "room-1", round: 0 }));
+
+    const room = await getRoom("room-1");
+    expect(room.status).toBe("finished");
+    expect(room.winnerUid).toBeTruthy();
+  });
+});
+
+describe("resolveSoloPlayerTimeout", () => {
+  test("busts a player whose own per-stimulus deadline has genuinely expired", async () => {
+    await seedSoloPlayingRoom({
+      players: {
+        a: {
+          uid: "a",
+          displayName: "A",
+          avatarIndex: 0,
+          alive: true,
+          order: 0,
+          joinedAtMs: 0,
+          soloScore: 0,
+          soloRound: 0,
+          soloStreak: 0,
+          soloStimulus: { wordLabel: "RED", inkColor: "BLUE", options: ["RED", "GREEN", "BLUE", "YELLOW"] },
+          soloDeadlineAtMs: Date.now() - 1000,
+        },
+        b: {
+          uid: "b",
+          displayName: "B",
+          avatarIndex: 0,
+          alive: true,
+          order: 1,
+          joinedAtMs: 0,
+          soloScore: 0,
+          soloRound: 0,
+          soloStreak: 0,
+          soloStimulus: { wordLabel: "GREEN", inkColor: "YELLOW", options: ["RED", "GREEN", "BLUE", "YELLOW"] },
+          soloDeadlineAtMs: Date.now() + 3000,
+        },
+      },
+    });
+
+    await resolveSoloPlayerTimeout.run(buildTaskRequest({ roomId: "room-1", uid: "a", round: 0 }));
+
+    const room = await getRoom("room-1");
+    expect(room.players.a.alive).toBe(false);
+    expect(room.players.b.alive).toBe(true); // untouched -- own independent deadline, not yet reached
+  });
+
+  test("no-ops when the player's round is already stale (they already answered)", async () => {
+    await seedSoloPlayingRoom({
+      players: {
+        a: {
+          uid: "a",
+          displayName: "A",
+          avatarIndex: 0,
+          alive: true,
+          order: 0,
+          joinedAtMs: 0,
+          soloScore: 110,
+          soloRound: 1, // already advanced past round 0
+          soloStreak: 1,
+          soloStimulus: { wordLabel: "RED", inkColor: "BLUE", options: ["RED", "GREEN", "BLUE", "YELLOW"] },
+          soloDeadlineAtMs: Date.now() + 3000,
+        },
+      },
+    });
+
+    await resolveSoloPlayerTimeout.run(buildTaskRequest({ roomId: "room-1", uid: "a", round: 0 }));
+
+    const room = await getRoom("room-1");
+    expect(room.players.a.alive).toBe(true); // untouched
+    expect(room.players.a.soloRound).toBe(1);
+  });
 });
 
 describe("onPresenceChanged", () => {
@@ -547,6 +761,17 @@ describe("onPresenceChanged", () => {
 
     const room = await getRoom("room-1");
     expect(room.players.c.alive).toBe(true);
+  });
+
+  test("busts only the disconnecting player in 'solo_survival' mode, leaving the other's run untouched", async () => {
+    await seedSoloPlayingRoom();
+
+    await onPresenceChanged.run(buildPresenceEvent("room-1", "a", { state: "offline" }));
+
+    const room = await getRoom("room-1");
+    expect(room.players.a.alive).toBe(false);
+    expect(room.players.b.alive).toBe(true);
+    expect(room.status).toBe("playing"); // "b" is still in it
   });
 
   test("swallows and logs when resolveRound throws instead of rejecting", async () => {

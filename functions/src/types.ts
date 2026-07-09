@@ -7,8 +7,10 @@ export type RoomStatus = "waiting" | "starting" | "playing" | "finished";
 // "hot_potato": turn only passes forward on a CORRECT answer; wrong/timeout just
 //   re-prompts the same holder. The only way to be eliminated is holding the
 //   turn when the hidden bomb (rooms/{roomId}/private/bomb) goes off.
-// "solo_survival": reserved for the future per-player simultaneous mode -- not
-//   wired into resolveRound/resolveHotPotato yet.
+// "solo_survival": no shared turn order at all -- every player runs their own
+//   independent Stroop session (own stimulus/round/score, one mistake or
+//   timeout busts just that player) under one shared room-level session clock.
+//   Highest score when the clock runs out wins. See soloSurvival.ts.
 export type GameModeId = "mistake" | "hot_potato" | "solo_survival";
 
 export interface RoomPlayerDoc {
@@ -18,6 +20,17 @@ export interface RoomPlayerDoc {
   alive: boolean;
   order: number;
   joinedAtMs: number;
+  // solo_survival only -- undefined/unused in mistake and hot_potato rooms.
+  // Each player answers against their OWN stimulus/deadline instead of the
+  // room's shared ones (RoomDoc.stimulus/deadlineAtMs are repurposed for this
+  // mode: deadlineAtMs becomes the shared session-end clock, stimulus stays
+  // null). alive here means "hasn't busted yet", same meaning as the other
+  // modes, just scoped to this player's own run instead of a shared turn order.
+  soloScore?: number;
+  soloRound?: number;
+  soloStreak?: number;
+  soloStimulus?: StimulusDoc | null;
+  soloDeadlineAtMs?: number | null;
 }
 
 export type StimulusDoc = Stimulus;

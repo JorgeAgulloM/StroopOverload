@@ -10,7 +10,13 @@ import { generateStimulus } from "./stimulus";
 import { timeLimitMsForRound } from "./turnLogic";
 import { resolveRound } from "./resolveRound";
 import { armBomb, explodeBomb as explodeBombFn, resolveHotPotatoTurn } from "./resolveHotPotato";
-import { scheduleTimeoutCheck, scheduleGameStart } from "./taskQueue";
+import {
+  beginSoloSurvivalMatch,
+  finishSoloSurvivalSession,
+  resolveSoloAnswer,
+  SOLO_SESSION_DURATION_MS,
+} from "./soloSurvival";
+import { scheduleTimeoutCheck, scheduleGameStart, scheduleSoloPlayerTimeoutCheck } from "./taskQueue";
 
 initializeApp();
 
@@ -157,8 +163,21 @@ export const beginRound = onTaskDispatched<{ roomId: string }>(
     const { roomId } = req.data;
     try {
       const roomRef = roomsCol().doc(roomId);
+      const modeDoc = await roomRef.get();
+      if (!modeDoc.exists) return;
+      const mode = (modeDoc.data() as RoomDoc).mode;
+
+      if (mode === "solo_survival") {
+        const playerDeadlines = await beginSoloSurvivalMatch(roomId);
+        if (playerDeadlines.length === 0) return; // stale/already handled
+        await Promise.all(
+          playerDeadlines.map((d) => scheduleSoloPlayerTimeoutCheck(roomId, d.uid, d.round, d.deadlineAtMs - Date.now()))
+        );
+        await scheduleTimeoutCheck(roomId, 0, SOLO_SESSION_DURATION_MS);
+        return;
+      }
+
       let scheduled: { round: number; deadlineAtMs: number } | null = null;
-      let mode: GameModeId | null = null;
 
       await getFirestore().runTransaction(async (tx) => {
         const doc = await tx.get(roomRef);
@@ -170,7 +189,6 @@ export const beginRound = onTaskDispatched<{ roomId: string }>(
         const deadlineAtMs = Date.now() + timeLimitMsForRound(1);
         tx.update(roomRef, { status: "playing", round: 1, turnIndex: 0, stimulus, deadlineAtMs });
         scheduled = { round: 1, deadlineAtMs };
-        mode = room.mode;
       });
 
       if (scheduled) {
@@ -213,6 +231,18 @@ export const submitAnswer = onCall(async (request) => {
     const doc = await roomRef.get();
     if (!doc.exists) throw new HttpsError("not-found", "Sala no existe.");
     const room = doc.data() as RoomDoc;
+
+    if (room.mode === "solo_survival") {
+      const me = room.players[uid];
+      if (!me || !me.alive) throw new HttpsError("failed-precondition", "Ya estás eliminado.");
+      if (!me.soloStimulus || me.soloDeadlineAtMs == null) throw new HttpsError("failed-precondition", "No hay ronda activa.");
+      if (Date.now() > me.soloDeadlineAtMs) throw new HttpsError("deadline-exceeded", "Se acabó el tiempo.");
+
+      const reason: ResolutionReason = selectedColor === me.soloStimulus.inkColor ? "correct" : "wrong";
+      const applied = await resolveSoloAnswer(roomId, uid, reason, me.soloRound ?? 0);
+      if (!applied) throw new HttpsError("deadline-exceeded", "La ronda ya se resolvió (probablemente por timeout).");
+      return { accepted: true, reason };
+    }
 
     const currentTurnUid = room.turnOrder[room.turnIndex];
     if (currentTurnUid !== uid) throw new HttpsError("permission-denied", "No es tu turno.");
@@ -287,6 +317,14 @@ export const resolveTimeout = onTaskDispatched<ResolveTimeoutTaskData>(
       if (room.status !== "playing" || room.round !== round) return; // stale/already-resolved round
       if (!room.deadlineAtMs || Date.now() < room.deadlineAtMs) return; // hasn't reached its deadline yet
 
+      // solo_survival never advances RoomDoc.round (each player tracks their
+      // own soloRound instead), so it's always scheduled/checked with round 0
+      // -- this is the shared session-end clock, not a per-turn timeout.
+      if (room.mode === "solo_survival") {
+        await finishSoloSurvivalSession(roomId);
+        return;
+      }
+
       const timedOutUid = room.turnOrder[room.turnIndex];
       if (room.mode === "hot_potato") {
         await resolveHotPotatoTurn(roomId, timedOutUid, "timeout", round);
@@ -295,6 +333,37 @@ export const resolveTimeout = onTaskDispatched<ResolveTimeoutTaskData>(
       }
     } catch (err) {
       console.error(`resolveTimeout failed for room ${roomId}, round ${round}`, err);
+      throw err;
+    }
+  }
+);
+
+interface ResolveSoloPlayerTimeoutTaskData {
+  roomId: string;
+  uid: string;
+  round: number;
+}
+
+// solo_survival's per-player equivalent of resolveTimeout: each player has
+// their own stimulus/deadline, so each gets its own scheduled check instead
+// of sharing one room-level timeout.
+export const resolveSoloPlayerTimeout = onTaskDispatched<ResolveSoloPlayerTimeoutTaskData>(
+  { retryConfig: { maxAttempts: 5, minBackoffSeconds: 1 } },
+  async (req) => {
+    const { roomId, uid, round } = req.data;
+    try {
+      const roomRef = roomsCol().doc(roomId);
+      const doc = await roomRef.get();
+      if (!doc.exists) return;
+      const room = doc.data() as RoomDoc;
+      if (room.status !== "playing") return;
+      const player = room.players[uid];
+      if (!player || !player.alive || (player.soloRound ?? 0) !== round) return; // stale/already-resolved
+      if (!player.soloDeadlineAtMs || Date.now() < player.soloDeadlineAtMs) return; // hasn't reached its deadline yet
+
+      await resolveSoloAnswer(roomId, uid, "timeout", round);
+    } catch (err) {
+      console.error(`resolveSoloPlayerTimeout failed for room ${roomId}, uid ${uid}, round ${round}`, err);
       throw err;
     }
   }
@@ -318,6 +387,11 @@ export const onPresenceChanged = onValueWritten("presence/{roomId}/{uid}", async
     // or the bomb goes off (which resolves correctly either way, since the
     // bomb only checks who currently holds the turn).
     if (room.mode === "hot_potato") return;
+
+    if (room.mode === "solo_survival") {
+      await resolveSoloAnswer(roomId, uid, "disconnect", room.players[uid].soloRound ?? 0);
+      return;
+    }
 
     await resolveRound(roomId, uid, "disconnect", room.round);
   } catch (err) {

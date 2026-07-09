@@ -17,3 +17,12 @@ export async function scheduleBombExplosion(roomId: string, delayMs: number): Pr
   const scheduleDelaySeconds = Math.max(1, Math.ceil(delayMs / 1000));
   await queue.enqueue({ roomId }, { scheduleDelaySeconds });
 }
+
+// solo_survival only -- unlike the turn-based modes' single per-round timeout,
+// every player has their own independent stimulus/deadline, so each needs its
+// own scheduled check keyed by (roomId, uid, round).
+export async function scheduleSoloPlayerTimeoutCheck(roomId: string, uid: string, round: number, delayMs: number): Promise<void> {
+  const queue = getFunctions().taskQueue("resolveSoloPlayerTimeout");
+  const scheduleDelaySeconds = Math.max(1, Math.ceil((delayMs + 500) / 1000));
+  await queue.enqueue({ roomId, uid, round }, { scheduleDelaySeconds });
+}
