@@ -193,18 +193,40 @@ describe("resolveSoloAnswer", () => {
     expect(after.players.a.alive).toBe(false);
   });
 
-  test("busting the last alive player finishes the match with the highest scorer as winner", async () => {
+  test("busting every player finishes the match with the highest scorer as winner", async () => {
     await seedRoom();
     await beginSoloSurvivalMatch("room-1");
     // Give "c" a real lead before everyone else busts.
     await resolveSoloAnswer("room-1", "c", "correct", 0);
     await resolveSoloAnswer("room-1", "a", "wrong", 0);
     await resolveSoloAnswer("room-1", "b", "wrong", 0);
-    await resolveSoloAnswer("room-1", "c", "wrong", 1);
+    // The match already finished once "b" busted (leaving only "c" alive --
+    // see the sole-survivor test below), so this 4th call lands on an
+    // already-finished room and is a no-op. Kept to confirm that's safe.
+    const appliedAfterFinish = await resolveSoloAnswer("room-1", "c", "wrong", 1);
 
+    expect(appliedAfterFinish).toBe(false);
     const after = await getRoom();
     expect(after.status).toBe("finished");
     expect(after.winnerUid).toBe("c"); // only player with a nonzero score
+    expect(after.deadlineAtMs).toBeNull();
+  });
+
+  test("busting down to exactly one survivor finishes the match immediately -- no playing on alone", async () => {
+    await seedRoom();
+    await beginSoloSurvivalMatch("room-1");
+    await resolveSoloAnswer("room-1", "c", "correct", 0); // c takes an early lead
+    await resolveSoloAnswer("room-1", "a", "wrong", 0); // a busts, b and c still alive -> continues
+
+    const midway = await getRoom();
+    expect(midway.status).toBe("playing");
+
+    await resolveSoloAnswer("room-1", "b", "wrong", 0); // b busts -> only c remains alive
+
+    const after = await getRoom();
+    expect(after.status).toBe("finished");
+    expect(after.winnerUid).toBe("c");
+    expect(after.players.c.alive).toBe(true); // the sole survivor, not busted themselves
     expect(after.deadlineAtMs).toBeNull();
   });
 

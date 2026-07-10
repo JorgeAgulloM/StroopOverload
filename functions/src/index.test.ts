@@ -559,7 +559,7 @@ describe("submitAnswer", () => {
     expect(room.players.b.soloRound).toBe(0); // untouched -- no shared turn in this mode
   });
 
-  test("dispatches to the solo_survival resolver: a wrong answer busts only the acting player", async () => {
+  test("dispatches to the solo_survival resolver: a wrong answer busts only the acting player, and with only 2 players that ends the match", async () => {
     await seedSoloPlayingRoom(); // "a"'s soloStimulus.inkColor === "BLUE"
     const result = await submitAnswer.run(buildRequest({ roomId: "room-1", selectedColor: "RED" }, "a"));
 
@@ -567,7 +567,10 @@ describe("submitAnswer", () => {
     const room = await getRoom("room-1");
     expect(room.players.a.alive).toBe(false);
     expect(room.players.b.alive).toBe(true); // untouched
-    expect(room.status).toBe("playing"); // "b" is still in it
+    // Only "b" remains alive -- no point playing on solo, so the match ends
+    // immediately with "b" as the sole survivor.
+    expect(room.status).toBe("finished");
+    expect(room.winnerUid).toBe("b");
   });
 
   test("solo_survival rejects a caller who has already busted", async () => {
@@ -763,7 +766,7 @@ describe("onPresenceChanged", () => {
     expect(room.players.c.alive).toBe(true);
   });
 
-  test("busts only the disconnecting player in 'solo_survival' mode, leaving the other's run untouched", async () => {
+  test("busts only the disconnecting player in 'solo_survival' mode, ending the match since only 2 players were in it", async () => {
     await seedSoloPlayingRoom();
 
     await onPresenceChanged.run(buildPresenceEvent("room-1", "a", { state: "offline" }));
@@ -771,7 +774,8 @@ describe("onPresenceChanged", () => {
     const room = await getRoom("room-1");
     expect(room.players.a.alive).toBe(false);
     expect(room.players.b.alive).toBe(true);
-    expect(room.status).toBe("playing"); // "b" is still in it
+    expect(room.status).toBe("finished"); // "b" is the sole survivor
+    expect(room.winnerUid).toBe("b");
   });
 
   test("swallows and logs when resolveRound throws instead of rejecting", async () => {

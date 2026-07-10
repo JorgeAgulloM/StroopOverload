@@ -105,8 +105,11 @@ function highestScoreWinner(players: Readonly<Record<string, RoomPlayerDoc>>): s
  * Resolves one player's answer (or timeout, via the same "wrong" reason) in
  * solo_survival. Unlike resolveRound/resolveHotPotatoTurn there is no shared
  * turn to pass -- a correct answer only ever affects the acting player's own
- * state. If this bust leaves every player busted, the match finishes early
- * instead of waiting out the rest of the session clock.
+ * state. If this bust leaves at most one player still alive, the match
+ * finishes early instead of waiting out the rest of the session clock --
+ * there's no point making a sole survivor keep playing alone once everyone
+ * else has fallen (startGame already guarantees >= 2 players, so "one left"
+ * always means a real win, not a degenerate single-player room).
  */
 export async function resolveSoloAnswer(
   roomId: string,
@@ -131,12 +134,18 @@ export async function resolveSoloAnswer(
 
       if (reason !== "correct") {
         const players = { ...room.players, [actingUid]: { ...me, alive: false, soloStimulus: null, soloDeadlineAtMs: null } };
-        const stillAlive = Object.values(players).some((p) => p.alive);
-        if (!stillAlive) {
+        const survivors = Object.values(players).filter((p) => p.alive);
+        if (survivors.length <= 1) {
+          // Sole survivor wins outright for actually surviving -- unlike the
+          // all-busted or session-timeout finishes below (where nobody's left
+          // standing, or several still are, so score is the only fair
+          // tiebreak), there's no ambiguity here about who "won": whoever's
+          // still alive did, regardless of their score.
+          const winnerUid = survivors.length === 1 ? survivors[0].uid : highestScoreWinner(players);
           tx.update(roomRef, {
             players: withFinalScores(players),
             status: "finished",
-            winnerUid: highestScoreWinner(players),
+            winnerUid,
             deadlineAtMs: null,
           });
         } else {
