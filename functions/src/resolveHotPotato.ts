@@ -3,7 +3,8 @@ import { generateStimulus } from "./stimulus";
 import { nextAliveIndex, soleSurvivor, timeLimitMsForRound } from "./turnLogic";
 import { ResolutionReason, RoomDoc } from "./types";
 import { roomsCol, privateBombDoc } from "./roomRepo";
-import { scheduleTimeoutCheck, scheduleBombExplosion } from "./taskQueue";
+import { scheduleBombExplosion } from "./taskQueue";
+import { applyCorrectAnswer, rankMistakeOrHotPotatoPlayers } from "./scoring";
 
 export const BOMB_MIN_DELAY_MS = 15_000;
 export const BOMB_MAX_DELAY_MS = 30_000;
@@ -22,10 +23,15 @@ export async function armBomb(roomId: string): Promise<void> {
 
 /**
  * Patata Caliente's answer resolution: unlike resolveRound (the "mistake" mode),
- * a wrong/timeout answer never eliminates anyone and never advances the turn --
- * the same player just gets a fresh stimulus and keeps holding it. Only a
- * correct answer passes the turn forward. Elimination only ever happens via
- * the hidden bomb (see explodeBomb below).
+ * a wrong answer never eliminates anyone and never advances the turn -- the
+ * same player just gets a fresh stimulus and keeps holding it. Only a correct
+ * answer passes the turn forward. Elimination only ever happens via the
+ * hidden bomb (see explodeBomb below).
+ *
+ * No timeout task is scheduled for this mode (see beginRound/submitAnswer):
+ * the current holder can take as long as they want between stimuli -- the
+ * only real pressure is the bomb, which is independent of how fast anyone
+ * answers. `reason` can still arrive as "disconnect" for a bystander.
  */
 export async function resolveHotPotatoTurn(
   roomId: string,
@@ -35,41 +41,34 @@ export async function resolveHotPotatoTurn(
 ): Promise<boolean> {
   const roomRef = roomsCol().doc(roomId);
 
-  type Scheduled = { round: number; deadlineAtMs: number } | null;
-  const { applied, scheduled } = await getFirestore().runTransaction<{ applied: boolean; scheduled: Scheduled }>(
-    async (tx) => {
-      const doc = await tx.get(roomRef);
-      if (!doc.exists) return { applied: false, scheduled: null };
-      const room = doc.data() as RoomDoc;
+  return getFirestore().runTransaction<boolean>(async (tx) => {
+    const doc = await tx.get(roomRef);
+    if (!doc.exists) return false;
+    const room = doc.data() as RoomDoc;
 
-      if (room.status !== "playing" || room.round !== roundExpected) return { applied: false, scheduled: null };
-      if (room.turnOrder[room.turnIndex] !== actingUid) return { applied: false, scheduled: null };
+    if (room.status !== "playing" || room.round !== roundExpected) return false;
+    if (room.turnOrder[room.turnIndex] !== actingUid) return false;
 
-      const nextRound = room.round + 1;
-      const stimulus = generateStimulus();
-      const deadlineAtMs = Date.now() + timeLimitMsForRound(nextRound);
+    const nextRound = room.round + 1;
+    const stimulus = generateStimulus();
+    const deadlineAtMs = Date.now() + timeLimitMsForRound(nextRound);
+    const me = room.players[actingUid];
 
-      if (reason === "correct") {
-        const nextIndex = nextAliveIndex(room.turnOrder, room.players, room.turnIndex);
-        tx.update(roomRef, { turnIndex: nextIndex, round: nextRound, stimulus, deadlineAtMs });
-      } else {
-        // Wrong/timeout: no elimination, no turn change -- the current holder
-        // just gets re-prompted. The bomb clock is unaffected either way.
-        tx.update(roomRef, { round: nextRound, stimulus, deadlineAtMs });
-      }
-      return { applied: true, scheduled: { round: nextRound, deadlineAtMs } };
+    if (reason === "correct") {
+      const { score, streak } = applyCorrectAnswer(me.matchScore ?? 0, me.matchStreak ?? 0);
+      const players = { ...room.players, [actingUid]: { ...me, matchScore: score, matchStreak: streak } };
+      const nextIndex = nextAliveIndex(room.turnOrder, room.players, room.turnIndex);
+      tx.update(roomRef, { players, turnIndex: nextIndex, round: nextRound, stimulus, deadlineAtMs });
+    } else {
+      // Wrong (or a stale timeout/disconnect call): no elimination, no turn
+      // change -- the current holder just gets re-prompted. The bomb clock is
+      // unaffected either way. Still breaks their scoring streak, same as a
+      // local-mode miss does.
+      const players = { ...room.players, [actingUid]: { ...me, matchStreak: 0 } };
+      tx.update(roomRef, { players, round: nextRound, stimulus, deadlineAtMs });
     }
-  );
-
-  if (scheduled) {
-    try {
-      await scheduleTimeoutCheck(roomId, scheduled.round, scheduled.deadlineAtMs - Date.now());
-    } catch (err) {
-      console.error(`resolveHotPotatoTurn: failed to schedule timeout for room ${roomId} round ${scheduled.round}`, err);
-    }
-  }
-
-  return applied;
+    return true;
+  });
 }
 
 /**
@@ -87,11 +86,15 @@ export async function explodeBomb(roomId: string): Promise<void> {
     if (room.status !== "playing" || room.mode !== "hot_potato") return "stale";
 
     const holderUid = room.turnOrder[room.turnIndex];
-    const players = { ...room.players, [holderUid]: { ...room.players[holderUid], alive: false } };
+    const players = { ...room.players, [holderUid]: { ...room.players[holderUid], alive: false, eliminatedAtMs: Date.now() } };
 
     const survivor = soleSurvivor(players);
     if (survivor) {
-      tx.update(roomRef, { players, status: "finished", winnerUid: survivor, stimulus: null, deadlineAtMs: null });
+      const finishedPlayers = { ...players };
+      for (const r of rankMistakeOrHotPotatoPlayers(players, survivor)) {
+        finishedPlayers[r.uid] = { ...finishedPlayers[r.uid], placement: r.placement, finalScore: r.finalScore };
+      }
+      tx.update(roomRef, { players: finishedPlayers, status: "finished", winnerUid: survivor, stimulus: null, deadlineAtMs: null });
       return "finished";
     }
 

@@ -193,9 +193,13 @@ export const beginRound = onTaskDispatched<{ roomId: string }>(
 
       if (scheduled) {
         const { round, deadlineAtMs } = scheduled as { round: number; deadlineAtMs: number };
-        await scheduleTimeoutCheck(roomId, round, deadlineAtMs - Date.now());
         if (mode === "hot_potato") {
+          // No timeout task for this mode -- the current holder can take as
+          // long as they want between stimuli; only the hidden bomb (armed
+          // below) applies real pressure. See resolveHotPotato.ts.
           await armBomb(roomId);
+        } else {
+          await scheduleTimeoutCheck(roomId, round, deadlineAtMs - Date.now());
         }
       }
     } catch (err) {
@@ -247,7 +251,11 @@ export const submitAnswer = onCall(async (request) => {
     const currentTurnUid = room.turnOrder[room.turnIndex];
     if (currentTurnUid !== uid) throw new HttpsError("permission-denied", "No es tu turno.");
     if (!room.stimulus || !room.deadlineAtMs) throw new HttpsError("failed-precondition", "No hay ronda activa.");
-    if (Date.now() > room.deadlineAtMs) throw new HttpsError("deadline-exceeded", "Se acabó el tiempo.");
+    // hot_potato has no enforced per-stimulus deadline (see resolveHotPotato.ts) --
+    // the holder can answer whenever, so a late answer here is never stale.
+    if (room.mode !== "hot_potato" && Date.now() > room.deadlineAtMs) {
+      throw new HttpsError("deadline-exceeded", "Se acabó el tiempo.");
+    }
 
     // `selectedColor` is compared against the stimulus's ink color as a plain
     // string equality check. Any value that isn't an exact match --
@@ -325,12 +333,16 @@ export const resolveTimeout = onTaskDispatched<ResolveTimeoutTaskData>(
         return;
       }
 
-      const timedOutUid = room.turnOrder[room.turnIndex];
       if (room.mode === "hot_potato") {
-        await resolveHotPotatoTurn(roomId, timedOutUid, "timeout", round);
-      } else {
-        await resolveRound(roomId, timedOutUid, "timeout", round);
+        // No timeout task is scheduled for this mode anymore (see beginRound) --
+        // guard kept only in case an already-scheduled task from before this
+        // change ever fires; resolveRound's elimination logic must never run
+        // against a hot_potato room.
+        return;
       }
+
+      const timedOutUid = room.turnOrder[room.turnIndex];
+      await resolveRound(roomId, timedOutUid, "timeout", round);
     } catch (err) {
       console.error(`resolveTimeout failed for room ${roomId}, round ${round}`, err);
       throw err;

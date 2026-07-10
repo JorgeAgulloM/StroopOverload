@@ -4,6 +4,7 @@ import { nextAliveIndex, soleSurvivor, timeLimitMsForRound } from "./turnLogic";
 import { ResolutionReason, RoomDoc } from "./types";
 import { roomsCol } from "./roomRepo";
 import { scheduleTimeoutCheck } from "./taskQueue";
+import { applyCorrectAnswer, rankMistakeOrHotPotatoPlayers } from "./scoring";
 
 export async function resolveRound(
   roomId: string,
@@ -34,14 +35,22 @@ export async function resolveRound(
     if (room.status !== "playing" || room.round !== roundExpected) return { applied: false, scheduled: null };
 
     const players = { ...room.players };
-    if (reason !== "correct" && actingUid && players[actingUid]) {
-      players[actingUid] = { ...players[actingUid], alive: false };
+    if (reason === "correct" && actingUid && players[actingUid]) {
+      const me = players[actingUid];
+      const { score, streak } = applyCorrectAnswer(me.matchScore ?? 0, me.matchStreak ?? 0);
+      players[actingUid] = { ...me, matchScore: score, matchStreak: streak };
+    } else if (reason !== "correct" && actingUid && players[actingUid]) {
+      players[actingUid] = { ...players[actingUid], alive: false, eliminatedAtMs: Date.now() };
     }
 
     const survivor = soleSurvivor(players);
     if (survivor) {
+      const finishedPlayers = { ...players };
+      for (const r of rankMistakeOrHotPotatoPlayers(players, survivor)) {
+        finishedPlayers[r.uid] = { ...finishedPlayers[r.uid], placement: r.placement, finalScore: r.finalScore };
+      }
       tx.update(roomRef, {
-        players,
+        players: finishedPlayers,
         status: "finished",
         winnerUid: survivor,
         stimulus: null,

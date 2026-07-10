@@ -4,6 +4,15 @@ import { timeLimitMsForRound } from "./turnLogic";
 import { ResolutionReason, RoomDoc, RoomPlayerDoc } from "./types";
 import { roomsCol } from "./roomRepo";
 import { scheduleSoloPlayerTimeoutCheck } from "./taskQueue";
+import { rankSoloSurvivalPlayers } from "./scoring";
+
+function withFinalScores(players: Readonly<Record<string, RoomPlayerDoc>>): Record<string, RoomPlayerDoc> {
+  const ranked = { ...players };
+  for (const r of rankSoloSurvivalPlayers(players)) {
+    ranked[r.uid] = { ...ranked[r.uid], placement: r.placement, finalScore: r.finalScore };
+  }
+  return ranked;
+}
 
 // Mirrors the Android client's single-player ENDLESS mode (GameConfig.kt):
 // every 5 rounds is one "level", and the per-stimulus time limit decays per
@@ -125,7 +134,7 @@ export async function resolveSoloAnswer(
         const stillAlive = Object.values(players).some((p) => p.alive);
         if (!stillAlive) {
           tx.update(roomRef, {
-            players,
+            players: withFinalScores(players),
             status: "finished",
             winnerUid: highestScoreWinner(players),
             deadlineAtMs: null,
@@ -183,6 +192,7 @@ export async function finishSoloSurvivalSession(roomId: string): Promise<void> {
     if (room.status !== "playing") return; // already finished (all-busted early finish, or stale)
 
     tx.update(roomRef, {
+      players: withFinalScores(room.players),
       status: "finished",
       winnerUid: highestScoreWinner(room.players),
       deadlineAtMs: null,

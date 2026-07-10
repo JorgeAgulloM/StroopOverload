@@ -31,6 +31,21 @@ export interface RoomPlayerDoc {
   soloStreak?: number;
   soloStimulus?: StimulusDoc | null;
   soloDeadlineAtMs?: number | null;
+  // mistake/hot_potato only -- solo_survival tracks the same idea via
+  // soloScore/soloStreak instead. Accumulated live via scoring.ts's
+  // applyCorrectAnswer whenever this player answers correctly.
+  matchScore?: number;
+  matchStreak?: number;
+  // mistake/hot_potato only -- server timestamp of this player's elimination,
+  // used to rank non-winners by "survived longest" once the match finishes
+  // (a hot_potato match with 3-4 players can have several bomb explosions
+  // before it ends, so this can accumulate more than one elimination just
+  // like mistake mode).
+  eliminatedAtMs?: number | null;
+  // Set once, at match finish, by scoring.ts's rank*Players helpers. 1-based;
+  // 1 == winner. finalScore is the profile points this player earned.
+  placement?: number | null;
+  finalScore?: number | null;
 }
 
 export type StimulusDoc = Stimulus;

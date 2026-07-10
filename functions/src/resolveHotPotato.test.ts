@@ -121,10 +121,13 @@ describe("resolveHotPotatoTurn", () => {
     expect(after.turnIndex).toBe(1); // moved to "b"
     expect(after.round).toBe(2);
     expect(after.players.a.alive).toBe(true);
-    expect(scheduleTimeoutCheck).toHaveBeenCalledWith("room-1", 2, expect.any(Number));
+    // No timeout task is ever scheduled for this mode -- the holder can take
+    // as long as they want between stimuli; only armBomb's task applies
+    // real pressure.
+    expect(scheduleTimeoutCheck).not.toHaveBeenCalled();
   });
 
-  test("a wrong answer re-prompts the same holder: no elimination, no turn change", async () => {
+  test("a wrong answer re-prompts the same holder: no elimination, no turn change, no timeout scheduled", async () => {
     await seedRoom();
     const applied = await resolveHotPotatoTurn("room-1", "a", "wrong", 1);
 
@@ -133,15 +136,17 @@ describe("resolveHotPotatoTurn", () => {
     expect(after.turnIndex).toBe(0); // still "a"
     expect(after.round).toBe(2); // fresh prompt, but same holder
     expect(after.players.a.alive).toBe(true);
+    expect(scheduleTimeoutCheck).not.toHaveBeenCalled();
   });
 
-  test("a timeout re-prompts the same holder just like a wrong answer", async () => {
+  test("a stale timeout call (defense in depth, no longer scheduled in practice) still re-prompts safely", async () => {
     await seedRoom();
     await resolveHotPotatoTurn("room-1", "a", "timeout", 1);
 
     const after = await getRoom();
     expect(after.turnIndex).toBe(0);
     expect(after.players.a.alive).toBe(true);
+    expect(scheduleTimeoutCheck).not.toHaveBeenCalled();
   });
 
   test("rejects a caller who isn't the current turn-holder", async () => {
