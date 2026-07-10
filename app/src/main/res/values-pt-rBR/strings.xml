@@ -131,6 +131,9 @@
     <string name="profile_discard">DESCARTAR</string>
     <string name="profile_xp_progress_label">PROGRESSO DE XP SINÁPTICO</string>
     <string name="profile_xp_progress_value">%1$d / %2$d XP</string>
+    <string name="profile_audio_section_header">[ ÁUDIO ]</string>
+    <string name="profile_audio_music_toggle">MÚSICA</string>
+    <string name="profile_audio_sfx_toggle">EFEITOS SONOROS</string>
     <string name="profile_career_stats_header">[ TELEMETRIA // ESTATÍSTICAS DE CARREIRA ]</string>
     <string name="profile_stat_total_runs">PARTIDAS TOTAIS</string>
     <string name="profile_stat_victories">VITÓRIAS</string>

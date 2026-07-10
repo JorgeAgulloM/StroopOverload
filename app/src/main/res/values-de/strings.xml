@@ -131,6 +131,9 @@
     <string name="profile_discard">VERWERFEN</string>
     <string name="profile_xp_progress_label">SYNAPSEN-XP-FORTSCHRITT</string>
     <string name="profile_xp_progress_value">%1$d / %2$d XP</string>
+    <string name="profile_audio_section_header">[ AUDIO ]</string>
+    <string name="profile_audio_music_toggle">MUSIK</string>
+    <string name="profile_audio_sfx_toggle">SOUNDEFFEKTE</string>
     <string name="profile_career_stats_header">[ TELEMETRIE // KARRIERE-STATISTIK ]</string>
     <string name="profile_stat_total_runs">SPIELE GESAMT</string>
     <string name="profile_stat_victories">SIEGE</string>

@@ -1,12 +1,23 @@
 package com.softyorch.stroopoverload.ui
 
 import android.app.Application
+import androidx.activity.compose.LocalActivity
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import com.softyorch.stroopoverload.BuildConfig
+import com.softyorch.stroopoverload.R
+import com.softyorch.stroopoverload.ads.AdsConsentManager
+import com.softyorch.stroopoverload.ads.InterstitialAdManager
+import com.softyorch.stroopoverload.audio.MusicManager
+import com.softyorch.stroopoverload.audio.MusicTrack
 import com.softyorch.stroopoverload.data.AsoDemoSeeder
 import com.softyorch.stroopoverload.data.AuthService
 import com.softyorch.stroopoverload.data.FirebaseGameRepository
@@ -40,6 +51,16 @@ private const val ROUTE_LEADERBOARD = "leaderboard"
 private const val ROUTE_MULTIPLAYER = "multiplayer"
 private const val ROUTE_PROFILE = "profile"
 
+// Shared by local single-player (ROUTE_GAME below) and online gameplay
+// (MultiplayerScreen's own PLAYING/FINISHED sub-state) -- same "active match"
+// music context either way.
+val GAMEPLAY_MUSIC_TRACKS = listOf(
+    R.raw.music_gameplay_01,
+    R.raw.music_gameplay_02,
+    R.raw.music_gameplay_03,
+    R.raw.music_gameplay_04,
+)
+
 @Composable
 fun StroopNavGraph() {
     val context = LocalContext.current
@@ -47,7 +68,46 @@ fun StroopNavGraph() {
     val navController = rememberNavController()
     val authService = remember { AuthService() }
     val repository = remember { FirebaseGameRepository.getInstance(context) }
+    val adsConsentManager = remember { AdsConsentManager(context) }
+    val interstitialAdManager = remember { InterstitialAdManager(BuildConfig.AD_UNIT_INTERSTITIAL_ONLINE) }
+    val musicManager = remember { MusicManager(context) }
     val scope = rememberCoroutineScope()
+
+    DisposableEffect(Unit) {
+        onDispose { musicManager.release() }
+    }
+
+    // Screen off (or any other loss of foreground -- recents, a system
+    // dialog, an interstitial ad activity) triggers ON_PAUSE on the hosting
+    // Activity before Android actually stops it, so this is the earliest
+    // reliable hook to cut music instead of leaving it playing behind a
+    // locked screen.
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner, musicManager) {
+        val observer = LifecycleEventObserver { _, event ->
+            when (event) {
+                Lifecycle.Event.ON_PAUSE -> musicManager.pause()
+                Lifecycle.Event.ON_RESUME -> musicManager.resume()
+                else -> Unit
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
+
+    // Single source of truth for route-level music. ROUTE_MULTIPLAYER is
+    // deliberately excluded -- it owns its own music switching internally
+    // across its lobby/waiting/gameplay sub-states (see MultiplayerScreen).
+    val backStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = backStackEntry?.destination?.route
+    LaunchedEffect(currentRoute) {
+        when (currentRoute) {
+            ROUTE_HOME -> musicManager.setTrack(MusicTrack.Loop(R.raw.music_dashboard))
+            ROUTE_GAME -> musicManager.setTrack(MusicTrack.Playlist(GAMEPLAY_MUSIC_TRACKS))
+            ROUTE_MULTIPLAYER -> Unit
+            else -> musicManager.setTrack(null)
+        }
+    }
 
     var currentProfile by remember { mutableStateOf(UserProfile()) }
     var previousHighScore by remember { mutableIntStateOf(0) }
@@ -59,7 +119,7 @@ fun StroopNavGraph() {
 
     val startRoute = remember {
         AsoDemoSeeder.seedIfNeeded(context)
-        val isDemoShowcaseBuild = com.softyorch.stroopoverload.BuildConfig.FLAVOR == "demo"
+        val isDemoShowcaseBuild = BuildConfig.FLAVOR == "demo"
         if (authService.currentUid == null && !isDemoShowcaseBuild) ROUTE_AUTH else ROUTE_HOME
     }
 
@@ -85,6 +145,17 @@ fun StroopNavGraph() {
             LaunchedEffect(Unit) {
                 currentProfile = repository.getProfile()
                 previousHighScore = currentProfile.highScore
+            }
+            // Ask for ad consent (GDPR/UMP) once we reach a real screen with an
+            // Activity available, then preload the online-match interstitial so
+            // it's ready by the time the player actually creates/joins a room.
+            val activity = LocalActivity.current
+            LaunchedEffect(activity) {
+                activity?.let {
+                    adsConsentManager.requestConsentIfNeeded(it) {
+                        interstitialAdManager.preload(it)
+                    }
+                }
             }
             HomeScreen(
                 profile = currentProfile,
@@ -121,6 +192,7 @@ fun StroopNavGraph() {
 
             GameScreen(
                 viewModel = gameVm,
+                isAdFree = currentProfile.isAdFree || currentProfile.isPremium,
                 onGameOver = { result ->
                     val playingState = gameState as? GameState.Playing
                     val streak = playingState?.currentStreak ?: 0
@@ -167,6 +239,9 @@ fun StroopNavGraph() {
                 myUid = authService.currentUid ?: "guest_local_0001",
                 myNickname = currentProfile.displayName,
                 repository = repository,
+                interstitialAdManager = interstitialAdManager,
+                isAdFree = currentProfile.isAdFree || currentProfile.isPremium,
+                musicManager = musicManager,
             )
         }
         composable(ROUTE_PROFILE) {

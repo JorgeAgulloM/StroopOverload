@@ -28,6 +28,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.softyorch.stroopoverload.R
+import com.softyorch.stroopoverload.audio.AudioPlayer
+import com.softyorch.stroopoverload.audio.GameSfx
 import com.softyorch.stroopoverload.core.GameConfig
 import com.softyorch.stroopoverload.core.StroopColor
 import com.softyorch.stroopoverload.domain.multiplayer.MultiplayerRoom
@@ -45,6 +47,7 @@ fun MultiplayerGameScreen(
     myUid: String,
     onColorTapped: (StroopColor) -> Unit,
     onExit: () -> Unit,
+    audioPlayer: AudioPlayer,
 ) {
     val myTurn = room.canAnswer(myUid)
 
@@ -125,7 +128,7 @@ fun MultiplayerGameScreen(
             }
 
             when (room.status) {
-                RoomStatus.PLAYING -> PlayingContent(room, myTurn, onColorTapped)
+                RoomStatus.PLAYING -> PlayingContent(room, myTurn, onColorTapped, audioPlayer)
                 // Rendered as a full-screen overlay below instead, so it can float over
                 // the roster/timer rather than being squeezed into the remaining weight.
                 RoomStatus.FINISHED -> Unit
@@ -137,13 +140,13 @@ fun MultiplayerGameScreen(
         }
 
         if (room.status == RoomStatus.FINISHED) {
-            MatchFinishedOverlay(room = room, myUid = myUid, onExit = onExit)
+            MatchFinishedOverlay(room = room, myUid = myUid, onExit = onExit, audioPlayer = audioPlayer)
         }
     }
 }
 
 @Composable
-private fun ColumnScope.PlayingContent(room: MultiplayerRoom, myTurn: Boolean, onColorTapped: (StroopColor) -> Unit) {
+private fun ColumnScope.PlayingContent(room: MultiplayerRoom, myTurn: Boolean, onColorTapped: (StroopColor) -> Unit, audioPlayer: AudioPlayer) {
     val stimulus = room.stimulus
     if (stimulus == null) {
         Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
@@ -163,7 +166,12 @@ private fun ColumnScope.PlayingContent(room: MultiplayerRoom, myTurn: Boolean, o
     // a fresh stimulus, so the flash naturally clears once that arrives.
     var missFlashColor by remember(room.round) { mutableStateOf<StroopColor?>(null) }
     val handleTap: (StroopColor) -> Unit = { tapped ->
-        if (tapped != stimulus.correctAnswer) missFlashColor = stimulus.correctAnswer
+        if (tapped == stimulus.correctAnswer) {
+            audioPlayer.play(GameSfx.TAP_CORRECT)
+        } else {
+            missFlashColor = stimulus.correctAnswer
+            audioPlayer.play(GameSfx.TAP_WRONG)
+        }
         onColorTapped(tapped)
     }
 

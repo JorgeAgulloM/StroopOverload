@@ -8,6 +8,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -20,9 +21,12 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.softyorch.stroopoverload.R
+import com.softyorch.stroopoverload.audio.AudioPlayer
+import com.softyorch.stroopoverload.audio.GameSfx
 import com.softyorch.stroopoverload.domain.multiplayer.MultiplayerRoom
 import com.softyorch.stroopoverload.domain.multiplayer.RoomMode
 import com.softyorch.stroopoverload.domain.multiplayer.RoomPlayer
+import com.softyorch.stroopoverload.ui.components.hudCornerBrackets
 import com.softyorch.stroopoverload.ui.theme.Muted
 import com.softyorch.stroopoverload.ui.theme.NeonYellow
 import com.softyorch.stroopoverload.ui.theme.TechAccent
@@ -37,10 +41,18 @@ import com.softyorch.stroopoverload.ui.theme.TechAccent
  * mode-specific ranking logic.
  */
 @Composable
-fun MatchFinishedOverlay(room: MultiplayerRoom, myUid: String, onExit: () -> Unit) {
+fun MatchFinishedOverlay(room: MultiplayerRoom, myUid: String, onExit: () -> Unit, audioPlayer: AudioPlayer) {
     val winner = room.players.firstOrNull { it.uid == room.winnerUid }
     val iWon = room.winnerUid == myUid
     val matchStartMs = room.startsAtMs ?: room.createdAtMs
+
+    // Dedicated CTA stinger, distinct from the tap/match-start SFX -- this is
+    // the modal announcing the result, not just a state flip, so it gets its
+    // own richer sound. Keyed on roomId (not iWon) so it fires exactly once
+    // per match, not on every recomposition while the dialog is visible.
+    LaunchedEffect(room.roomId) {
+        audioPlayer.play(if (iWon) GameSfx.RESULT_VICTORY else GameSfx.RESULT_DEFEAT)
+    }
     // Captured once, the instant this dialog first composes -- a fine enough
     // approximation of "when the match ended" since FINISHED just arrived.
     val finishedAtMs = remember(room.roomId) { System.currentTimeMillis() }
@@ -56,7 +68,8 @@ fun MatchFinishedOverlay(room: MultiplayerRoom, myUid: String, onExit: () -> Uni
                 .fillMaxHeight(0.86f)
                 .clip(RoundedCornerShape(16.dp))
                 .background(MaterialTheme.colorScheme.surface)
-                .border(1.dp, TechAccent, RoundedCornerShape(16.dp)),
+                .border(1.dp, TechAccent, RoundedCornerShape(16.dp))
+                .hudCornerBrackets(TechAccent, length = 18.dp, inset = 8.dp),
         ) {
             Column(
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 18.dp),

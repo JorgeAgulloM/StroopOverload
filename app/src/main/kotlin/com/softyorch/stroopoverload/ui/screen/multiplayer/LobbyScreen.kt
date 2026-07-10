@@ -16,6 +16,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.softyorch.stroopoverload.R
 import com.softyorch.stroopoverload.domain.multiplayer.RoomMode
+import com.softyorch.stroopoverload.ui.components.hudCornerBrackets
 import com.softyorch.stroopoverload.ui.theme.Muted
 import com.softyorch.stroopoverload.ui.theme.TechAccent
 
@@ -113,12 +114,16 @@ fun LobbyScreen(
 
 @Composable
 private fun ModeCard(mode: RoomMode, selected: Boolean, enabled: Boolean, onClick: () -> Unit) {
-    val borderColor = if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline
+    // A soft filled `primaryContainer` selected-state (the generic Material
+    // chip look) reads as safe/default, not "Aggressive. Electric. Sharp."
+    // (PRODUCT.md) -- selection here is a tactical-HUD corner-bracket
+    // "targeting reticle" instead, on an always-dark surface.
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .border(if (selected) 2.dp else 1.dp, borderColor, RoundedCornerShape(8.dp))
-            .background(if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface)
+            .border(1.dp, if (selected) TechAccent else MaterialTheme.colorScheme.outline, RoundedCornerShape(4.dp))
+            .background(MaterialTheme.colorScheme.surface)
+            .then(if (selected) Modifier.hudCornerBrackets(TechAccent, inset = 3.dp) else Modifier)
             .clickable(enabled = enabled, onClick = onClick)
             .padding(16.dp),
     ) {

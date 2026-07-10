@@ -1,9 +1,21 @@
+import java.io.FileInputStream
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.google.services)
 }
+
+// AdMob ad unit IDs, keyed by product flavor -- see admob/admob.properties.example for the
+// expected keys. The real file is gitignored; falls back to Google's public test IDs if it's
+// missing so a fresh checkout still builds (just shows test ads instead of configured ones).
+val adMobProperties = Properties().apply {
+    val file = rootProject.file("admob/admob.properties")
+    if (file.exists()) load(FileInputStream(file))
+}
+fun adMobProperty(key: String): String = (adMobProperties[key] as? String)?.trim().orEmpty()
 
 android {
     namespace = "com.softyorch.stroopoverload"
@@ -21,11 +33,19 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+
+            manifestPlaceholders["admobAppId"] =
+                adMobProperty("PROD_KEY_ID_ADMOB_APP").ifBlank { "ca-app-pub-3940256099942544~3347511713" }
+            buildConfigField("boolean", "ADS_ENABLED", "true")
+            buildConfigField("String", "AD_UNIT_NATIVE_DASHBOARD", "\"${adMobProperty("PROD_KEY_ID_NATIVE_DASHBOARD")}\"")
+            buildConfigField("String", "AD_UNIT_NATIVE_GAME", "\"${adMobProperty("PROD_KEY_ID_NATIVE_GAME")}\"")
+            buildConfigField("String", "AD_UNIT_INTERSTITIAL_ONLINE", "\"${adMobProperty("PROD_KEY_ID_INTERSTITIAL_ONLINE")}\"")
         }
     }
     flavorDimensions += "environment"
@@ -34,13 +54,22 @@ android {
             dimension = "environment"
             applicationIdSuffix = ".dev"
             versionNameSuffix = "-dev"
-        }
-        create("prod") {
-            dimension = "environment"
+            manifestPlaceholders["admobAppId"] = adMobProperty("DEV_KEY_ID_ADMOB_APP")
+                .ifBlank { "ca-app-pub-3940256099942544~3347511713" } // Google's public test app ID
+            buildConfigField("boolean", "ADS_ENABLED", "true")
+            buildConfigField("String", "AD_UNIT_NATIVE_DASHBOARD", "\"${adMobProperty("DEV_KEY_ID_NATIVE_DASHBOARD")}\"")
+            buildConfigField("String", "AD_UNIT_NATIVE_GAME", "\"${adMobProperty("DEV_KEY_ID_NATIVE_GAME")}\"")
+            buildConfigField("String", "AD_UNIT_INTERSTITIAL_ONLINE", "\"${adMobProperty("DEV_KEY_ID_INTERSTITIAL_ONLINE")}\"")
         }
         create("demo") {
             dimension = "environment"
             versionNameSuffix = "-demo"
+            // Demo builds are the App Store review/showcase flavor -- never show ads there.
+            manifestPlaceholders["admobAppId"] = "ca-app-pub-3940256099942544~3347511713"
+            buildConfigField("boolean", "ADS_ENABLED", "false")
+            buildConfigField("String", "AD_UNIT_NATIVE_DASHBOARD", "\"\"")
+            buildConfigField("String", "AD_UNIT_NATIVE_GAME", "\"\"")
+            buildConfigField("String", "AD_UNIT_INTERSTITIAL_ONLINE", "\"\"")
         }
     }
     compileOptions {
@@ -73,6 +102,8 @@ dependencies {
     implementation(libs.firebase.database)
     implementation(libs.firebase.functions)
     implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.play.services.ads)
+    implementation(libs.google.ump)
 
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)

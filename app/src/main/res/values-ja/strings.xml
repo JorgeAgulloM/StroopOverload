@@ -131,6 +131,9 @@
     <string name="profile_discard">破棄</string>
     <string name="profile_xp_progress_label">シナプスXP進捗</string>
     <string name="profile_xp_progress_value">%1$d / %2$d XP</string>
+    <string name="profile_audio_section_header">[ オーディオ ]</string>
+    <string name="profile_audio_music_toggle">音楽</string>
+    <string name="profile_audio_sfx_toggle">効果音</string>
     <string name="profile_career_stats_header">[ テレメトリー // 通算成績 ]</string>
     <string name="profile_stat_total_runs">総プレイ回数</string>
     <string name="profile_stat_victories">勝利数</string>

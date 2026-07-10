@@ -18,7 +18,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.softyorch.stroopoverload.BuildConfig
 import com.softyorch.stroopoverload.R
+import com.softyorch.stroopoverload.ads.NativeAdBanner
 import com.softyorch.stroopoverload.domain.UserProfile
 import com.softyorch.stroopoverload.domain.XpSystem
 import com.softyorch.stroopoverload.ui.theme.*
@@ -183,13 +185,23 @@ fun HomeScreen(
             }
         }
 
-        // Footer HUD Info
-        Text(
-            text = stringResource(R.string.home_footer),
-            style = MaterialTheme.typography.bodySmall,
-            color = Muted,
-            fontSize = 10.sp,
-            modifier = Modifier.align(Alignment.BottomCenter)
-        )
+        // Footer HUD Info + dashboard native ad
+        Column(
+            modifier = Modifier.align(Alignment.BottomCenter).fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text(
+                text = stringResource(R.string.home_footer),
+                style = MaterialTheme.typography.bodySmall,
+                color = Muted,
+                fontSize = 10.sp,
+            )
+            Spacer(Modifier.height(8.dp))
+            NativeAdBanner(
+                adUnitId = BuildConfig.AD_UNIT_NATIVE_DASHBOARD,
+                isAdFree = profile.isAdFree || profile.isPremium,
+                modifier = Modifier.fillMaxWidth().height(72.dp),
+            )
+        }
     }
 }

@@ -131,6 +131,9 @@
     <string name="profile_discard">ANNULER</string>
     <string name="profile_xp_progress_label">PROGRESSION XP SYNAPTIQUE</string>
     <string name="profile_xp_progress_value">%1$d / %2$d XP</string>
+    <string name="profile_audio_section_header">[ AUDIO ]</string>
+    <string name="profile_audio_music_toggle">MUSIQUE</string>
+    <string name="profile_audio_sfx_toggle">EFFETS SONORES</string>
     <string name="profile_career_stats_header">[ TÉLÉMÉTRIE // STATISTIQUES DE CARRIÈRE ]</string>
     <string name="profile_stat_total_runs">PARTIES TOTALES</string>
     <string name="profile_stat_victories">VICTOIRES</string>

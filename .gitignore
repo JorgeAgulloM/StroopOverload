@@ -14,6 +14,9 @@ gradle/wrapper/gradle-wrapper.jar
 # Firebase — must be added manually from Firebase console
 app/google-services.json
 
+# AdMob — real ad unit IDs, not test IDs; see admob/admob.properties.example
+admob/admob.properties
+
 # Firebase Cloud Functions
 functions/node_modules/
 functions/lib/

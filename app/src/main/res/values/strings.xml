@@ -131,6 +131,9 @@
     <string name="profile_discard">DISCARD</string>
     <string name="profile_xp_progress_label">SYNAPSE XP PROGRESS</string>
     <string name="profile_xp_progress_value">%1$d / %2$d XP</string>
+    <string name="profile_audio_section_header">[ AUDIO ]</string>
+    <string name="profile_audio_music_toggle">MUSIC</string>
+    <string name="profile_audio_sfx_toggle">SOUND EFFECTS</string>
     <string name="profile_career_stats_header">[ TELEMETRY // CAREER STATS ]</string>
     <string name="profile_stat_total_runs">TOTAL RUNS</string>
     <string name="profile_stat_victories">VICTORIES</string>

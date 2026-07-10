@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.sp
 import com.softyorch.stroopoverload.R
 import com.softyorch.stroopoverload.domain.multiplayer.MultiplayerRoom
 import com.softyorch.stroopoverload.domain.multiplayer.RoomPlayer
+import com.softyorch.stroopoverload.ui.components.hudCornerBrackets
 import com.softyorch.stroopoverload.ui.theme.Muted
 import com.softyorch.stroopoverload.ui.theme.TechAccent
 import com.softyorch.stroopoverload.ui.theme.TechBorder
@@ -69,12 +70,14 @@ fun WaitingRoomScreen(
 
             Spacer(Modifier.height(20.dp))
 
-            // Room code — tap to copy
+            // Room code — tap to copy. The card players stare at most while
+            // waiting, so it gets the tactical-HUD bracket treatment.
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .border(1.dp, TechAccent, RoundedCornerShape(8.dp))
                     .background(MaterialTheme.colorScheme.surface)
+                    .hudCornerBrackets(TechAccent, inset = 4.dp)
                     .clickable { clipboard.setText(AnnotatedString(room.code)) }
                     .padding(vertical = 20.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,

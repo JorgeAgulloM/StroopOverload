@@ -16,6 +16,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.softyorch.stroopoverload.R
+import com.softyorch.stroopoverload.audio.AudioPlayer
+import com.softyorch.stroopoverload.audio.GameSfx
 import com.softyorch.stroopoverload.core.StroopColor
 import com.softyorch.stroopoverload.domain.multiplayer.MultiplayerRoom
 import com.softyorch.stroopoverload.domain.multiplayer.RoomPlayer
@@ -43,6 +45,7 @@ fun SoloSurvivalGameScreen(
     myUid: String,
     onColorTapped: (StroopColor) -> Unit,
     onExit: () -> Unit,
+    audioPlayer: AudioPlayer,
 ) {
     val me = room.player(myUid)
 
@@ -129,7 +132,7 @@ fun SoloSurvivalGameScreen(
             }
 
             when (room.status) {
-                RoomStatus.PLAYING -> PlayingContent(me, onColorTapped)
+                RoomStatus.PLAYING -> PlayingContent(me, onColorTapped, audioPlayer)
                 // Rendered as a full-screen overlay below instead, so it can float over
                 // the roster/timer rather than being squeezed into the remaining weight.
                 RoomStatus.FINISHED -> Unit
@@ -141,13 +144,13 @@ fun SoloSurvivalGameScreen(
         }
 
         if (room.status == RoomStatus.FINISHED) {
-            MatchFinishedOverlay(room = room, myUid = myUid, onExit = onExit)
+            MatchFinishedOverlay(room = room, myUid = myUid, onExit = onExit, audioPlayer = audioPlayer)
         }
     }
 }
 
 @Composable
-private fun ColumnScope.PlayingContent(me: RoomPlayer?, onColorTapped: (StroopColor) -> Unit) {
+private fun ColumnScope.PlayingContent(me: RoomPlayer?, onColorTapped: (StroopColor) -> Unit, audioPlayer: AudioPlayer) {
     val stimulus = me?.soloStimulus
 
     if (me == null || !me.alive || stimulus == null) {
@@ -205,17 +208,22 @@ private fun ColumnScope.PlayingContent(me: RoomPlayer?, onColorTapped: (StroopCo
 
     Spacer(modifier = Modifier.height(10.dp))
 
+    val handleTap: (StroopColor) -> Unit = { tapped ->
+        audioPlayer.play(if (tapped == stimulus.correctAnswer) GameSfx.TAP_CORRECT else GameSfx.TAP_WRONG)
+        onColorTapped(tapped)
+    }
+
     // 2x2 quadrant grid, same layout/component as local mode and the other
     // online modes' MultiplayerGameScreen (shared QuadrantBox).
     val options = stimulus.options
     Column(modifier = Modifier.weight(1.2f).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(modifier = Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            options.getOrNull(0)?.let { QuadrantBox(it, true, false, Modifier.weight(1f).fillMaxHeight()) { onColorTapped(it) } }
-            options.getOrNull(1)?.let { QuadrantBox(it, true, false, Modifier.weight(1f).fillMaxHeight()) { onColorTapped(it) } }
+            options.getOrNull(0)?.let { QuadrantBox(it, true, false, Modifier.weight(1f).fillMaxHeight()) { handleTap(it) } }
+            options.getOrNull(1)?.let { QuadrantBox(it, true, false, Modifier.weight(1f).fillMaxHeight()) { handleTap(it) } }
         }
         Row(modifier = Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            options.getOrNull(2)?.let { QuadrantBox(it, true, false, Modifier.weight(1f).fillMaxHeight()) { onColorTapped(it) } }
-            options.getOrNull(3)?.let { QuadrantBox(it, true, false, Modifier.weight(1f).fillMaxHeight()) { onColorTapped(it) } }
+            options.getOrNull(2)?.let { QuadrantBox(it, true, false, Modifier.weight(1f).fillMaxHeight()) { handleTap(it) } }
+            options.getOrNull(3)?.let { QuadrantBox(it, true, false, Modifier.weight(1f).fillMaxHeight()) { handleTap(it) } }
         }
     }
 }

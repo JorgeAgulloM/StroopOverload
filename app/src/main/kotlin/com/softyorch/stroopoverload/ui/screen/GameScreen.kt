@@ -28,8 +28,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.softyorch.stroopoverload.BuildConfig
 import com.softyorch.stroopoverload.R
+import com.softyorch.stroopoverload.ads.NativeAdBanner
 import com.softyorch.stroopoverload.audio.AudioPlayer
+import com.softyorch.stroopoverload.audio.GameSfx
 import com.softyorch.stroopoverload.core.StroopColor
 import com.softyorch.stroopoverload.domain.GameMode
 import com.softyorch.stroopoverload.domain.GameResult
@@ -42,6 +45,7 @@ import com.softyorch.stroopoverload.ui.theme.*
 fun GameScreen(
     viewModel: GameViewModel,
     onGameOver: (GameResult) -> Unit,
+    isAdFree: Boolean = false,
 ) {
     val context = LocalContext.current
     val audioPlayer = remember { AudioPlayer(context) }
@@ -57,9 +61,24 @@ fun GameScreen(
 
     val playingState = state as? GameState.Playing
 
+    // correctHits/missFlashColor only ever change on their respective event
+    // (monotonic increment / flash-then-clear), so keying LaunchedEffect on
+    // them fires the matching SFX exactly once per event -- including misses
+    // caused by a timeout, not just a wrong tap, since both go through the
+    // same ViewModel state transition.
+    LaunchedEffect(playingState?.correctHits) {
+        if ((playingState?.correctHits ?: 0) > 0) audioPlayer.play(GameSfx.TAP_CORRECT)
+    }
+    LaunchedEffect(playingState?.missFlashColor) {
+        if (playingState?.missFlashColor != null) audioPlayer.play(GameSfx.TAP_WRONG)
+    }
+
     when (val s = state) {
         is GameState.GameOver -> {
-            LaunchedEffect(s) { onGameOver(s.result) }
+            LaunchedEffect(s) {
+                audioPlayer.play(if (s.result.won) GameSfx.MATCH_WIN else GameSfx.MATCH_LOSE)
+                onGameOver(s.result)
+            }
         }
         else -> Unit
     }
@@ -188,10 +207,21 @@ fun GameScreen(
                     }
                 }
             }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            NativeAdBanner(
+                adUnitId = BuildConfig.AD_UNIT_NATIVE_GAME,
+                isAdFree = isAdFree,
+                modifier = Modifier.fillMaxWidth().height(64.dp),
+            )
         }
 
         if (state is GameState.Countdown) {
-            CountdownOverlay(onFinished = { viewModel.beginRound() })
+            CountdownOverlay(onFinished = {
+                audioPlayer.play(GameSfx.MATCH_START)
+                viewModel.beginRound()
+            })
         }
     }
 }

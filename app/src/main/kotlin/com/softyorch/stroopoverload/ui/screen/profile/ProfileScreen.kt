@@ -15,6 +15,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -25,6 +26,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.softyorch.stroopoverload.R
+import com.softyorch.stroopoverload.audio.AudioSettingsStore
 import com.softyorch.stroopoverload.domain.Achievement
 import com.softyorch.stroopoverload.domain.XpSystem
 import com.softyorch.stroopoverload.ui.screen.auth.PasswordVisibilityToggle
@@ -42,6 +44,10 @@ fun ProfileScreen(
     val achievementPairs = remember(state.achievements) { state.achievements.chunked(2) }
     var showChangePasswordDialog by remember { mutableStateOf(false) }
     var showDeleteAccountDialog by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val audioSettingsStore = remember { AudioSettingsStore(context) }
+    val musicEnabled by audioSettingsStore.musicEnabled.collectAsState()
+    val sfxEnabled by audioSettingsStore.sfxEnabled.collectAsState()
 
     Scaffold(
         topBar = {
@@ -210,6 +216,35 @@ fun ProfileScreen(
                                 .background(Color(rarity.composeColorArgb), RoundedCornerShape(4.dp))
                         )
                     }
+                }
+            }
+
+            // Audio settings
+            item {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp))
+                        .background(MaterialTheme.colorScheme.surface)
+                        .padding(horizontal = 16.dp, vertical = 4.dp),
+                ) {
+                    Text(
+                        text = stringResource(R.string.profile_audio_section_header),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = TechAccent,
+                        modifier = Modifier.padding(top = 12.dp, bottom = 4.dp),
+                    )
+                    AudioToggleRow(
+                        label = stringResource(R.string.profile_audio_music_toggle),
+                        checked = musicEnabled,
+                        onCheckedChange = { audioSettingsStore.setMusicEnabled(it) },
+                    )
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.4f))
+                    AudioToggleRow(
+                        label = stringResource(R.string.profile_audio_sfx_toggle),
+                        checked = sfxEnabled,
+                        onCheckedChange = { audioSettingsStore.setSfxEnabled(it) },
+                    )
                 }
             }
 
@@ -481,6 +516,29 @@ private fun DeleteAccountDialog(
             TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_cancel)) }
         },
     )
+}
+
+@Composable
+private fun AudioToggleRow(label: String, checked: Boolean, onCheckedChange: (Boolean) -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth().padding(vertical = 10.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+        Switch(
+            checked = checked,
+            onCheckedChange = onCheckedChange,
+            colors = SwitchDefaults.colors(
+                checkedThumbColor = MaterialTheme.colorScheme.background,
+                checkedTrackColor = TechAccent,
+            ),
+        )
+    }
 }
 
 @Composable
