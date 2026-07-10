@@ -90,6 +90,10 @@ class FirebaseMultiplayerRepository(
                 soloRound = (p["soloRound"] as? Long)?.toInt() ?: 0,
                 soloStimulus = parseStimulus(soloStimulusMap),
                 soloDeadlineAtMs = p["soloDeadlineAtMs"] as? Long,
+                matchScore = (p["matchScore"] as? Long)?.toInt() ?: 0,
+                eliminatedAtMs = p["eliminatedAtMs"] as? Long,
+                placement = (p["placement"] as? Long)?.toInt(),
+                finalScore = (p["finalScore"] as? Long)?.toInt(),
             )
         }.sortedBy { it.order }
 
@@ -113,6 +117,7 @@ class FirebaseMultiplayerRepository(
             deadlineAtMs = data["deadlineAtMs"] as? Long,
             winnerUid = data["winnerUid"] as? String,
             startsAtMs = data["startsAtMs"] as? Long,
+            createdAtMs = data["createdAtMs"] as? Long ?: 0L,
         )
     }
 

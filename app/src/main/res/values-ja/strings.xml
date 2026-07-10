@@ -248,6 +248,7 @@
     <string name="mp_waiting_host_badge">ホスト</string>
     <string name="mp_waiting_empty_slot">・パイロット待機中・</string>
     <string name="mp_waiting_start_game">[ 対戦開始 ]</string>
+    <string name="mp_waiting_starting_game">開始しています…</string>
     <string name="mp_waiting_scanning_host">他のパイロットを待っています…</string>
     <string name="mp_waiting_scanning_guest">ホストを待っています…</string>
 
@@ -260,6 +261,16 @@
     <string name="mp_game_won_by">%1$sの勝利</string>
     <string name="mp_game_waiting">待機中…</string>
     <string name="mp_game_unknown_player">…</string>
+    <string name="mp_game_match_summary">試合結果</string>
+    <string name="mp_game_exit_room">[ ルームを退出 ]</string>
+    <string name="mp_game_points_earned">+%1$dポイント獲得</string>
+    <string name="mp_finish_duration">試合時間 %1$s</string>
+    <string name="mp_finish_raw_score">試合スコア</string>
+    <string name="mp_finish_halved">半分</string>
+    <string name="mp_finish_placement_bonus">順位ボーナス（×%1$s）</string>
+    <string name="mp_finish_eliminated_at">%1$d秒で脱落</string>
+    <string name="mp_finish_rounds_reached">ラウンド%1$dまで到達</string>
+    <string name="mp_finish_survived_full">最後まで生き残った</string>
 
     <!-- Multiplayer solo_survival screen -->
     <string name="mp_solo_time_left">残り%1$d秒</string>
@@ -270,6 +281,11 @@
     <string name="mp_solo_leaderboard_title">ランキング</string>
     <string name="mp_solo_you_won">勝利！</string>
     <string name="mp_solo_won_by">%1$sが%2$dptsで勝利</string>
+
+    <!-- Multiplayer anonymous-account gate dialog -->
+    <string name="mp_anon_gate_title">オンライン機能はロック中</string>
+    <string name="mp_anon_gate_body">ゲストパイロットはオンライン対戦に参加できません。無料アカウントを作成すると、マルチプレイが解放され、ポイントの獲得やレベルアップができるようになります。</string>
+    <string name="mp_anon_gate_dismiss">了解</string>
 
     <!-- Multiplayer error fallbacks (shown only when the backend gives no detail message) -->
     <string name="mp_error_create_room">ルームを作成できませんでした。</string>

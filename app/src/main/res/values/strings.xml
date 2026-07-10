@@ -248,6 +248,7 @@
     <string name="mp_waiting_host_badge">HOST</string>
     <string name="mp_waiting_empty_slot">· waiting for pilot ·</string>
     <string name="mp_waiting_start_game">[ START MATCH ]</string>
+    <string name="mp_waiting_starting_game">STARTING…</string>
     <string name="mp_waiting_scanning_host">WAITING FOR MORE PILOTS…</string>
     <string name="mp_waiting_scanning_guest">WAITING FOR HOST…</string>
 
@@ -260,6 +261,16 @@
     <string name="mp_game_won_by">%1$s won</string>
     <string name="mp_game_waiting">Waiting…</string>
     <string name="mp_game_unknown_player">…</string>
+    <string name="mp_game_match_summary">MATCH SUMMARY</string>
+    <string name="mp_game_exit_room">[ EXIT ROOM ]</string>
+    <string name="mp_game_points_earned">+%1$d POINTS EARNED</string>
+    <string name="mp_finish_duration">DURATION %1$s</string>
+    <string name="mp_finish_raw_score">Match score</string>
+    <string name="mp_finish_halved">Halved</string>
+    <string name="mp_finish_placement_bonus">Placement bonus (×%1$s)</string>
+    <string name="mp_finish_eliminated_at">Eliminated at %1$ds</string>
+    <string name="mp_finish_rounds_reached">Reached round %1$d</string>
+    <string name="mp_finish_survived_full">Survived the full match</string>
 
     <!-- Multiplayer solo_survival screen -->
     <string name="mp_solo_time_left">%1$ds LEFT</string>
@@ -270,6 +281,11 @@
     <string name="mp_solo_leaderboard_title">LEADERBOARD</string>
     <string name="mp_solo_you_won">YOU WIN!</string>
     <string name="mp_solo_won_by">%1$s wins with %2$d pts</string>
+
+    <!-- Multiplayer anonymous-account gate dialog -->
+    <string name="mp_anon_gate_title">ONLINE ACCESS LOCKED</string>
+    <string name="mp_anon_gate_body">Guest pilots can\'t deploy into online matches. Create a free account to unlock multiplayer and start earning points and leveling up.</string>
+    <string name="mp_anon_gate_dismiss">GOT IT</string>
 
     <!-- Multiplayer error fallbacks (shown only when the backend gives no detail message) -->
     <string name="mp_error_create_room">Could not create the room.</string>

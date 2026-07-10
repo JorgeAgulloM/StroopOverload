@@ -45,6 +45,8 @@ private const val MAX_PLAYERS = 4
 fun WaitingRoomScreen(
     room: MultiplayerRoom,
     myUid: String,
+    isStartingGame: Boolean,
+    startGameError: MultiplayerErrorReason.StartGameFailed?,
     onStartGame: () -> Unit,
 ) {
     val isHost = room.hostUid == myUid
@@ -135,7 +137,7 @@ fun WaitingRoomScreen(
             if (isHost) {
                 Button(
                     onClick = onStartGame,
-                    enabled = room.players.size in 2..MAX_PLAYERS,
+                    enabled = !isStartingGame && room.players.size in 2..MAX_PLAYERS,
                     modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.primary,
@@ -143,11 +145,29 @@ fun WaitingRoomScreen(
                     ),
                     shape = RoundedCornerShape(6.dp),
                 ) {
+                    if (isStartingGame) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = MaterialTheme.colorScheme.background,
+                            strokeWidth = 2.dp,
+                        )
+                        Spacer(Modifier.width(10.dp))
+                    }
                     Text(
-                        text = stringResource(R.string.mp_waiting_start_game),
+                        text = stringResource(if (isStartingGame) R.string.mp_waiting_starting_game else R.string.mp_waiting_start_game),
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.background,
                         fontWeight = FontWeight.Black,
+                    )
+                }
+                if (startGameError != null) {
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = startGameError.detail ?: stringResource(R.string.mp_error_start_game),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.error,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth(),
                     )
                 }
                 Spacer(Modifier.height(20.dp))

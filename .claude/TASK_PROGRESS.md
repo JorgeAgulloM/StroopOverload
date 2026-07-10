@@ -443,6 +443,54 @@ correctness fix.
 
 ---
 
+## Sub-task: Solo Survival — 3rd mode, backend + client (2026-07-09)
+
+User: "currently two online games, but told me three, find the missing one and implement it."
+`GameModeId` already had `"solo_survival"` reserved in `functions/src/types.ts` since A4, but with
+no engine and no client exposure (`RoomMode` enum only had MISTAKE/HOT_POTATO) — this was the
+missing third mode.
+
+**Backend** (`functions/src/soloSurvival.ts` + `soloSurvival.test.ts`, wired into `index.ts`/
+`taskQueue.ts`/`types.ts`): no shared turn order — every player runs their own independent Stroop
+session (own stimulus/round/streak/score) under one shared room-level session clock
+(`SOLO_SESSION_DURATION_MS` = 60s). One wrong answer or timeout busts only that player; the match
+keeps going for everyone else. Each player gets their own scheduled timeout check
+(`scheduleSoloPlayerTimeoutCheck`, keyed by roomId+uid+round) since there's no single per-round
+deadline to share. Highest score when the session clock runs out (or when everyone's busted, early)
+wins; ties break toward whoever joined first. `functions/` test suite: 6 suites / **98/98 passing**.
+
+**Client**: `RoomMode.SOLO_SURVIVAL` added (domain), `FirebaseMultiplayerRepository` parses each
+player's `soloScore/soloRound/soloStimulus/soloDeadlineAtMs` off Firestore, `MultiplayerRoom.canAnswer(uid)`
+replaces the old `isMyTurn`-only gate in `MultiplayerViewModel.submitAnswer` (solo mode: any alive
+player may answer anytime, no shared turn to hold). New `SoloSurvivalGameScreen.kt` (separate from
+`MultiplayerGameScreen` since the data shape is fundamentally different — always renders MY stimulus,
+never someone else's) shows a live countdown, my own stimulus/score, a "you're out" state for busted
+players who keep watching, and a leaderboard ranked by score. `MultiplayerScreen.kt` routes
+PLAYING/FINISHED to it when `room.mode == SOLO_SURVIVAL`. `LobbyScreen`'s mode picker and
+`WaitingRoomScreen`'s mode badge needed zero changes — both already iterate `RoomMode.entries`/read
+`mode.titleRes` generically. 8 new string keys × 6 locales (`mp_mode_solo_survival_*`, `mp_solo_*`).
+
+Kotlin tests updated/added: `MultiplayerRoomTest` (`RoomMode.fromFirestoreValue("solo_survival")` no
+longer falls back to MISTAKE; `canAnswer` cases for all 3 modes, including the case that would have
+wrongly rejected a non-turnIndex-0 player under the old turn-only gate), `MultiplayerViewModelTest`
+(`submitAnswer` accepted for a non-turn-holder in solo mode, rejected once busted).
+
+Verified: `compileDevDebugKotlin`/`compileDemoDebugKotlin`/`compileProdDebugKotlin` all green,
+`testDevDebugUnitTest` green (full run, not just the touched test classes). `functions`:
+`npm run build` clean, `npm test` 98/98. Not yet verified on-device. Not committed.
+
+### Not yet done
+- On-device manual pass: create a Solo Survival room with 2+ players, verify each player sees their
+  own stimulus (not someone else's), verify a busted player keeps seeing the leaderboard update
+  live, verify the match ends and picks the right winner both on session-clock-expiry and
+  everyone-busted-early paths.
+- Deploy: this mode's Cloud Functions changes aren't live yet (same "ask before deploying" rule as
+  Patata Caliente above — `firebase deploy --only functions`, user must be logged in).
+- Nothing committed yet — same working tree as the Patata Caliente sub-task above, now with these
+  changes layered on top.
+
+---
+
 ## Side thread, interrupted: TIME-mode survival achievements (2026-07-10, NOT STARTED)
 
 User reported TIME mode (contrarreloj) can never earn the `survival_expert`/`master`/`legend`/`god`
@@ -552,3 +600,333 @@ tests) green (functions). Not yet verified on a real device/emulator. Not commit
   updates live, verify the match finishes correctly both via the session clock and via an
   all-players-busted early finish.
 - The TIME-mode survival-achievements side thread above is still fully open.
+
+---
+
+## Sub-task: online multiplayer bug reports — Patata Caliente mode + Mistake-mode UI (2026-07-10)
+
+User reported 5 issues after (presumably) testing on a real device:
+1. Creating a "Patata Caliente" room silently becomes "Modo Error" (mistake).
+2. Mistake-mode's `MultiplayerGameScreen` looks bad — should resemble the local `GameScreen`.
+3. Mistake-mode gameplay "doesn't work", no visible timer decay bar.
+4. Host's "Start Game" button has no press confirmation/lock.
+5. The FINISHED screen has no info CTA and no exit button, unlike local `GameOverScreen`.
+
+**Root cause of #1 (and likely a big part of #3): the Cloud Functions backend has never been
+deployed since 2026-07-04/05** — confirmed via `firebase functions:list`, which shows only the
+original 6 functions (`createRoom`, `joinRoom`, `onPresenceChanged`, `resolveTimeout`, `startGame`,
+`submitAnswer`) with no `resolveSoloPlayerTimeout` (added for solo_survival) and, more importantly,
+predates the entire Patata Caliente feature. The deployed `createRoom`'s `VALID_GAME_MODES` almost
+certainly doesn't know `"hot_potato"` yet, so it silently falls back to `"mistake"` — exactly
+matching the reported symptom. **This is a deploy gap, not a code bug** — both this sub-task and the
+two above it flagged the same "ask before deploying" item repeatedly without the user acting on it
+yet. Task #1 in the task list is left `in_progress`/unresolved pending the user's explicit
+deploy-confirmation (shared prod infra, per this project's safety rules — never deploy without
+asking first).
+
+**Fixed (#2, #3, #4, #5), all client-side, all verified compiling + all Kotlin unit tests green:**
+
+- `MultiplayerUiState.InRoom` gained `isStartingGame: Boolean` + `startGameError:
+  MultiplayerErrorReason.StartGameFailed?`. `MultiplayerViewModel.startGame()` now locks
+  immediately (before the suspend call even resolves, so the UI can render the lock on the very
+  next composition) and is a no-op while already starting; on failure it re-reads the *latest*
+  InRoom state (not the captured `current`) to avoid clobbering a Firestore update that arrived
+  during the call, clears the lock, and sets `startGameError` — critically, it does **not** bounce
+  to the old `MultiplayerUiState.Error` (which would have kicked the host back to the Lobby,
+  destroying the room state); the host stays in the waiting room and can retry.
+- `WaitingRoomScreen`'s start button: disabled while `isStartingGame`, shows a small
+  `CircularProgressIndicator` + "STARTING…" label while locked, shows `startGameError` inline in red
+  below the button on failure. New string `mp_waiting_starting_game` × 6 locales.
+- `MultiplayerGameScreen.kt` fully rewritten to match the local `GameScreen`'s visual language:
+  bordered/surfaced roster HUD card (was a bare `primaryContainer` fill), a real `TimerBar` (same
+  `lerp(error, primary, progress)` component as local mode, previously **completely absent** — no
+  countdown was ever rendered), a bordered central stimulus box, and a 2×2 quadrant grid (was a
+  horizontally-scrolling button row) using the same `QuadrantBox` visual pattern as local mode.
+  `timerProgress` is computed client-side every 100ms via a `timeLimitMsForRound(round)` helper that
+  mirrors `turnLogic.ts`'s decay formula (`GameConfig.INITIAL_TIME_LIMIT_MS` /
+  `TIME_LIMIT_DECAY_MS` / `MINIMUM_TIME_LIMIT_MS`, matching the local single-player timer) — the
+  server never pushes a "total ms for this round" field, so the client re-derives it from `room.round`
+  instead of needing a new schema field. `canAnswer(uid)` used instead of raw `isMyTurn` (harmless
+  here since this screen only ever renders MISTAKE/HOT_POTATO, but keeps it consistent with the
+  ViewModel's gating).
+- FINISHED state redesigned as a `MatchFinishedOverlay`: winner banner + a bordered "match summary"
+  card (rounds survived, per-player alive/eliminated standings, winner highlighted) mirroring local
+  `GameOverScreen`'s telemetry-card style, plus an `[ EXIT ROOM ]` button.
+- New `MultiplayerViewModel.exitRoom()`: cancels the room listener job and resets state to `Idle`
+  (back to the Lobby) — used by the new exit button.
+- `SoloSurvivalGameScreen`'s FINISHED banner also gained the same exit button + `onExit` param for
+  consistency (task explicitly called out both screens needing this).
+- 2 new string keys × 6 locales (`mp_game_match_summary`, `mp_game_exit_room`); reused the existing
+  `game_over_rounds_survived` string from local mode rather than duplicating it.
+- Kotlin tests: `MultiplayerViewModelTest` gained `startGame locks isStartingGame immediately and is
+  a no-op while already starting` and `startGame failure clears isStartingGame and surfaces
+  startGameError, staying in the room`; the pre-existing `startGame calls the repository only while
+  InRoom` test updated to consume the new intermediate `isStartingGame=true` emission (Turbine fails
+  on unconsumed events, and the new state mutation added one).
+
+Verified: `compileDevDebugKotlin`/`compileDemoDebugKotlin`/`compileProdDebugKotlin` all green,
+`testDevDebugUnitTest` green (full rerun, not just touched classes). Not yet verified on-device —
+the whole point of this sub-task was device-reported bugs, so an on-device re-test is especially
+important before considering it closed. Not committed yet.
+
+**Deployed** (user confirmed): `firebase deploy --only functions` to `stroopoverload-softyorch`,
+2026-07-10. `firestore.rules`/`firestore.indexes.json`/`database.rules.json`/`firebase.json` had no
+uncommitted drift, so functions-only was sufficient. `firebase functions:list` post-deploy confirms
+10 functions live (was 6): `beginRound`, `explodeBomb`, `deleteMyMultiplayerData`,
+`resolveSoloPlayerTimeout` newly created; `createRoom`/`joinRoom`/`startGame`/`submitAnswer`/
+`resolveTimeout`/`onPresenceChanged` updated. This closes bug #1 (mode fallback) and should resolve
+most of bug #3's "doesn't work" complaint alongside the client-side timer-bar fix above.
+
+### Not yet done
+- On-device re-test of all 5 original reports now that backend is deployed: create a Patata
+  Caliente room and confirm it stays Patata Caliente; play a full Mistake-mode match and confirm the
+  timer bar ticks and answers register; press Start Game and confirm the lock/spinner; finish a
+  match and confirm the summary card + exit button both work.
+
+---
+
+## Sub-task: online scoring, hot_potato polish, solo_survival redesign, nickname, anon-gate (2026-07-10)
+
+User follow-up after the previous sub-task, 6 more items. Created tasks #6-11 and worked through all
+of them in one pass.
+
+**#6 — Online match scoring** (biggest piece, backend + client):
+- New `functions/src/scoring.ts`: `applyCorrectAnswer(score, streak)` mirrors the Android local
+  formula (100/hit + streak*10 capped at 100) — used to accumulate mistake/hot_potato's new
+  `matchScore`/`matchStreak` per-player fields live during the match, the same role solo_survival's
+  pre-existing `soloScore`/`soloStreak` already played. `placementMultiplier(placement)`: 1st x2,
+  2nd x1.5, 3rd x1, 4th x0.5 (out-of-range falls back to x0.5); explicitly NOT compressed for
+  smaller rooms — a 2-player match still awards x2/x1.5, not x2/x0.5. `finalScoreForPlacement(raw,
+  placement)` = `round((raw/2) * multiplier)`. `rankMistakeOrHotPotatoPlayers`: winner is always
+  placement 1, everyone else ranked by new `eliminatedAtMs` (server timestamp, added wherever a
+  player's `alive` flips false in `resolveRound.ts`/`resolveHotPotato.ts`'s `explodeBomb`) descending
+  — survived longest places better — tiebroken by `order` (join order) ascending.
+  `rankSoloSurvivalPlayers`: same idea but ranked by `soloScore` descending (no elimination order to
+  use, matches the mode's existing win-tiebreak convention). Both write `placement`/`finalScore` onto
+  each player doc at the moment a room transitions to `"finished"` (all 4 finish sites:
+  `resolveRound.ts`'s `soleSurvivor` branch, `resolveHotPotato.ts`'s `explodeBomb`,
+  `soloSurvival.ts`'s all-busted-early-finish and `finishSoloSurvivalSession`). New
+  `scoring.test.ts` (12 tests) + all 4 finish sites' existing test suites still pass unmodified
+  (new fields are additive). `functions` suite: 7 suites / **110/110 passing**.
+  - Client: `RoomPlayer` gained `matchScore`/`placement`/`finalScore`, parsed in
+    `FirebaseMultiplayerRepository.mapRoom`. New `MultiplayerAwardStore` (SharedPreferences, capped
+    at 200 room IDs) + `FirebaseGameRepository.applyMultiplayerScore(roomId, pointsEarned, won)`:
+    idempotent per roomId (a Firestore listener re-emitting the same FINISHED room, or the app
+    restarting while still on the results screen, can't double-award), no-ops for anonymous profiles
+    (defense in depth — anonymous can't reach a room at all now, see #11), bumps
+    `points`/`experience`/`level` (via `XpSystem.levelFromTotalXp`, same as local mode)/
+    `matchesPlayed`/`matchesWon`/`matchesLost`. Wired from a `LaunchedEffect(room.roomId)` in
+    `MultiplayerScreen.kt` that fires once when a room reaches FINISHED. Design choice: this is a
+    dedicated points/XP path, deliberately NOT routed through `recordGameResult`'s ±100/-25
+    win/loss delta system (that's a different, much smaller-magnitude scoring philosophy that
+    doesn't fit "your actual in-match performance, scaled by placement") — no achievements/career-stats
+    integration for multiplayer yet, flagged below as a natural follow-up, not implemented here to
+    avoid scope creep.
+  - New shared `MatchFinishedOverlay.kt` (extracted from `MultiplayerGameScreen.kt`, now also used by
+    `SoloSurvivalGameScreen.kt`): winner banner, "+N points earned" callout, standings card sorted by
+    the server's `placement` field (previously mistake/hot_potato's version only correctly sorted the
+    winner first; non-winners now rank correctly too), exit button. Fully mode-generic since ranking
+    is now computed uniformly server-side for all 3 modes.
+  - 3 new string keys × 6 locales (`mp_game_points_earned` + the reused existing ones).
+
+**#7 — Patata Caliente**: removed the `TimerBar` entirely for `HOT_POTATO` (kept for `MISTAKE` only)
+— a decaying red/green bar falsely implies elimination-on-timeout, but hot_potato's timeout just
+re-prompts the same holder with a fresh stimulus, no penalty. Also found and fixed a real silent-failure
+bug while reviewing `submitAnswer`: `MultiplayerViewModel.submitAnswer` discarded the repository
+`Result<Unit>` entirely, so a rejected answer (lost a race against the deadline, stale turn, etc. —
+confirmed server-side via `index.ts`'s `if (Date.now() > room.deadlineAtMs) throw
+"deadline-exceeded"`, which does apply to hot_potato despite its forgiving elimination rules) had zero
+trace anywhere, matching "no funciona" reports with nothing to debug from. Added `.onFailure { Log.w
+(...) }` — deliberately not a full UI error surface (the room listener naturally self-corrects the
+board on the next snapshot), just made it debuggable.
+
+**#8 — Mode-revert-to-Mistake bug**: re-investigated the full client chain
+(`LobbyScreen`→`MultiplayerViewModel.createRoom`→`FirebaseMultiplayerRepository.createRoom`→
+`createRoom` callable) end to end and found no remaining client-side cause — confirmed this was
+fully explained by the previous sub-task's deploy gap (already fixed and deployed). No code change
+needed; closed as verified.
+
+**#9 — Solo Survival redesign**: full rewrite of `SoloSurvivalGameScreen.kt` to reuse the same visual
+components as `MultiplayerGameScreen`/local `GameScreen` rather than its previous distinct look —
+made `QuadrantBox`, `TimerBar`, and `timeLimitMsForRound` `internal` (were `private`, which in Kotlin
+means file-private, not package-private) in `MultiplayerGameScreen.kt` so both screens share the
+exact same components instead of duplicating them. New `soloTimeLimitMs(round)` mirrors
+`soloSurvival.ts`'s level-based decay (`round/5 + 1` fed into the shared `timeLimitMsForRound`). The
+"added room players" piece the user asked for is a roster HUD row (same bordered-card pattern as
+`MultiplayerGameScreen`'s top row) showing every player's live `soloScore` and alive status, "you"
+highlighted — doubles as a live standings view without a separate leaderboard section. FINISHED state
+now uses the shared `MatchFinishedOverlay` instead of its own bespoke banner+leaderboard.
+
+**#10 — Real nickname instead of free-text pilot name**: `LobbyScreen` lost its `displayName`
+`OutlinedTextField` entirely; now takes a `pilotName: String` param (shown as a read-only styled
+badge) sourced from `NavGraph`'s existing `currentProfile.displayName` (already loaded there for
+other screens — no new fetch needed) via a new `MultiplayerScreen(myUid, myNickname, repository)`
+param threaded down. `onCreateRoom`/`onJoinRoom` signatures simplified (mode-only / code-only, no
+longer take a name the caller already has canonically). Left the now-orphaned
+`mp_lobby_default_name` string in place across all 6 locale files rather than chasing a 6-file
+cleanup for a harmless unused resource — flagged here instead.
+
+**#11 — Anonymous gating**: `HomeScreen`'s `onMultiplayer` callback (wired in `NavGraph.kt`) now
+checks `authService.currentUser?.isAnonymous` before navigating; if true, shows a new
+`AnonymousGateDialog` (custom `Dialog`, not a plain `AlertDialog` — bordered/glowing card matching
+the app's existing cyberpunk visual language, per the user's "dialog molón" ask) instead of entering
+`ROUTE_MULTIPLAYER`. Explains guest accounts can't play online and don't earn points/levels. 3 new
+string keys × 6 locales.
+
+Verified: `compileDevDebugKotlin`/`compileDemoDebugKotlin`/`compileProdDebugKotlin` all green,
+`testDevDebugUnitTest` green (full rerun). `functions`: `npm run build` clean, `npm test` 110/110.
+Not yet verified on-device. **Not deployed** — the scoring engine changes (`resolveRound.ts`,
+`resolveHotPotato.ts`, `soloSurvival.ts`, `types.ts`, new `scoring.ts`) are backend changes that need
+`firebase deploy --only functions` before online scoring actually takes effect in production (same
+"ask before deploying" rule as every prior sub-task touching this). Not committed.
+
+**Deployed** (user confirmed): `firebase deploy --only functions` to `stroopoverload-softyorch`,
+2026-07-10. All 10 functions updated successfully (`createRoom`, `joinRoom`, `startGame`,
+`submitAnswer`, `beginRound`, `explodeBomb`, `deleteMyMultiplayerData`, `resolveTimeout`,
+`resolveSoloPlayerTimeout`, `onPresenceChanged`). Scoring is now live in production.
+
+### Not yet done
+- On-device pass: verify a full match now awards points on the results screen and that
+  `profile.points`/`level` actually go up afterward; verify hot_potato no longer shows a timer bar;
+  verify solo_survival's new layout renders correctly with 2+ players; verify the anonymous gate
+  dialog appears for a guest session and blocks entry.
+- Not implemented (explicitly deferred, flagged above): multiplayer results don't yet feed
+  achievements/career-stats/XpSystem's richer bonuses (flawless, streak, daily-streak) the way local
+  `recordGameResult` does — only points/XP/level/matches played-won-lost. A natural follow-up if the
+  user wants online play to count toward achievements too.
+- `mp_lobby_default_name` string is now unused dead weight across 6 locale files (cosmetic-only,
+  never chased down).
+- Nothing committed — same long-lived uncommitted working tree as the two sub-tasks above this one.
+
+---
+
+## Sub-task: mode-picker Compose bug, starting-screen timing, hot_potato balloon, finish dialog (2026-07-10)
+
+User reported 4 more issues after the previous sub-task, immediately including a regression: the
+mode-reverts-to-Mistake bug was reported as **still happening** despite the earlier deploy that was
+believed to fix it. Created tasks #12-15.
+
+**#12 — the real mode-picker bug, finally found.** The earlier investigation (closed in the previous
+sub-task as "verified, no client bug") only traced the *data* path (selectedMode correctly reaching
+the createRoom payload) and missed a *composition-structure* bug. `MultiplayerScreen.kt` called
+`LobbyScreen(...)` from **three separate call sites** — one each in the `Idle`/`Connecting`/`Error`
+branches of a `when`. In Jetpack Compose, distinct source-code call sites are distinct groups in the
+slot table; switching between them tears down and remounts the composable rather than recomposing it
+in place. Pressing "Create" flips state `Idle -> Connecting` mid-click, which moved `LobbyScreen`
+from the line-29 call site to the line-36 one — a full remount — resetting its `remember`-held
+`selectedMode` back to the default `MISTAKE`. The room itself was always created with the correct
+mode (the button's `onClick` had already captured `selectedMode` before the reset), but the picker
+UI visibly flashed back to Mistake right as the button was pressed — exactly the reported symptom,
+and a completely different root cause from the original (now-fixed) backend deploy gap. Fix:
+collapsed the three call sites into one (`is Idle, is Connecting, is Error -> LobbyScreen(...)`,
+comma-branch on the sealed type, computing `isConnecting`/`errorReason` from `current` inline) so
+Compose keeps the same instance alive across those transitions. Lesson for next time: a "the data is
+correct" trace isn't enough for a *visual flash* bug report — check composable call-site identity too.
+
+**#13 — starting-screen timing.** `MultiplayerStartingScreen` played a fixed ~3.6s local
+`CountdownOverlay` regardless of the server's actual `STARTING_COUNTDOWN_MS` (4000ms, set in
+`startGame`) or network latency in the client even *observing* the "starting" status, then showed a
+loading spinner if Firestore hadn't caught up to "playing" by the time the local animation finished —
+a jarring "countdown ends, loader jumps in" transition on every match. Inverted per the user's ask
+("load first, then show the initializer"): now computes `remainingMs = room.startsAtMs - now` the
+moment STARTING is observed, shows a loading spinner for `remainingMs - 3600ms` (absorbing any
+latency), and only *then* plays the countdown -- timed to land almost exactly on the server's real
+transition instant instead of racing it blind.
+
+**#14 — Hot Potato balloon.** Added `HotPotatoBalloon`: a semi-transparent circle behind the stimulus
+text (only rendered for `HOT_POTATO`) that grows from the same `timerProgress` value the removed
+`TimerBar` used to drive (`1f` fresh -> `0f` about to expire), then does a one-shot pop (scale spike
+to 2.1x + fade to 0) timed off `room.deadlineAtMs` directly via its own `LaunchedEffect` (not the
+polling tick, so it fires exactly once per stimulus regardless of frame timing) -- an on-theme,
+non-lethal-feeling substitute for the bar that still communicates urgency.
+
+**#15 — match-finished dialog.** `MatchFinishedOverlay` converted from a full-screen `Column` overlay
+into an actual `Dialog` (`DialogProperties(usePlatformDefaultWidth = false)`, sized to 94%/86% of the
+screen, scrollable body). Content substantially enriched per the user's "no un texto explicativo" ask
+— each player now gets a bordered breakdown card instead of one flat summary line: placement badge,
+name, a "moves" detail line (`Reached round N` for solo_survival, `Eliminated at Ns` / `Survived the
+full match` for mistake/hot_potato, using the newly-client-exposed `eliminatedAtMs`), and a 3-row
+point breakdown (raw match score -> halved -> placement bonus with the actual multiplier shown, e.g.
+"×2.0") ending in the real server-computed `finalScore`. Added match duration (`room.startsAtMs` or
+`createdAtMs` to dialog-open time) in the header. Required exposing 2 more already-deployed backend
+fields to the client that weren't parsed before: `RoomPlayer.eliminatedAtMs` and
+`MultiplayerRoom.createdAtMs` — no backend changes needed this round, both fields have existed in
+Firestore since the scoring sub-task's deploy.
+
+7 new string keys × 6 locales (`mp_finish_*`).
+
+Verified: `compileDevDebugKotlin`/`compileDemoDebugKotlin`/`compileProdDebugKotlin` all green,
+`testDevDebugUnitTest` green (full rerun). Not yet verified on-device. Not committed. **No backend
+deploy needed this round** — everything here is client-only (the 2 newly-parsed fields were already
+live in Firestore).
+
+### Not yet done
+- On-device pass: confirm the mode picker no longer flashes to Mistake on Create; confirm the
+  starting screen shows a loader-then-countdown with no jarring jump; confirm the Hot Potato balloon
+  grows/pops correctly across a few rounds; confirm the finished dialog renders correctly for 2-4
+  players in all 3 modes and scrolls properly on a small screen.
+- Nothing committed — same long-lived uncommitted working tree as the sub-tasks above this one.
+
+---
+
+## Sub-task: hot_potato still broken — real fix (2026-07-10)
+
+User reported hot_potato specifically was still broken, with two concrete, correct observations that
+the previous sub-task's balloon (tied to the per-stimulus answer deadline) had gotten wrong. Created
+tasks #16-17.
+
+**#16 — the actual bug: the turn-holder's stimulus was auto-changing on a timer even when they never
+touched anything.** Root cause: `resolveTimeout` (a Cloud Task scheduled every time a stimulus was
+generated) still fired for hot_potato and called `resolveHotPotatoTurn(..., "timeout", ...)`, which
+generates a brand new stimulus -- same behavior as an actual wrong answer, just triggered by pure
+inactivity. This directly contradicted the mode's own design (previously documented: "no time
+pressure, only the bomb matters") and is what the user meant by "el color cambia cada x tiempo".
+Fixed by removing the scheduling entirely: `beginRound` only calls `scheduleTimeoutCheck` for
+non-hot_potato modes now (hot_potato still arms the bomb); `resolveHotPotatoTurn` no longer schedules
+a follow-up timeout after resolving; `submitAnswer`'s shared deadline-exceeded check is skipped for
+`room.mode === "hot_potato"` (a late answer is never late in this mode, since nothing enforces
+lateness); `resolveTimeout`'s hot_potato branch is now a defensive no-op (kept only in case an
+already-scheduled task from before this change still fires) rather than calling resolveRound's
+elimination logic against the wrong mode. `resolveHotPotato.test.ts` updated: the "correct
+answer"/"wrong answer" tests now assert `scheduleTimeoutCheck` is NOT called; the old "timeout
+re-prompts" test kept (the function itself still handles a "timeout" reason safely if ever called)
+but renamed to note it's defense-in-depth, not a real path anymore. `functions`: 7 suites / **110/110
+passing**.
+  - Client: added missing wrong-answer flash feedback to `MultiplayerGameScreen` (previously had
+    none, unlike local `GameScreen`'s `missFlashColor`) -- evaluated client-side against the stimulus
+    already in hand for instant feedback (no round-trip wait), flashing the CORRECT color the player
+    should have pressed. `QuadrantBox` gained an `isFlashing` param with the same white-overlay
+    treatment as local mode. Flash state is scoped `remember(room.round)`, which self-clears the
+    instant the next round's real stimulus arrives from Firestore -- no manual timer needed.
+
+**#17 — balloon redesign, now tied to what it should represent.** The previous balloon used
+`room.deadlineAtMs` (the per-stimulus answer window) -- wrong signal per the user, since the balloon
+should represent the *bomb's* risk, not the answer window (which no longer has any real deadline
+after #16 anyway). The real `bombAtMs` is intentionally secret (`firestore.rules` blocks all client
+reads of `rooms/{roomId}/private/bomb`), so an exact countdown is impossible without leaking
+information that would let players game the mode. Design: track a client-side "bomb epoch" that
+resets whenever `room.players.count { alive }` drops (the only client-visible signal an explosion
++ rearm just happened), grow the balloon's width as a literal fraction of the available width toward
+the *known public* worst-case bound (`BOMB_MAX_DELAY_MS = 30_000`, mirrored from
+`resolveHotPotato.ts`) as time passes, start a shake (`rememberInfiniteTransition`, magnitude scaling
+with how far past the threshold) once width crosses 60%, and play a pop-and-fade transition at the
+moment alive-count actually decreases (the true, authoritative signal, not a client guess). Visual
+polish per the "molón" ask: tri-color progression through the app's existing neon palette
+(`TechAccent -> NeonYellow -> NeonRed`), a glow ring plus filled orb plus an offset glossy highlight
+(reads as a balloon/orb rather than a flat disc), matching `CountdownOverlay`'s established pulse-ring
+language rather than introducing a new visual vocabulary.
+
+Verified: `compileDevDebugKotlin`/`compileDemoDebugKotlin`/`compileProdDebugKotlin` all green,
+`testDevDebugUnitTest` green (full rerun), `functions` `npm run build` clean + `npm test` 110/110.
+Not yet verified on-device. Not committed. **Backend changes this round** (`resolveHotPotato.ts`,
+`index.ts`) — needs `firebase deploy --only functions` before the timeout-removal fix is live in
+production. Ask before deploying.
+
+**Deployed** (user confirmed): `firebase deploy --only functions` to `stroopoverload-softyorch`,
+2026-07-10. All 10 functions updated successfully. The timeout-removal fix is live.
+
+### Not yet done
+- On-device pass: confirm a hot_potato turn-holder's stimulus no longer changes on its own without
+  them acting; confirm the wrong-answer flash shows the correct color instantly; confirm the balloon
+  grows/shakes/pops sensibly across a full match with several eliminations.
+- Nothing committed — same long-lived uncommitted working tree as the sub-tasks above this one.

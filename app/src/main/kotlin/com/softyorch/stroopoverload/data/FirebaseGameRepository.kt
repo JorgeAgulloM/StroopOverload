@@ -9,6 +9,7 @@ import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.SetOptions
 import com.softyorch.stroopoverload.core.GameConfig
 import com.softyorch.stroopoverload.data.local.AchievementsLocalStore
+import com.softyorch.stroopoverload.data.local.MultiplayerAwardStore
 import com.softyorch.stroopoverload.data.local.ProfileLocalStore
 import com.softyorch.stroopoverload.domain.Achievement
 import com.softyorch.stroopoverload.domain.AchievementDefinitions
@@ -26,6 +27,7 @@ class FirebaseGameRepository private constructor(
     private val profileStore: ProfileLocalStore = ProfileLocalStore(context),
     private val achievementsStore: AchievementsLocalStore = AchievementsLocalStore(context),
     private val achievementEngine: AchievementEngine = AchievementEngine(),
+    private val multiplayerAwardStore: MultiplayerAwardStore = MultiplayerAwardStore(context),
     private val db: FirebaseFirestore? = try { FirebaseFirestore.getInstance() } catch (e: Exception) { null },
 ) {
     private val users get() = db?.collection("users")
@@ -250,6 +252,38 @@ class FirebaseGameRepository private constructor(
         }
 
         return@withContext newlyUnlockedAchievements
+    }
+
+    /**
+     * Applies a finished multiplayer match's server-computed [pointsEarned] (see
+     * functions/src/scoring.ts -- already halved and placement-multiplied) to the
+     * local profile's points/XP/level/match counters. Idempotent per [roomId]:
+     * returns false and does nothing if this room's score was already applied
+     * (guards against a Firestore listener re-emitting the same FINISHED room).
+     * No-ops for anonymous profiles -- defense in depth, multiplayer entry is
+     * already gated on a non-anonymous account before a room can be joined.
+     */
+    suspend fun applyMultiplayerScore(roomId: String, pointsEarned: Int, won: Boolean): Boolean = withContext(Dispatchers.IO) {
+        if (multiplayerAwardStore.hasAwarded(roomId)) return@withContext false
+        val current = getProfile()
+        if (current.isAnonymous) {
+            multiplayerAwardStore.markAwarded(roomId)
+            return@withContext false
+        }
+
+        val newXp = current.experience + pointsEarned.coerceAtLeast(0)
+        val updated = current.copy(
+            points = (current.points + pointsEarned).coerceAtLeast(0),
+            experience = newXp,
+            level = XpSystem.levelFromTotalXp(newXp),
+            matchesPlayed = current.matchesPlayed + 1,
+            matchesWon = if (won) current.matchesWon + 1 else current.matchesWon,
+            matchesLost = if (!won) current.matchesLost + 1 else current.matchesLost,
+            lastPlayedAtEpochMs = System.currentTimeMillis(),
+        )
+        updateProfile(updated)
+        multiplayerAwardStore.markAwarded(roomId)
+        true
     }
 
     private suspend fun syncProgressToCloud(

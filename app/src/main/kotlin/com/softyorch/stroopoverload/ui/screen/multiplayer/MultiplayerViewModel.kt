@@ -1,5 +1,6 @@
 package com.softyorch.stroopoverload.ui.screen.multiplayer
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.softyorch.stroopoverload.core.StroopColor
@@ -47,17 +48,40 @@ class MultiplayerViewModel(
 
     fun startGame() {
         val current = _state.value as? MultiplayerUiState.InRoom ?: return
+        if (current.isStartingGame) return
+        _state.value = current.copy(isStartingGame = true, startGameError = null)
         viewModelScope.launch {
-            repository.startGame(current.room.roomId)
-                .onFailure { _state.value = MultiplayerUiState.Error(MultiplayerErrorReason.StartGameFailed(it.message)) }
+            repository.startGame(current.room.roomId).onFailure { err ->
+                // Re-read the latest InRoom state rather than reusing `current`: the
+                // Firestore listener may have pushed a newer room in the meantime,
+                // and clobbering it back to `current` would lose that update.
+                val latest = _state.value as? MultiplayerUiState.InRoom ?: return@onFailure
+                _state.value = latest.copy(
+                    isStartingGame = false,
+                    startGameError = MultiplayerErrorReason.StartGameFailed(err.message),
+                )
+            }
         }
+    }
+
+    /** Leaves a FINISHED match's result screen back to the lobby, stopping the room listener. */
+    fun exitRoom() {
+        observeRoomJob?.cancel()
+        observeRoomJob = null
+        _state.value = MultiplayerUiState.Idle
     }
 
     fun submitAnswer(color: StroopColor) {
         val current = _state.value as? MultiplayerUiState.InRoom ?: return
         if (!current.room.canAnswer(current.myUid)) return
         viewModelScope.launch {
+            // Best-effort: a rejected answer (e.g. lost a race against the deadline
+            // or the turn already moved on) self-corrects on the next Firestore
+            // snapshot, which is why this doesn't surface a UI error state -- but
+            // it must not fail silently with no trace when debugging reports like
+            // "my tap didn't register".
             repository.submitAnswer(current.room.roomId, color)
+                .onFailure { Log.w("MultiplayerViewModel", "submitAnswer rejected: ${it.message}") }
         }
     }
 

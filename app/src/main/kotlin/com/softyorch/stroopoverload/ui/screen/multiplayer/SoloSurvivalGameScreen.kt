@@ -1,208 +1,227 @@
 package com.softyorch.stroopoverload.ui.screen.multiplayer
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.softyorch.stroopoverload.R
 import com.softyorch.stroopoverload.core.StroopColor
 import com.softyorch.stroopoverload.domain.multiplayer.MultiplayerRoom
 import com.softyorch.stroopoverload.domain.multiplayer.RoomPlayer
 import com.softyorch.stroopoverload.domain.multiplayer.RoomStatus
+import com.softyorch.stroopoverload.ui.theme.Muted
+import com.softyorch.stroopoverload.ui.theme.TechAccent
 import kotlinx.coroutines.delay
 
+private const val SOLO_LEVELS_PER_DIFFICULTY = 5
+
+/** Mirrors soloSurvival.ts's soloLevelForRound/soloTimeLimitMs formula. */
+private fun soloTimeLimitMs(round: Int): Long =
+    timeLimitMsForRound(round / SOLO_LEVELS_PER_DIFFICULTY + 1)
+
 /**
- * solo_survival has no shared turn to render: every player answers against
- * their own stimulus on their own clock, so unlike MultiplayerGameScreen this
- * always shows MY stimulus/score (never someone else's), plus a leaderboard
- * so busted players can still see how the rest of the room is doing.
+ * solo_survival has no shared turn to render -- every player answers against
+ * their own stimulus on their own clock -- but the screen otherwise reuses
+ * the exact same visual language as the local single-player GameScreen and
+ * the other online modes' MultiplayerGameScreen (roster HUD, TimerBar,
+ * bordered stimulus box, 2x2 quadrant grid), just always showing MY OWN
+ * stimulus/score instead of a shared one.
  */
 @Composable
 fun SoloSurvivalGameScreen(
     room: MultiplayerRoom,
     myUid: String,
     onColorTapped: (StroopColor) -> Unit,
+    onExit: () -> Unit,
 ) {
     val me = room.player(myUid)
 
     var nowMs by remember { mutableStateOf(System.currentTimeMillis()) }
     LaunchedEffect(room.roomId) {
         while (true) {
-            delay(200L)
+            delay(100L)
             nowMs = System.currentTimeMillis()
         }
     }
-    val remainingSeconds = room.deadlineAtMs?.let { ((it - nowMs).coerceAtLeast(0L)) / 1000 }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
-            .safeDrawingPadding()
-            .padding(16.dp)
-    ) {
-        if (room.status == RoomStatus.PLAYING && remainingSeconds != null) {
-            Text(
-                text = stringResource(R.string.mp_solo_time_left, remainingSeconds),
-                style = MaterialTheme.typography.labelLarge,
-                color = MaterialTheme.colorScheme.tertiary,
-                modifier = Modifier.align(Alignment.CenterHorizontally),
-            )
+    val sessionSecondsLeft = room.deadlineAtMs?.let { ((it - nowMs).coerceAtLeast(0L)) / 1000 } ?: 0L
+    val timerProgress = remember(me?.soloDeadlineAtMs, me?.soloRound, nowMs) {
+        val deadline = me?.soloDeadlineAtMs
+        if (deadline == null) {
+            0f
+        } else {
+            val totalMs = soloTimeLimitMs((me.soloRound).coerceAtLeast(0)).toFloat()
+            ((deadline - nowMs).toFloat() / totalMs).coerceIn(0f, 1f)
         }
-
-        Spacer(Modifier.height(16.dp))
-
-        when (room.status) {
-            RoomStatus.PLAYING -> PlayingContent(me, onColorTapped)
-            RoomStatus.FINISHED -> FinishedBanner(room, myUid)
-            // Unreachable here: MultiplayerScreen routes WAITING/STARTING to their own
-            // screens before this composable is ever shown. Kept only so the `when` stays
-            // exhaustive against RoomStatus.
-            RoomStatus.WAITING, RoomStatus.STARTING -> Text(stringResource(R.string.mp_game_waiting))
-        }
-
-        Spacer(Modifier.height(24.dp))
-        Leaderboard(room.players, myUid)
     }
-}
 
-@Composable
-private fun ColumnScope.PlayingContent(me: RoomPlayer?, onColorTapped: (StroopColor) -> Unit) {
-    val stimulus = me?.soloStimulus
-    when {
-        me == null -> Text(
-            text = stringResource(R.string.mp_game_preparing_round),
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.align(Alignment.CenterHorizontally),
-        )
-        !me.alive -> {
-            Text(
-                text = stringResource(R.string.mp_solo_busted_title),
-                style = MaterialTheme.typography.headlineMedium,
-                color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.align(Alignment.CenterHorizontally),
-            )
-            Spacer(Modifier.height(8.dp))
-            Text(
-                text = stringResource(R.string.mp_solo_busted_subtitle, me.soloScore),
-                style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.align(Alignment.CenterHorizontally),
-            )
-        }
-        stimulus != null -> {
-            Text(
-                text = "${stringResource(R.string.mp_solo_score_label)}: ${me.soloScore}",
-                style = MaterialTheme.typography.labelLarge,
-                modifier = Modifier.align(Alignment.CenterHorizontally),
-            )
-            Spacer(Modifier.height(16.dp))
-            Text(
-                text = stringResource(stimulus.wordLabel.displayNameRes),
-                style = MaterialTheme.typography.displayMedium,
-                color = stimulus.inkColor.composeColor,
-                modifier = Modifier.align(Alignment.CenterHorizontally),
-            )
-            Spacer(Modifier.height(32.dp))
+    Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .safeDrawingPadding()
+                .padding(horizontal = 14.dp, vertical = 8.dp)
+        ) {
+            // Roster HUD, same bordered-card pattern as MultiplayerGameScreen --
+            // this is the "added" room-players piece: everyone's live score and
+            // alive status, "you" called out so a busted player can still track
+            // how the room is doing without a separate leaderboard section.
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .horizontalScroll(rememberScrollState()),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(6.dp))
+                    .background(MaterialTheme.colorScheme.surface)
+                    .padding(10.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                stimulus.options.forEach { option ->
-                    Button(
-                        onClick = { onColorTapped(option) },
-                        colors = ButtonDefaults.buttonColors(containerColor = option.composeColor),
-                        modifier = Modifier.heightIn(min = 44.dp),
+                room.players.sortedByDescending { it.soloScore }.forEach { player ->
+                    val isMe = player.uid == myUid
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         Text(
-                            text = stringResource(option.displayNameRes),
-                            color = Color.Black,
+                            text = player.displayName,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = if (isMe) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
+                            fontWeight = if (isMe) FontWeight.Black else FontWeight.Normal,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        Text(
+                            text = if (player.alive) "${player.soloScore}" else stringResource(R.string.mp_game_eliminated),
+                            style = MaterialTheme.typography.labelSmall,
+                            color = if (player.alive) Muted else MaterialTheme.colorScheme.error,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
                     }
                 }
             }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            if (room.status == RoomStatus.PLAYING) {
+                Text(
+                    text = stringResource(R.string.mp_solo_time_left, sessionSecondsLeft),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = TechAccent,
+                    modifier = Modifier.align(Alignment.CenterHorizontally),
+                )
+                Spacer(modifier = Modifier.height(6.dp))
+            }
+
+            if (room.status == RoomStatus.PLAYING && me?.alive == true) {
+                TimerBar(
+                    progress = timerProgress,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(8.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(4.dp)),
+                )
+                Spacer(modifier = Modifier.height(10.dp))
+            }
+
+            when (room.status) {
+                RoomStatus.PLAYING -> PlayingContent(me, onColorTapped)
+                // Rendered as a full-screen overlay below instead, so it can float over
+                // the roster/timer rather than being squeezed into the remaining weight.
+                RoomStatus.FINISHED -> Unit
+                // Unreachable here: MultiplayerScreen routes WAITING/STARTING to their own
+                // screens before this composable is ever shown. Kept only so the `when` stays
+                // exhaustive against RoomStatus.
+                RoomStatus.WAITING, RoomStatus.STARTING -> Text(stringResource(R.string.mp_game_waiting))
+            }
         }
-        else -> Text(
-            text = stringResource(R.string.mp_game_preparing_round),
-            style = MaterialTheme.typography.bodyMedium,
-            modifier = Modifier.align(Alignment.CenterHorizontally),
-        )
+
+        if (room.status == RoomStatus.FINISHED) {
+            MatchFinishedOverlay(room = room, myUid = myUid, onExit = onExit)
+        }
     }
 }
 
 @Composable
-private fun ColumnScope.FinishedBanner(room: MultiplayerRoom, myUid: String) {
-    val winner = room.players.firstOrNull { it.uid == room.winnerUid }
-    val text = if (room.winnerUid == myUid) {
-        stringResource(R.string.mp_solo_you_won)
-    } else {
-        stringResource(
-            R.string.mp_solo_won_by,
-            winner?.displayName ?: stringResource(R.string.mp_game_unknown_player),
-            winner?.soloScore ?: 0,
-        )
-    }
-    Text(text = text, style = MaterialTheme.typography.headlineMedium, modifier = Modifier.align(Alignment.CenterHorizontally))
-}
+private fun ColumnScope.PlayingContent(me: RoomPlayer?, onColorTapped: (StroopColor) -> Unit) {
+    val stimulus = me?.soloStimulus
 
-@Composable
-private fun ColumnScope.Leaderboard(players: List<RoomPlayer>, myUid: String) {
-    Text(
-        text = stringResource(R.string.mp_solo_leaderboard_title),
-        style = MaterialTheme.typography.labelLarge,
-    )
-    Spacer(Modifier.height(8.dp))
-    val ranked = players.sortedByDescending { it.soloScore }
-    LazyColumn(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        items(ranked, key = { it.uid }) { player -> LeaderboardRow(player, isMe = player.uid == myUid) }
+    if (me == null || !me.alive || stimulus == null) {
+        Box(modifier = Modifier.weight(1f).fillMaxWidth(), contentAlignment = Alignment.Center) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                if (me != null && !me.alive) {
+                    Text(
+                        text = stringResource(R.string.mp_solo_busted_title),
+                        style = MaterialTheme.typography.headlineMedium,
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                    Spacer(Modifier.height(8.dp))
+                    Text(
+                        text = stringResource(R.string.mp_solo_busted_subtitle, me.soloScore),
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                } else {
+                    Text(
+                        text = stringResource(R.string.mp_game_preparing_round),
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
+            }
+        }
+        return
     }
-}
 
-@Composable
-private fun LeaderboardRow(player: RoomPlayer, isMe: Boolean) {
-    Row(
+    // Central word terminal, matching the local GameScreen's bordered stimulus box.
+    Box(
         modifier = Modifier
+            .weight(1f)
             .fillMaxWidth()
-            .clip(RoundedCornerShape(8.dp))
-            .background(if (isMe) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface)
-            .padding(horizontal = 12.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
+            .border(2.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(12.dp))
+            .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)),
+        contentAlignment = Alignment.Center,
     ) {
-        Text(
-            text = player.displayName + if (isMe) " (${stringResource(R.string.mp_solo_you_tag)})" else "",
-            style = MaterialTheme.typography.bodyMedium,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f),
-        )
-        if (!player.alive) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
-                text = stringResource(R.string.mp_game_eliminated),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.error,
-                modifier = Modifier.padding(end = 8.dp),
+                text = stringResource(R.string.game_stimulus_hint),
+                style = MaterialTheme.typography.bodySmall,
+                color = Muted,
+                letterSpacing = 2.sp,
+                fontSize = 11.sp,
+            )
+            Spacer(modifier = Modifier.height(12.dp))
+            Text(
+                text = stringResource(stimulus.wordLabel.displayNameRes),
+                color = stimulus.inkColor.composeColor,
+                fontSize = 46.sp,
+                fontWeight = FontWeight.Black,
+                letterSpacing = 4.sp,
             )
         }
-        Text(
-            text = "${player.soloScore}",
-            style = MaterialTheme.typography.labelMedium,
-            fontWeight = FontWeight.Bold,
-        )
+    }
+
+    Spacer(modifier = Modifier.height(10.dp))
+
+    // 2x2 quadrant grid, same layout/component as local mode and the other
+    // online modes' MultiplayerGameScreen (shared QuadrantBox).
+    val options = stimulus.options
+    Column(modifier = Modifier.weight(1.2f).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Row(modifier = Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            options.getOrNull(0)?.let { QuadrantBox(it, true, false, Modifier.weight(1f).fillMaxHeight()) { onColorTapped(it) } }
+            options.getOrNull(1)?.let { QuadrantBox(it, true, false, Modifier.weight(1f).fillMaxHeight()) { onColorTapped(it) } }
+        }
+        Row(modifier = Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            options.getOrNull(2)?.let { QuadrantBox(it, true, false, Modifier.weight(1f).fillMaxHeight()) { onColorTapped(it) } }
+            options.getOrNull(3)?.let { QuadrantBox(it, true, false, Modifier.weight(1f).fillMaxHeight()) { onColorTapped(it) } }
+        }
     }
 }

@@ -12,21 +12,23 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.softyorch.stroopoverload.R
 import com.softyorch.stroopoverload.domain.multiplayer.RoomMode
+import com.softyorch.stroopoverload.ui.theme.Muted
+import com.softyorch.stroopoverload.ui.theme.TechAccent
 
 @Composable
 fun LobbyScreen(
-    onCreateRoom: (displayName: String, mode: RoomMode) -> Unit,
-    onJoinRoom: (code: String, displayName: String) -> Unit,
+    pilotName: String,
+    onCreateRoom: (mode: RoomMode) -> Unit,
+    onJoinRoom: (code: String) -> Unit,
     errorReason: MultiplayerErrorReason?,
     isConnecting: Boolean,
 ) {
-    var displayName by remember { mutableStateOf("") }
     var code by remember { mutableStateOf("") }
     var selectedMode by remember { mutableStateOf(RoomMode.MISTAKE) }
-    val defaultName = stringResource(R.string.mp_lobby_default_name)
 
     Column(
         modifier = Modifier
@@ -39,13 +41,34 @@ fun LobbyScreen(
     ) {
         Text(stringResource(R.string.mp_lobby_title), style = MaterialTheme.typography.headlineSmall)
         Spacer(Modifier.height(16.dp))
-        OutlinedTextField(
-            value = displayName,
-            onValueChange = { displayName = it },
-            label = { Text(stringResource(R.string.mp_lobby_name_label)) },
-            enabled = !isConnecting,
-            modifier = Modifier.fillMaxWidth(),
-        )
+
+        // Pilot identity is the account's real nickname -- no free-text entry,
+        // so match history/scoring always ties back to a real profile.
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(8.dp))
+                .background(MaterialTheme.colorScheme.surface)
+                .padding(horizontal = 14.dp, vertical = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+        ) {
+            Column {
+                Text(
+                    text = stringResource(R.string.mp_lobby_name_label),
+                    style = MaterialTheme.typography.labelSmall,
+                    color = Muted,
+                )
+                Text(
+                    text = pilotName,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = TechAccent,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+
         Spacer(Modifier.height(24.dp))
         Text(stringResource(R.string.mp_lobby_mode_label), style = MaterialTheme.typography.labelLarge)
         Spacer(Modifier.height(8.dp))
@@ -61,7 +84,7 @@ fun LobbyScreen(
         }
         Spacer(Modifier.height(24.dp))
         Button(
-            onClick = { onCreateRoom(displayName.ifBlank { defaultName }, selectedMode) },
+            onClick = { onCreateRoom(selectedMode) },
             enabled = !isConnecting,
             modifier = Modifier.fillMaxWidth(),
         ) { Text(if (isConnecting) stringResource(R.string.mp_lobby_connecting) else stringResource(R.string.mp_lobby_create_room)) }
@@ -77,7 +100,7 @@ fun LobbyScreen(
         )
         Spacer(Modifier.height(12.dp))
         Button(
-            onClick = { onJoinRoom(code, displayName.ifBlank { defaultName }) },
+            onClick = { onJoinRoom(code) },
             enabled = !isConnecting && code.length == 5,
             modifier = Modifier.fillMaxWidth(),
         ) { Text(stringResource(R.string.mp_lobby_join_room)) }

@@ -51,6 +51,16 @@ data class RoomPlayer(
     val soloRound: Int = 0,
     val soloStimulus: MultiplayerStimulus? = null,
     val soloDeadlineAtMs: Long? = null,
+    // mistake/hot_potato only -- live accumulated score, mirrors soloScore's role.
+    val matchScore: Int = 0,
+    // mistake/hot_potato only -- server timestamp of this player's elimination
+    // (a hot_potato match can eliminate several players before it ends).
+    val eliminatedAtMs: Long? = null,
+    // Set once, server-side, when the match finishes. 1-based; 1 == winner.
+    // finalScore is the profile points this player earned (halved raw score
+    // times a placement multiplier -- see functions/src/scoring.ts).
+    val placement: Int? = null,
+    val finalScore: Int? = null,
 )
 
 data class MultiplayerStimulus(
@@ -75,6 +85,7 @@ data class MultiplayerRoom(
     val deadlineAtMs: Long? = null,
     val winnerUid: String? = null,
     val startsAtMs: Long? = null,
+    val createdAtMs: Long = 0L,
 ) {
     val currentTurnUid: String? get() = turnOrder.getOrNull(turnIndex)
     fun isMyTurn(uid: String): Boolean = currentTurnUid == uid

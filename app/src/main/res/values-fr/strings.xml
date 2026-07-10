@@ -248,6 +248,7 @@
     <string name="mp_waiting_host_badge">HÔTE</string>
     <string name="mp_waiting_empty_slot">· en attente d\'un pilote ·</string>
     <string name="mp_waiting_start_game">[ COMMENCER LA PARTIE ]</string>
+    <string name="mp_waiting_starting_game">DÉMARRAGE…</string>
     <string name="mp_waiting_scanning_host">EN ATTENTE D\'AUTRES PILOTES…</string>
     <string name="mp_waiting_scanning_guest">EN ATTENTE DE L\'HÔTE…</string>
 
@@ -260,6 +261,16 @@
     <string name="mp_game_won_by">%1$s a gagné</string>
     <string name="mp_game_waiting">En attente…</string>
     <string name="mp_game_unknown_player">…</string>
+    <string name="mp_game_match_summary">RÉSUMÉ DE LA PARTIE</string>
+    <string name="mp_game_exit_room">[ QUITTER LA SALLE ]</string>
+    <string name="mp_game_points_earned">+%1$d POINTS GAGNÉS</string>
+    <string name="mp_finish_duration">DURÉE %1$s</string>
+    <string name="mp_finish_raw_score">Score de la partie</string>
+    <string name="mp_finish_halved">Divisé par deux</string>
+    <string name="mp_finish_placement_bonus">Bonus de classement (×%1$s)</string>
+    <string name="mp_finish_eliminated_at">Éliminé à %1$ds</string>
+    <string name="mp_finish_rounds_reached">A atteint la manche %1$d</string>
+    <string name="mp_finish_survived_full">A survécu toute la partie</string>
 
     <!-- Multiplayer solo_survival screen -->
     <string name="mp_solo_time_left">%1$ds RESTANTES</string>
@@ -270,6 +281,11 @@
     <string name="mp_solo_leaderboard_title">CLASSEMENT</string>
     <string name="mp_solo_you_won">VICTOIRE !</string>
     <string name="mp_solo_won_by">%1$s gagne avec %2$d pts</string>
+
+    <!-- Multiplayer anonymous-account gate dialog -->
+    <string name="mp_anon_gate_title">ACCÈS EN LIGNE VERROUILLÉ</string>
+    <string name="mp_anon_gate_body">Les pilotes invités ne peuvent pas rejoindre les parties en ligne. Crée un compte gratuit pour débloquer le multijoueur et commencer à gagner des points et à monter de niveau.</string>
+    <string name="mp_anon_gate_dismiss">COMPRIS</string>
 
     <!-- Multiplayer error fallbacks (shown only when the backend gives no detail message) -->
     <string name="mp_error_create_room">Impossible de créer la salle.</string>

@@ -28,6 +28,7 @@ import com.softyorch.stroopoverload.ui.screen.auth.AuthScreen
 import com.softyorch.stroopoverload.ui.screen.auth.AuthViewModel
 import com.softyorch.stroopoverload.ui.screen.profile.ProfileScreen
 import com.softyorch.stroopoverload.ui.screen.profile.ProfileViewModel
+import com.softyorch.stroopoverload.ui.components.AnonymousGateDialog
 import kotlinx.coroutines.launch
 
 private const val ROUTE_AUTH = "auth"
@@ -54,6 +55,7 @@ fun StroopNavGraph() {
     var lastResult by remember { mutableStateOf<GameResult?>(null) }
     var lastXpBreakdown by remember { mutableStateOf<XpBreakdown?>(null) }
     var lastNewAchievements by remember { mutableStateOf<List<Achievement>>(emptyList()) }
+    var showAnonymousGateDialog by remember { mutableStateOf(false) }
 
     val startRoute = remember {
         AsoDemoSeeder.seedIfNeeded(context)
@@ -89,7 +91,17 @@ fun StroopNavGraph() {
                 isReady = true,
                 onPlay = { navController.navigate(ROUTE_GAME_MODE_SELECT) },
                 onLeaderboard = { navController.navigate(ROUTE_LEADERBOARD) },
-                onMultiplayer = { navController.navigate(ROUTE_MULTIPLAYER) },
+                onMultiplayer = {
+                    // Anonymous profiles never sync to Firestore (see
+                    // FirebaseGameRepository.updateProfile), so a guest could join a
+                    // room but could never actually be scored -- block the whole
+                    // flow up front instead of letting them play for nothing.
+                    if (authService.currentUser?.isAnonymous == true) {
+                        showAnonymousGateDialog = true
+                    } else {
+                        navController.navigate(ROUTE_MULTIPLAYER)
+                    }
+                },
                 onProfile = { navController.navigate(ROUTE_PROFILE) },
             )
         }
@@ -151,7 +163,11 @@ fun StroopNavGraph() {
             LeaderboardScreen(onBack = { navController.popBackStack() })
         }
         composable(ROUTE_MULTIPLAYER) {
-            MultiplayerScreen(myUid = authService.currentUid ?: "guest_local_0001")
+            MultiplayerScreen(
+                myUid = authService.currentUid ?: "guest_local_0001",
+                myNickname = currentProfile.displayName,
+                repository = repository,
+            )
         }
         composable(ROUTE_PROFILE) {
             val profileVm: ProfileViewModel = viewModel(factory = ProfileViewModelFactory(application))
@@ -169,6 +185,10 @@ fun StroopNavGraph() {
                 }
             )
         }
+    }
+
+    if (showAnonymousGateDialog) {
+        AnonymousGateDialog(onDismiss = { showAnonymousGateDialog = false })
     }
 }
 

@@ -366,8 +366,80 @@ class MultiplayerViewModelTest {
             awaitItem() // InRoom
 
             viewModel.startGame()
+            val starting = awaitItem() as MultiplayerUiState.InRoom
+            assertTrue(starting.isStartingGame)
             dispatcher.scheduler.advanceUntilIdle()
             assertEquals(1, fake.startGameCallCount)
+        }
+    }
+
+    @Test
+    fun `startGame locks isStartingGame immediately and is a no-op while already starting`() = runTest {
+        val fake = FakeMultiplayerRepository()
+        val viewModel = MultiplayerViewModel(fake)
+
+        viewModel.state.test {
+            assertEquals(MultiplayerUiState.Idle, awaitItem())
+
+            viewModel.createRoom(uid = "host-1", displayName = "Neo")
+            assertEquals(MultiplayerUiState.Connecting, awaitItem())
+            dispatcher.scheduler.advanceUntilIdle()
+
+            fake.emitRoom(
+                MultiplayerRoom(
+                    roomId = "room-1",
+                    status = RoomStatus.WAITING,
+                    hostUid = "host-1",
+                    players = listOf(RoomPlayer(uid = "host-1", displayName = "Neo")),
+                    turnOrder = listOf("host-1"),
+                )
+            )
+            awaitItem() // InRoom, isStartingGame == false
+
+            viewModel.startGame()
+            val starting = awaitItem() as MultiplayerUiState.InRoom
+            assertTrue(starting.isStartingGame) // locked before the repository call even resolves
+
+            // A second press while still starting must not re-trigger the repository.
+            viewModel.startGame()
+            dispatcher.scheduler.advanceUntilIdle()
+            assertEquals(1, fake.startGameCallCount)
+        }
+    }
+
+    @Test
+    fun `startGame failure clears isStartingGame and surfaces startGameError, staying in the room`() = runTest {
+        val fake = FakeMultiplayerRepository()
+        fake.startGameResult = Result.failure(RuntimeException("network down"))
+        val viewModel = MultiplayerViewModel(fake)
+
+        viewModel.state.test {
+            assertEquals(MultiplayerUiState.Idle, awaitItem())
+
+            viewModel.createRoom(uid = "host-1", displayName = "Neo")
+            assertEquals(MultiplayerUiState.Connecting, awaitItem())
+            dispatcher.scheduler.advanceUntilIdle()
+
+            fake.emitRoom(
+                MultiplayerRoom(
+                    roomId = "room-1",
+                    status = RoomStatus.WAITING,
+                    hostUid = "host-1",
+                    players = listOf(RoomPlayer(uid = "host-1", displayName = "Neo")),
+                    turnOrder = listOf("host-1"),
+                )
+            )
+            awaitItem() // InRoom
+
+            viewModel.startGame()
+            val starting = awaitItem() as MultiplayerUiState.InRoom
+            assertTrue(starting.isStartingGame)
+            dispatcher.scheduler.advanceUntilIdle()
+
+            val failed = awaitItem() as MultiplayerUiState.InRoom
+            assertEquals(false, failed.isStartingGame) // unlocked so the host can retry
+            assertEquals("network down", failed.startGameError?.detail)
+            assertEquals("room-1", failed.room.roomId) // still in the room, not bounced to Lobby
         }
     }
 

@@ -248,6 +248,7 @@
     <string name="mp_waiting_host_badge">HOST</string>
     <string name="mp_waiting_empty_slot">· wartet auf Piloten ·</string>
     <string name="mp_waiting_start_game">[ SPIEL STARTEN ]</string>
+    <string name="mp_waiting_starting_game">STARTET…</string>
     <string name="mp_waiting_scanning_host">WARTET AUF WEITERE PILOTEN…</string>
     <string name="mp_waiting_scanning_guest">WARTET AUF DEN HOST…</string>
 
@@ -260,6 +261,16 @@
     <string name="mp_game_won_by">%1$s hat gewonnen</string>
     <string name="mp_game_waiting">Warten…</string>
     <string name="mp_game_unknown_player">…</string>
+    <string name="mp_game_match_summary">SPIELÜBERSICHT</string>
+    <string name="mp_game_exit_room">[ RAUM VERLASSEN ]</string>
+    <string name="mp_game_points_earned">+%1$d PUNKTE ERHALTEN</string>
+    <string name="mp_finish_duration">DAUER %1$s</string>
+    <string name="mp_finish_raw_score">Spielpunktzahl</string>
+    <string name="mp_finish_halved">Halbiert</string>
+    <string name="mp_finish_placement_bonus">Platzierungsbonus (×%1$s)</string>
+    <string name="mp_finish_eliminated_at">Eliminiert nach %1$ds</string>
+    <string name="mp_finish_rounds_reached">Runde %1$d erreicht</string>
+    <string name="mp_finish_survived_full">Das ganze Match überlebt</string>
 
     <!-- Multiplayer solo_survival screen -->
     <string name="mp_solo_time_left">NOCH %1$ds</string>
@@ -270,6 +281,11 @@
     <string name="mp_solo_leaderboard_title">BESTENLISTE</string>
     <string name="mp_solo_you_won">DU GEWINNST!</string>
     <string name="mp_solo_won_by">%1$s gewinnt mit %2$d Punkten</string>
+
+    <!-- Multiplayer anonymous-account gate dialog -->
+    <string name="mp_anon_gate_title">ONLINE-ZUGANG GESPERRT</string>
+    <string name="mp_anon_gate_body">Gastpiloten können nicht an Online-Matches teilnehmen. Erstelle ein kostenloses Konto, um den Mehrspielermodus freizuschalten und Punkte sowie Level-Aufstiege zu sammeln.</string>
+    <string name="mp_anon_gate_dismiss">VERSTANDEN</string>
 
     <!-- Multiplayer error fallbacks (shown only when the backend gives no detail message) -->
     <string name="mp_error_create_room">Der Raum konnte nicht erstellt werden.</string>
