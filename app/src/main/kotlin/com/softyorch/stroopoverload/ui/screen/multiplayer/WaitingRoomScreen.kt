@@ -235,7 +235,7 @@ private fun EmptyPlayerSlot() {
 
 /** Cyberpunk "scanning for signal" equalizer-style loading indicator. */
 @Composable
-private fun SignalScanner(label: String) {
+internal fun SignalScanner(label: String) {
     val barCount = 7
     val transition = rememberInfiniteTransition(label = "scanner")
 

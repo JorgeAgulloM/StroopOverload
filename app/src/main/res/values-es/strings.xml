@@ -252,6 +252,19 @@
     <string name="mp_waiting_scanning_host">ESPERANDO MÁS PILOTOS…</string>
     <string name="mp_waiting_scanning_guest">ESPERANDO AL ANFITRIÓN…</string>
 
+    <!-- Multiplayer preload waiting room (shown while the match is starting) -->
+    <string name="mp_preload_title">[ LANZANDO PARTIDA ]</string>
+    <string name="mp_preload_subtitle">%1$d PILOTOS SINCRONIZANDO</string>
+    <string name="mp_preload_scanner_label">CARGANDO CAMPO DE BATALLA…</string>
+    <string name="mp_loading_tip_1">Calibrando receptores de color…</string>
+    <string name="mp_loading_tip_2">Separando el rojo del verde…</string>
+    <string name="mp_loading_tip_3">Despertando tus reflejos…</string>
+    <string name="mp_loading_tip_4">Puliendo los píxeles neón…</string>
+    <string name="mp_loading_tip_5">Sincronizando rutas neuronales…</string>
+    <string name="mp_loading_tip_6">Comprobando que el rojo siga siendo rojo…</string>
+    <string name="mp_loading_tip_7">Cargando combinaciones de color prohibidas…</string>
+    <string name="mp_loading_tip_8">Cargando los botones de respuesta…</string>
+
     <!-- Multiplayer game screen -->
     <string name="mp_game_alive">VIVO</string>
     <string name="mp_game_eliminated">ELIMINADO</string>

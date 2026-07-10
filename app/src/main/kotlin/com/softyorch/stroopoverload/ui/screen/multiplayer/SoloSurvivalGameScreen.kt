@@ -21,7 +21,6 @@ import com.softyorch.stroopoverload.domain.multiplayer.MultiplayerRoom
 import com.softyorch.stroopoverload.domain.multiplayer.RoomPlayer
 import com.softyorch.stroopoverload.domain.multiplayer.RoomStatus
 import com.softyorch.stroopoverload.ui.theme.Muted
-import com.softyorch.stroopoverload.ui.theme.TechAccent
 import kotlinx.coroutines.delay
 
 private const val SOLO_LEVELS_PER_DIFFICULTY = 5
@@ -55,7 +54,6 @@ fun SoloSurvivalGameScreen(
         }
     }
 
-    val sessionSecondsLeft = room.deadlineAtMs?.let { ((it - nowMs).coerceAtLeast(0L)) / 1000 } ?: 0L
     val timerProgress = remember(me?.soloDeadlineAtMs, me?.soloRound, nowMs) {
         val deadline = me?.soloDeadlineAtMs
         if (deadline == null) {
@@ -112,16 +110,12 @@ fun SoloSurvivalGameScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            if (room.status == RoomStatus.PLAYING) {
-                Text(
-                    text = stringResource(R.string.mp_solo_time_left, sessionSecondsLeft),
-                    style = MaterialTheme.typography.labelSmall,
-                    color = TechAccent,
-                    modifier = Modifier.align(Alignment.CenterHorizontally),
-                )
-                Spacer(modifier = Modifier.height(6.dp))
-            }
-
+            // Only the per-stimulus timer is shown -- that's the one with real
+            // personal stakes (miss it and you bust). The shared room-level
+            // session clock is a backend safety-net finish path (see
+            // soloSurvival.ts), not something a player needs to track: the
+            // match now ends the moment only one survivor remains anyway, so
+            // surfacing "Xs left" on the session clock was just confusing.
             if (room.status == RoomStatus.PLAYING && me?.alive == true) {
                 TimerBar(
                     progress = timerProgress,

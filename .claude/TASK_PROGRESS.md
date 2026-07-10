@@ -929,4 +929,71 @@ production. Ask before deploying.
 - On-device pass: confirm a hot_potato turn-holder's stimulus no longer changes on its own without
   them acting; confirm the wrong-answer flash shows the correct color instantly; confirm the balloon
   grows/shakes/pops sensibly across a full match with several eliminations.
-- Nothing committed — same long-lived uncommitted working tree as the sub-tasks above this one.
+
+**Committed** (user confirmed "commitea todo"): two commits on `feature/online-multiplayer`, split
+backend/client per this repo's established convention (see e.g. the solo_survival backend+client
+commit pair) — `7950391` (scoring engine + hot_potato timeout fix, functions/) and `77adf4f`
+(scoring UI + anonymous gating + Solo Survival redesign + Hot Potato client fixes, app/). Not pushed
+to remote.
+
+---
+
+## Sub-task: preload waiting room, Solo Survival last-survivor + UI cleanup (2026-07-10)
+
+Three more items from the user after reviewing the committed work.
+
+**Preload waiting room**: user described the desired flow explicitly -- host starts match -> loading
+room with some light entertainment -> once truly loaded, exit showing the countdown, match starts on
+GO!. The previous sub-task's `MultiplayerStartingScreen` (load-then-countdown, timed to
+`room.startsAtMs`) already had the right *structure* for this — the gap was that its "loading" phase
+was a bare `CircularProgressIndicator`. Replaced with a new `PreloadWaitingRoom.kt`: rotating
+cyberpunk-themed flavor tips (8, crossfaded every 2.4s) over the same `SignalScanner` equalizer
+animation already used in `WaitingRoomScreen` (made `internal` so both screens share it instead of
+duplicating the animation). 11 new string keys × 6 locales (title, subtitle, scanner label, 8 tips).
+The underlying timing-safety property is unchanged and load-bearing: the countdown is timed to finish
+right at the server's real `startsAtMs`, since round 1's deadline is computed server-side at that
+exact instant regardless of client animation timing — reordering to "countdown after confirmed
+loaded" would have let the countdown eat into round 1's already-short answer window, so the fix was
+richer *content* during the wait, not a change to *when* the countdown plays.
+
+**Solo Survival: end match on sole survivor.** User: doesn't make sense for one player to keep
+playing alone once everyone else has fallen. `resolveSoloAnswer` (functions/src/soloSurvival.ts) now
+finishes the match as soon as a bust leaves `<= 1` players alive (was `=== 0`, i.e. only when
+literally everyone had busted). Caught a real pre-existing bug while adding this: `highestScoreWinner`
+picked purely by score, so a sole survivor with a low/zero score could lose the winner slot to an
+already-busted player who happened to have scored more before dying -- confirmed by a test regression
+(`finishSoloSurvivalSession`'s existing "highest score wins even though busted earlier" test, which
+is the *session-timeout* finish path and is supposed to keep that exact score-only semantics per its
+own docstring). Rather than changing the shared `highestScoreWinner` helper (which would have broken
+that intentional, already-tested, already-documented behavior), the sole-survivor branch now declares
+the actual survivor the winner directly, bypassing the score-based helper entirely -- only that one
+finish path changed, `finishSoloSurvivalSession` and the all-busted path are untouched. Updated 2
+existing `index.test.ts` tests that used a 2-player room (busting one of two now correctly ends the
+match instead of leaving it "playing" with one player stranded alone) and added a new
+`soloSurvival.test.ts` test isolating the "exactly one survivor" case from the pre-existing "everyone
+busts" one. `functions`: 7 suites / **111/111 passing**.
+
+**Removed the confusing session countdown from Solo Survival's UI.** User: didn't understand what the
+top "Xs LEFT" counter was for, since the real personal stakes are the per-stimulus timer (which they
+explicitly confirmed makes sense: "si se acaba el tiempo para pulsar el color correcto se pierde").
+Removed the `mp_solo_time_left` text and its now-unused `sessionSecondsLeft` calc from
+`SoloSurvivalGameScreen.kt`; kept the per-stimulus `TimerBar`. The backend session-clock mechanism
+itself (`SOLO_SESSION_DURATION_MS`, `finishSoloSurvivalSession`) is untouched -- still a safety-net
+finish path for the rare case 2+ skilled players both survive the full 60s session, just no longer
+surfaced as a confusing on-screen number. `mp_solo_time_left` string is now unused dead weight across
+6 locale files (same class of harmless cleanup debt as `mp_lobby_default_name`, `mp_game_match_summary`
+before it got reused -- not chased down).
+
+Verified: `compileDevDebugKotlin`/`compileDemoDebugKotlin`/`compileProdDebugKotlin` all green,
+`testDevDebugUnitTest` green (full rerun), `functions` `npm run build` clean + `npm test` 111/111.
+Not yet verified on-device. Not committed. **Backend changes this round** (`soloSurvival.ts`) — needs
+`firebase deploy --only functions` before the last-survivor fix is live in production. Ask before
+deploying.
+
+**Deployed** (user confirmed): `firebase deploy --only functions` to `stroopoverload-softyorch`,
+2026-07-10. All 10 functions updated successfully.
+
+### Not yet done
+- On-device pass: confirm a 2-player (and 3-4 player) solo_survival match ends the instant only one
+  player remains, with that player correctly declared the winner; confirm the preload waiting room's
+  tips rotate and the countdown still lands cleanly on GO! with no dead gap or premature cut.

@@ -252,6 +252,19 @@
     <string name="mp_waiting_scanning_host">他のパイロットを待っています…</string>
     <string name="mp_waiting_scanning_guest">ホストを待っています…</string>
 
+    <!-- Multiplayer preload waiting room (shown while the match is starting) -->
+    <string name="mp_preload_title">[ マッチ起動中 ]</string>
+    <string name="mp_preload_subtitle">%1$d人のパイロットを同期中</string>
+    <string name="mp_preload_scanner_label">戦場を読み込み中…</string>
+    <string name="mp_loading_tip_1">色受容体を調整中…</string>
+    <string name="mp_loading_tip_2">赤と緑をほどいています…</string>
+    <string name="mp_loading_tip_3">反射神経を目覚めさせています…</string>
+    <string name="mp_loading_tip_4">ネオンピクセルを磨いています…</string>
+    <string name="mp_loading_tip_5">神経経路を同期中…</string>
+    <string name="mp_loading_tip_6">赤がまだ赤いか確認中…</string>
+    <string name="mp_loading_tip_7">禁断の色の組み合わせを読み込み中…</string>
+    <string name="mp_loading_tip_8">回答ボタンを充電中…</string>
+
     <!-- Multiplayer game screen -->
     <string name="mp_game_alive">生存</string>
     <string name="mp_game_eliminated">脱落</string>

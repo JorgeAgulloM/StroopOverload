@@ -3,7 +3,6 @@ package com.softyorch.stroopoverload.ui.screen.multiplayer
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -12,10 +11,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.softyorch.stroopoverload.data.FirebaseGameRepository
+import com.softyorch.stroopoverload.domain.multiplayer.MultiplayerRoom
 import com.softyorch.stroopoverload.domain.multiplayer.RoomMode
 import com.softyorch.stroopoverload.domain.multiplayer.RoomStatus
 import com.softyorch.stroopoverload.ui.components.CountdownOverlay
@@ -72,7 +71,7 @@ fun MultiplayerScreen(myUid: String, myNickname: String, repository: FirebaseGam
                 // "playing", so every client gets the full answer window regardless of how
                 // long their own countdown animation/render took -- no more racing a
                 // deadline that started ticking before they could see the board.
-                RoomStatus.STARTING -> MultiplayerStartingScreen(startsAtMs = room.startsAtMs)
+                RoomStatus.STARTING -> MultiplayerStartingScreen(room)
                 RoomStatus.PLAYING, RoomStatus.FINISHED -> if (room.mode == RoomMode.SOLO_SURVIVAL) {
                     SoloSurvivalGameScreen(
                         room = room,
@@ -101,20 +100,25 @@ private const val COUNTDOWN_ANIMATION_MS = 3600L
 private enum class StartingPhase { LOADING, COUNTDOWN, BRIDGING }
 
 /**
- * "starting" used to always play the countdown animation first and only show
- * a loading spinner afterward if the server hadn't caught up yet -- a jarring
- * "countdown ends, then a loader jumps in" transition whenever network
- * latency meant the client saw the "starting" status later than the server's
- * real [startsAtMs]. Inverted: wait out any latency with a loading spinner
- * FIRST, then start the countdown timed so it finishes right as the server
- * actually transitions, so the loader never has to interrupt the animation.
+ * "starting" flow: a proper loading waiting room with some light
+ * entertainment (PreloadWaitingRoom) plays first -- for as long as it
+ * actually takes the server to reach [MultiplayerRoom.startsAtMs] -- then the
+ * 3-2-1-GO countdown plays, timed to finish right as the server actually
+ * transitions to "playing". This ordering matters for fairness, not just
+ * feel: round 1's real deadline is computed server-side at startsAtMs
+ * (see beginRound in the Cloud Functions) regardless of how long any
+ * client's local animation takes, so playing the countdown too early (before
+ * the wait is actually over) would either cut it short or leave a dead gap
+ * before the board appears -- countdown-then-loader was the old, jarring
+ * order; this is loader-then-countdown, ending on GO! right as the match
+ * actually starts.
  */
 @Composable
-private fun MultiplayerStartingScreen(startsAtMs: Long?) {
-    var phase by remember(startsAtMs) { mutableStateOf(StartingPhase.LOADING) }
+private fun MultiplayerStartingScreen(room: MultiplayerRoom) {
+    var phase by remember(room.startsAtMs) { mutableStateOf(StartingPhase.LOADING) }
 
-    LaunchedEffect(startsAtMs) {
-        val remainingMs = startsAtMs?.let { it - System.currentTimeMillis() } ?: 0L
+    LaunchedEffect(room.startsAtMs) {
+        val remainingMs = room.startsAtMs?.let { it - System.currentTimeMillis() } ?: 0L
         val waitBeforeCountdownMs = (remainingMs - COUNTDOWN_ANIMATION_MS).coerceAtLeast(0L)
         if (waitBeforeCountdownMs > 0) delay(waitBeforeCountdownMs)
         phase = StartingPhase.COUNTDOWN
@@ -123,13 +127,11 @@ private fun MultiplayerStartingScreen(startsAtMs: Long?) {
     Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         when (phase) {
             StartingPhase.COUNTDOWN -> CountdownOverlay(onFinished = { phase = StartingPhase.BRIDGING })
-            // LOADING (waiting out latency so the countdown ends on time) and
+            // LOADING (the actual wait, filled with PreloadWaitingRoom's content) and
             // BRIDGING (the countdown finished slightly before beginRound's real
             // Firestore update arrived) look identical to the player -- both are
-            // just "hang on".
-            StartingPhase.LOADING, StartingPhase.BRIDGING -> Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
-            }
+            // just "hang on" -- so BRIDGING reuses the same room.
+            StartingPhase.LOADING, StartingPhase.BRIDGING -> PreloadWaitingRoom(room)
         }
     }
 }
