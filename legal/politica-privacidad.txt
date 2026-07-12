@@ -1,0 +1,111 @@
+POLÍTICA DE PRIVACIDAD — STROOP OVERLOAD
+
+Última actualización: 12 de julio de 2026
+
+1. RESPONSABLE DEL TRATAMIENTO
+
+SoftYorch (Jorge Agulló), en adelante "el responsable", es el responsable del
+tratamiento de los datos personales recabados a través de la aplicación móvil Stroop
+Overload ("la App").
+Contacto: agullojorge@gmail.com
+
+2. DATOS QUE RECOPILAMOS
+
+2.1. Datos de cuenta (registro con correo electrónico):
+- Correo electrónico
+- Contraseña (almacenada de forma cifrada por Firebase Authentication; nunca en texto
+  plano ni accesible por el responsable)
+- Apodo (nickname) elegido por el usuario
+- Estado de verificación del correo electrónico
+
+2.2. Datos de cuenta invitado (modo anónimo):
+- Identificador único de dispositivo/sesión generado por Firebase Authentication, sin
+  datos identificativos directos.
+
+2.3. Datos de perfil y progreso de juego:
+- Avatar seleccionado, nivel, experiencia (XP), puntuación, racha diaria, historial de
+  partidas jugadas/ganadas/perdidas/abandonadas, paletas de color desbloqueadas y estado
+  de funciones premium/sin anuncios.
+
+2.4. Datos técnicos y de publicidad:
+- A través de Google AdMob y Google User Messaging Platform (UMP) pueden recopilarse
+  identificadores de publicidad del dispositivo y datos de interacción con anuncios, con
+  el fin de mostrar publicidad (personalizada o no, según el consentimiento otorgado).
+
+2.5. No recopilamos: ubicación precisa, contactos, cámara/micrófono, ni datos de pago (las
+compras dentro de la app, si existen, las gestiona directamente la tienda de
+aplicaciones — Google Play — y el responsable no accede a los datos de la tarjeta).
+
+3. FINALIDAD DEL TRATAMIENTO
+
+- Crear y gestionar la cuenta de usuario y autenticarlo (Firebase Authentication).
+- Guardar el progreso del juego y mostrar clasificaciones (leaderboard) (Cloud
+  Firestore / Firebase Realtime Database).
+- Habilitar los modos de juego multijugador online.
+- Mostrar publicidad y, en su caso, personalizarla según el consentimiento del usuario
+  (Google AdMob).
+- Comunicaciones operativas imprescindibles (verificación de correo, restablecimiento de
+  contraseña).
+
+4. BASE LEGAL
+
+- Ejecución del contrato de uso de la App (arts. 6.1.b RGPD): gestión de cuenta,
+  progreso y funciones online.
+- Consentimiento del usuario (art. 6.1.a RGPD): publicidad personalizada, gestionado
+  mediante el formulario de consentimiento de Google UMP.
+- Interés legítimo (art. 6.1.f RGPD): seguridad de la cuenta y prevención de abuso
+  (trampas, suplantación).
+
+5. ENCARGADOS Y TERCEROS
+
+Utilizamos los siguientes proveedores, que actúan como encargados del tratamiento o
+responden a sus propias políticas de privacidad:
+- Google Firebase (Authentication, Cloud Firestore, Realtime Database, Cloud Functions) —
+  alojamiento e infraestructura de cuenta y datos de juego.
+- Google AdMob y Google User Messaging Platform — publicidad y gestión del
+  consentimiento.
+
+Estos proveedores pueden procesar datos fuera del Espacio Económico Europeo, acogidos a
+las garantías legales correspondientes (cláusulas contractuales tipo u otros mecanismos
+de transferencia reconocidos por el RGPD).
+
+6. CONSERVACIÓN DE LOS DATOS
+
+Conservamos los datos de la cuenta mientras esté activa. Si el usuario elimina su cuenta
+desde la App, los datos de perfil y progreso se eliminan de nuestros sistemas, salvo
+aquellos que debamos conservar por obligación legal.
+
+7. DERECHOS DEL USUARIO
+
+De acuerdo con el RGPD, el usuario puede ejercer en cualquier momento sus derechos de
+acceso, rectificación, supresión, oposición, limitación del tratamiento y portabilidad:
+- Directamente desde la App: edición de perfil y eliminación de cuenta (ajustes de
+  perfil).
+- Por correo electrónico: agullojorge@gmail.com
+
+El usuario también tiene derecho a presentar una reclamación ante la Agencia Española de
+Protección de Datos (www.aepd.es) si considera que el tratamiento no se ajusta a la
+normativa.
+
+8. MENORES DE EDAD
+
+La App no está dirigida a menores de 13 años y no recopila conscientemente datos de
+menores de dicha edad. Si detectamos que un menor de 13 años nos ha facilitado datos sin
+autorización parental, procederemos a eliminarlos.
+
+9. SEGURIDAD
+
+Aplicamos medidas técnicas y organizativas razonables para proteger los datos personales,
+incluyendo cifrado en tránsito y en reposo proporcionado por la infraestructura de
+Firebase. Ningún sistema es completamente infalible; el usuario debe usar una contraseña
+robusta y no compartirla.
+
+10. CAMBIOS EN ESTA POLÍTICA
+
+Podemos actualizar esta Política de Privacidad para reflejar cambios legales o del
+servicio. Los cambios sustanciales se notificarán a través de la App o de la web. La
+fecha de "Última actualización" indica la versión vigente.
+
+11. CONTACTO
+
+Para cualquier consulta sobre esta Política de Privacidad: agullojorge@gmail.com

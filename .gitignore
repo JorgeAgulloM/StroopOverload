@@ -1,15 +1,46 @@
-# Android
-*.iml
-*.class
-*.log
-.DS_Store
-.idea/
+# Gradle files
 .gradle/
 build/
-/local.properties
+!gradle/wrapper/gradle-wrapper.jar
+!gradlew
+!gradlew.bat
+*.aab
 
-# Gradle wrapper jar (binary)
-gradle/wrapper/gradle-wrapper.jar
+# Local configuration file (sdk path, etc)
+local.properties
 
-# Firebase — must be added manually from Firebase console
-app/google-services.json
+# Log/OS Files
+*.log
+
+# Android Studio generated files and folders
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+output.json
+
+# IntelliJ
+*.iml
+.idea/
+misc.xml
+deploymentTargetDropDown.xml
+render.experimental.xml
+
+# Keystore files
+*.jks
+*.keystore
+
+# Android Profiling
+*.hprof
+
+# Secret Properties
+# signing/millAndFriends.jks
+signing.properties
+
+# Google Services (e.g. APIs or Firebase)
+google-services.json
+
+# Admob Pproperties
+admob.properties
+# GitHub Package credentials
+secrets/

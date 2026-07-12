@@ -1,0 +1,27 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /rooms/{roomId} {
+      allow read: if request.auth != null && request.auth.uid in resource.data.players;
+      allow write: if false;
+
+      // Server-only data (e.g. Patata Caliente's hidden bomb deadline) that must
+      // never reach any client, including players who can legitimately read the
+      // room doc itself. Firestore rules can't redact a single field from an
+      // otherwise-readable document, so anything that must stay secret from
+      // players lives here instead of as a field on the room doc. Only the
+      // Admin SDK (Cloud Functions) can touch this subcollection.
+      match /private/{document=**} {
+        allow read, write: if false;
+      }
+    }
+
+    // Profile + leaderboard. Read is open to any authenticated user (the leaderboard query
+    // needs to read every user's doc, not just the caller's own). Write is restricted to the
+    // doc's own uid — nobody can write another user's profile or progress.
+    match /users/{uid} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && request.auth.uid == uid;
+    }
+  }
+}

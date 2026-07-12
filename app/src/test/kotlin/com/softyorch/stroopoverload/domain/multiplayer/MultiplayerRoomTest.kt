@@ -1,0 +1,93 @@
+package com.softyorch.stroopoverload.domain.multiplayer
+
+import com.softyorch.stroopoverload.core.StroopColor
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertTrue
+import org.junit.Test
+
+class MultiplayerRoomTest {
+    @Test
+    fun `isMyTurn is true only for the uid at turnIndex`() {
+        val room = MultiplayerRoom(turnOrder = listOf("a", "b", "c"), turnIndex = 1)
+        assertTrue(room.isMyTurn("b"))
+        assertFalse(room.isMyTurn("a"))
+        assertFalse(room.isMyTurn("c"))
+    }
+
+    @Test
+    fun `currentTurnUid is null when turnOrder is empty`() {
+        val room = MultiplayerRoom(turnOrder = emptyList())
+        assertEquals(null, room.currentTurnUid)
+    }
+
+    @Test
+    fun `RoomStatus fromFirestoreValue maps raw strings correctly`() {
+        assertEquals(RoomStatus.WAITING, RoomStatus.fromFirestoreValue("waiting"))
+        assertEquals(RoomStatus.STARTING, RoomStatus.fromFirestoreValue("starting"))
+        assertEquals(RoomStatus.PLAYING, RoomStatus.fromFirestoreValue("playing"))
+        assertEquals(RoomStatus.FINISHED, RoomStatus.fromFirestoreValue("finished"))
+        assertEquals(RoomStatus.WAITING, RoomStatus.fromFirestoreValue(null))
+        assertEquals(RoomStatus.WAITING, RoomStatus.fromFirestoreValue("garbage"))
+    }
+
+    @Test
+    fun `RoomMode fromFirestoreValue maps raw strings correctly, defaulting to MISTAKE`() {
+        assertEquals(RoomMode.MISTAKE, RoomMode.fromFirestoreValue("mistake"))
+        assertEquals(RoomMode.HOT_POTATO, RoomMode.fromFirestoreValue("hot_potato"))
+        assertEquals(RoomMode.SOLO_SURVIVAL, RoomMode.fromFirestoreValue("solo_survival"))
+        assertEquals(RoomMode.MISTAKE, RoomMode.fromFirestoreValue(null))
+        assertEquals(RoomMode.MISTAKE, RoomMode.fromFirestoreValue("garbage"))
+    }
+
+    @Test
+    fun `RoomMode toFirestoreValue round-trips through fromFirestoreValue`() {
+        assertEquals(RoomMode.MISTAKE, RoomMode.fromFirestoreValue(RoomMode.MISTAKE.toFirestoreValue()))
+        assertEquals(RoomMode.HOT_POTATO, RoomMode.fromFirestoreValue(RoomMode.HOT_POTATO.toFirestoreValue()))
+        assertEquals(RoomMode.SOLO_SURVIVAL, RoomMode.fromFirestoreValue(RoomMode.SOLO_SURVIVAL.toFirestoreValue()))
+    }
+
+    @Test
+    fun `canAnswer follows the shared turn in MISTAKE and HOT_POTATO`() {
+        val room = MultiplayerRoom(mode = RoomMode.MISTAKE, turnOrder = listOf("a", "b"), turnIndex = 0)
+        assertTrue(room.canAnswer("a"))
+        assertFalse(room.canAnswer("b"))
+
+        val hotPotatoRoom = room.copy(mode = RoomMode.HOT_POTATO)
+        assertTrue(hotPotatoRoom.canAnswer("a"))
+        assertFalse(hotPotatoRoom.canAnswer("b"))
+    }
+
+    @Test
+    fun `canAnswer ignores turn order in SOLO_SURVIVAL -- any alive player may answer`() {
+        val room = MultiplayerRoom(
+            mode = RoomMode.SOLO_SURVIVAL,
+            turnOrder = listOf("a", "b"),
+            turnIndex = 0, // would only ever allow "a" under the turn-based rule
+            players = listOf(
+                RoomPlayer(uid = "a", displayName = "A", alive = true),
+                RoomPlayer(uid = "b", displayName = "B", alive = false),
+            ),
+        )
+        assertTrue(room.canAnswer("a"))
+        assertFalse(room.canAnswer("b")) // busted
+        assertFalse(room.canAnswer("stranger")) // not even in the room
+    }
+
+    @Test
+    fun `player looks up a room player by uid, or returns null`() {
+        val room = MultiplayerRoom(players = listOf(RoomPlayer(uid = "a", displayName = "Neo")))
+        assertEquals("Neo", room.player("a")?.displayName)
+        assertEquals(null, room.player("does-not-exist"))
+    }
+
+    @Test
+    fun `MultiplayerStimulus correctAnswer is always the ink color`() {
+        val stimulus = MultiplayerStimulus(
+            wordLabel = StroopColor.RED,
+            inkColor = StroopColor.BLUE,
+            options = listOf(StroopColor.RED, StroopColor.GREEN, StroopColor.BLUE, StroopColor.YELLOW),
+        )
+        assertEquals(StroopColor.BLUE, stimulus.correctAnswer)
+    }
+}

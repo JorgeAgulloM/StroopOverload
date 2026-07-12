@@ -1,0 +1,376 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Stroop Overload</string>
+
+    <!-- Common -->
+    <string name="common_back">Zurück</string>
+    <string name="common_refresh">Aktualisieren</string>
+    <string name="common_edit_profile">Profil bearbeiten</string>
+    <string name="common_profile_icon_desc">Profil</string>
+    <string name="common_locked">GESPERRT</string>
+    <string name="common_cancel">Abbrechen</string>
+    <string name="common_show_password">Passwort anzeigen</string>
+    <string name="common_hide_password">Passwort verbergen</string>
+
+    <!-- Stroop colors (shown as the gameplay word/answers) -->
+    <string name="color_red">ROT</string>
+    <string name="color_green">GRÜN</string>
+    <string name="color_blue">BLAU</string>
+    <string name="color_yellow">GELB</string>
+
+    <!-- Home screen -->
+    <string name="home_vip_badge">💎 VIP</string>
+    <string name="home_streak_badge">🔥 %1$dT</string>
+    <string name="home_player_badge">%1$s // STUFE %2$d</string>
+    <string name="home_tagline">[ KOGNITIVE ÜBERLASTUNG ]</string>
+    <string name="home_title_line1">STROOP</string>
+    <string name="home_title_line2">OVERLOAD</string>
+    <string name="home_subtitle">NEURONALER REAKTIONSSYNAPSEN-TEST</string>
+    <string name="home_play_button">NEURALEN LINK AKTIVIEREN</string>
+    <string name="home_play_button_loading">LINK WIRD KALIBRIERT…</string>
+    <string name="home_leaderboard_button">BESTENLISTE</string>
+    <string name="home_multiplayer_button">ONLINE-SPIEL</string>
+    <string name="home_footer">SYS_VER: 2.0 // CYBERPUNK-HUD AKTIV</string>
+
+    <!-- Level tier titles, every 10 levels (1-10, 11-20, ... 191-200+) -->
+    <string name="level_title_tier_01">Neuraler Neuling</string>
+    <string name="level_title_tier_02">Synapsen-Kadett</string>
+    <string name="level_title_tier_03">Reflex-Lehrling</string>
+    <string name="level_title_tier_04">Chromatischer Agent</string>
+    <string name="level_title_tier_05">Tintenläufer</string>
+    <string name="level_title_tier_06">Overload-Adept</string>
+    <string name="level_title_tier_07">Kortex-Spezialist</string>
+    <string name="level_title_tier_08">Synapsenbrecher</string>
+    <string name="level_title_tier_09">Neuraler Phantom</string>
+    <string name="level_title_tier_10">Reflex-Vorhut</string>
+    <string name="level_title_tier_11">Cyber-Duellant</string>
+    <string name="level_title_tier_12">Chromatischer Kriegsherr</string>
+    <string name="level_title_tier_13">Overload-Wächter</string>
+    <string name="level_title_tier_14">Synaptisches Orakel</string>
+    <string name="level_title_tier_15">Neuraler Aufsteiger</string>
+    <string name="level_title_tier_16">Kortex-Herrscher</string>
+    <string name="level_title_tier_17">Quantensynapse</string>
+    <string name="level_title_tier_18">Leerenreflex</string>
+    <string name="level_title_tier_19">Singularitätsgeist</string>
+    <string name="level_title_tier_20">Overload-Gottheit</string>
+
+    <!-- Game mode select screen -->
+    <string name="game_mode_select_title">[ PROTOKOLL WÄHLEN ]</string>
+    <string name="game_mode_endless_title">ENDLOS</string>
+    <string name="game_mode_endless_desc">Ein Fehler beendet den Lauf. Reines Überleben.</string>
+    <string name="game_mode_lives_title">LEBEN</string>
+    <string name="game_mode_lives_desc">3 Leben. Ein Fehler blinkt die richtige Antwort und kostet ein Leben.</string>
+    <string name="game_mode_time_title">ZEITANGRIFF</string>
+    <string name="game_mode_time_desc">60s auf der Uhr. Fehler blinken nur — die Zeit läuft weiter.</string>
+
+    <!-- Game screen -->
+    <string name="game_hud_score">PUNKTE</string>
+    <string name="game_hud_streak">SERIE</string>
+    <string name="game_hud_round">RUNDE</string>
+    <string name="game_hud_level">STUFE</string>
+    <string name="game_hud_level_value">STF %1$d</string>
+    <string name="game_hud_lives">LEBEN</string>
+    <string name="game_hud_time">ZEIT</string>
+    <string name="game_stimulus_hint">[ SYNAPSENZIEL // FARBE DER TINTE ZUORDNEN ]</string>
+
+    <!-- Countdown overlay (local + online game start) -->
+    <string name="countdown_get_ready">BEREIT MACHEN</string>
+    <string name="countdown_go">LOS!</string>
+
+    <!-- Game over screen -->
+    <string name="game_over_victory_title">[ SYNAPSEN-SIEG ]</string>
+    <string name="game_over_defeat_title">[ NEURALE ÜBERLASTUNG ]</string>
+    <string name="game_over_victory_subtitle">LINK GEMEISTERT</string>
+    <string name="game_over_defeat_subtitle">SYSTEMABSTURZ</string>
+    <string name="game_over_new_high_score">★ NEUER KOGNITIVER HÖCHSTWERT ★</string>
+    <string name="game_over_telemetry_header">[ LAUF-TELEMETRIE ]</string>
+    <string name="game_over_final_score">ENDPUNKTZAHL</string>
+    <string name="game_over_accuracy">GENAUIGKEIT</string>
+    <string name="game_over_rounds_survived">ÜBERLEBTE RUNDEN</string>
+    <string name="game_over_time_elapsed">VERSTRICHENE ZEIT</string>
+    <string name="game_over_perfect_bonus">PERFEKT-BONUS</string>
+    <string name="game_over_flawless_100">FEHLERFREI 100%%</string>
+    <string name="game_over_xp_header">[ XP-SYNTHESE ]</string>
+    <string name="game_over_xp_total">+%1$d XP</string>
+    <string name="game_over_xp_base">BASIS (%1$s)</string>
+    <string name="game_over_xp_flawless_bonus">FEHLERFREI-BONUS</string>
+    <string name="game_over_xp_time_bonus">OVERCLOCK-ZEIT</string>
+    <string name="game_over_xp_streak_bonus">MOMENTUM-SERIE</string>
+    <string name="game_over_xp_daily_bonus">TÄGLICHER LINK-BONUS</string>
+    <string name="game_over_xp_multiplier">HÖCHSTWERT-MULTIPLIKATOR</string>
+    <string name="game_over_xp_multiplier_value">x%1$s</string>
+    <string name="game_over_new_trophies">[ NEUE SYNAPTISCHE TROPHÄEN FREIGESCHALTET! ]</string>
+    <string name="game_over_xp_reward">(+%1$d XP)</string>
+    <string name="game_over_play_again">[ LINK ERNEUT AKTIVIEREN // NOCHMAL SPIELEN ]</string>
+    <string name="game_over_share_score">PUNKTZAHL TEILEN</string>
+    <string name="game_over_main_menu">HAUPTMENÜ</string>
+    <string name="game_over_share_text">Ich habe %1$d Punkte (+%2$d XP) bei Stroop Overload erzielt! Genauigkeit: %3$d%% — Kannst du meine kognitive Reaktion schlagen? 🧠⚡</string>
+
+    <!-- XP breakdown base labels -->
+    <string name="xp_base_afk">AFK // KEIN_SIGNAL</string>
+    <string name="xp_base_win">CYBER_SIEG</string>
+    <string name="xp_base_loss">SYNAPSEN_NIEDERLAGE</string>
+
+    <!-- Leaderboard screen -->
+    <string name="leaderboard_title">BESTENLISTE</string>
+    <string name="leaderboard_your_rank">DEIN SYNAPSEN-RANG</string>
+    <string name="leaderboard_points">%1$d</string>
+    <string name="leaderboard_points_caption">RANG-PKT</string>
+    <string name="leaderboard_highscore_caption">BESTLEISTUNG</string>
+    <string name="leaderboard_level">STF %1$d</string>
+    <string name="leaderboard_top_pilots">[ TOP-PILOTEN WELTWEIT ]</string>
+    <string name="leaderboard_empty">Noch keine Piloten verbunden.</string>
+    <string name="leaderboard_you_tag">[ DU ]</string>
+    <string name="leaderboard_high_score">%1$d</string>
+
+    <!-- Profile screen -->
+    <string name="profile_title">[ NEURAL // PROFIL ]</string>
+    <string name="profile_callsign_label">RUFZEICHEN</string>
+    <string name="profile_vip_badge">💎 WERBEFREIER VIP-PILOT</string>
+    <string name="profile_save">LINK SPEICHERN</string>
+    <string name="profile_discard">VERWERFEN</string>
+    <string name="profile_xp_progress_label">SYNAPSEN-XP-FORTSCHRITT</string>
+    <string name="profile_xp_progress_value">%1$d / %2$d XP</string>
+    <string name="profile_audio_section_header">[ AUDIO ]</string>
+    <string name="profile_audio_music_toggle">MUSIK</string>
+    <string name="profile_audio_sfx_toggle">SOUNDEFFEKTE</string>
+    <string name="profile_career_stats_header">[ TELEMETRIE // KARRIERE-STATISTIK ]</string>
+    <string name="profile_stat_total_runs">SPIELE GESAMT</string>
+    <string name="profile_stat_victories">SIEGE</string>
+    <string name="profile_stat_flawless">FEHLERFREI</string>
+    <string name="profile_stat_max_streak_label">LÄNGSTE SERIE</string>
+    <string name="profile_stat_max_streak_value">%1$d 🔥</string>
+    <string name="profile_stat_max_survival_label">LÄNGSTES ÜBERLEBEN</string>
+    <string name="profile_stat_max_survival_value">%1$ds ⏱️</string>
+    <string name="profile_stat_high_score_label">HÖCHSTWERT</string>
+    <string name="profile_trophies_header">[ SYNAPTISCHE TROPHÄEN ]</string>
+    <string name="profile_trophies_count">%1$d / %2$d</string>
+    <string name="profile_demo_restore_button">[ 📸 ASO // VIP-DEMO-PILOT WIEDERHERSTELLEN ]</string>
+    <string name="profile_change_password_button">PASSWORT ÄNDERN</string>
+    <string name="profile_change_password_title">[ PASSWORT ÄNDERN ]</string>
+    <string name="profile_change_password_current_label">AKTUELLES PASSWORT</string>
+    <string name="profile_change_password_new_label">NEUES PASSWORT</string>
+    <string name="profile_change_password_confirm_label">NEUES PASSWORT BESTÄTIGEN</string>
+    <string name="profile_change_password_mismatch">Neues Passwort und Bestätigung stimmen nicht überein.</string>
+    <string name="profile_change_password_success">Passwort aktualisiert.</string>
+    <string name="profile_change_password_error_wrong_current">Das aktuelle Passwort ist falsch.</string>
+    <string name="profile_change_password_error_recent_login">Bitte melde dich ab und wieder an, dann versuche es erneut.</string>
+    <string name="profile_change_password_error_network">Netzwerkfehler. Bitte erneut versuchen.</string>
+    <string name="profile_change_password_error_generic">Passwort konnte nicht geändert werden. Bitte erneut versuchen.</string>
+    <string name="profile_delete_account_button">MEINE DATEN LÖSCHEN</string>
+    <string name="profile_delete_account_title">[ KONTO LÖSCHEN ]</string>
+    <string name="profile_delete_account_warning">Dies löscht dauerhaft dein Profil, deine Statistiken, Erfolge und dein Konto. Dies kann nicht rückgängig gemacht werden.</string>
+    <string name="profile_delete_account_password_label">PASSWORT</string>
+    <string name="profile_delete_account_confirm_button">ENDGÜLTIG LÖSCHEN</string>
+    <string name="profile_delete_account_error_wrong_password">Das Passwort ist falsch.</string>
+    <string name="profile_delete_account_error_recent_login">Bitte melde dich ab und wieder an, dann versuche es erneut.</string>
+    <string name="profile_delete_account_error_network">Netzwerkfehler. Bitte erneut versuchen.</string>
+    <string name="profile_delete_account_error_generic">Konto konnte nicht gelöscht werden. Bitte erneut versuchen.</string>
+    <string name="profile_sign_out">[ NEURALE SITZUNG BEENDEN // ABMELDEN ]</string>
+    <string name="profile_achievement_hidden_title">\?\?\?</string>
+    <string name="profile_achievement_hidden_desc">Vertrauliche synaptische Trophäe</string>
+
+    <!-- Auth screen -->
+    <string name="auth_brand">[ STROOP // OVERLOAD ]</string>
+    <string name="auth_headline">NEURALER LINK-ZUGANG</string>
+    <string name="auth_tab_login">PILOTEN-ANMELDUNG</string>
+    <string name="auth_tab_register">NEUER KADETT</string>
+    <string name="auth_nickname_label">RUFZEICHEN / SPITZNAME</string>
+    <string name="auth_email_label">NEURALE FREQUENZ (E-MAIL)</string>
+    <string name="auth_email_confirm_label">NEURALE FREQUENZ BESTÄTIGEN</string>
+    <string name="auth_password_label">ZUGANGSCHIFFRE (PASSWORT)</string>
+    <string name="auth_password_confirm_label">ZUGANGSCHIFFRE BESTÄTIGEN</string>
+    <string name="auth_register_button">NEURALEN LINK INITIALISIEREN</string>
+    <string name="auth_login_button">LINK AKTIVIEREN</string>
+    <string name="auth_guest_button">[ UMGEHEN // ALS GAST-PILOT EINSTEIGEN ]</string>
+    <string name="auth_legal_consent">Wenn du fortfährst, akzeptierst du die %1$s und die %2$s der App.</string>
+    <string name="auth_legal_terms_link">Nutzungsbedingungen</string>
+    <string name="auth_legal_privacy_link">Datenschutzerklärung</string>
+    <string name="auth_verify_pending_title">⚠️ NEURALER LINK AUSSTEHEND</string>
+    <string name="auth_verify_pending_message">Eine Verifizierungsfrequenz wurde übertragen an:\n%1$s</string>
+    <string name="auth_verify_pending_hint">Bestätige deine Frequenz, um den Cloud-Fortschritt zu synchronisieren und Online-Bestenlisten freizuschalten.</string>
+    <string name="auth_verify_status_button">STATUS PRÜFEN</string>
+    <string name="auth_resend_button">E-MAIL ERNEUT SENDEN</string>
+    <string name="auth_abort_button">[ ABBRECHEN // ABMELDEN ]</string>
+    <string name="auth_default_pending_email">pilot@synapse.cyber</string>
+    <string name="auth_forgot_password_link">PASSWORT VERGESSEN?</string>
+    <string name="auth_forgot_password_title">[ NEURALE CHIFFRE ZURÜCKSETZEN ]</string>
+    <string name="auth_forgot_password_hint">Gib deine neurale Frequenz (E-Mail) ein — falls ein Konto existiert, senden wir einen Link zum Zurücksetzen.</string>
+    <string name="auth_forgot_password_button">LINK ÜBERTRAGEN</string>
+    <string name="auth_forgot_password_cancel">ZURÜCK</string>
+    <string name="auth_forgot_password_sent">[ SIGNAL GESENDET // PRÜFE DEIN POSTFACH FÜR DIE ANWEISUNGEN ]</string>
+
+    <!-- Auth view model messages -->
+    <string name="auth_error_missing_credentials">[ FEHLER // ANMELDEDATEN FEHLEN ]</string>
+    <string name="auth_error_wrong_password">[ ABGELEHNT // UNGÜLTIGES PASSWORT ]</string>
+    <string name="auth_error_invalid_email">[ ABGELEHNT // UNBEKANNTE E-MAIL ODER FALSCHES FORMAT ]</string>
+    <string name="auth_error_network">[ OFFLINE // NETZWERK-ZEITÜBERSCHREITUNG ]</string>
+    <string name="auth_error_unknown">[ ABGELEHNT // %1$s ]</string>
+    <string name="auth_register_error_weak_password">[ ZURÜCKGEWIESEN // SCHWACHES PASSWORT ]</string>
+    <string name="auth_register_error_invalid_email">[ ZURÜCKGEWIESEN // UNGÜLTIGES E-MAIL-FORMAT ]</string>
+    <string name="auth_register_error_network">[ OFFLINE // NETZWERKFEHLER BEI DER REGISTRIERUNG ]</string>
+    <string name="auth_register_error_unknown">[ ZURÜCKGEWIESEN // %1$s ]</string>
+    <string name="auth_register_success">[ REGISTRIERUNG ERFOLGREICH // VERIFIZIERUNGS-E-MAIL GESENDET ]</string>
+    <string name="auth_register_rejected">[ REGISTRIERUNG ABGELEHNT // %1$s ]</string>
+    <string name="auth_guest_error">[ FEHLER // GAST-NEURALLINK FEHLGESCHLAGEN ]</string>
+    <string name="auth_resend_success">[ SIGNAL GESENDET // VERIFIZIERUNGS-E-MAIL ERNEUT VERSANDT ]</string>
+    <string name="auth_resend_cooldown">[ ABKLINGZEIT AKTIV // WARTE %1$dS VOR ERNEUTEM SENDEN ]</string>
+    <string name="auth_resend_failed">[ FEHLER // ÜBERTRAGUNG FEHLGESCHLAGEN ]</string>
+    <string name="auth_verified_success">[ NEURALER LINK VERIFIZIERT ]</string>
+    <string name="auth_still_pending">[ STATUS // E-MAIL WARTET NOCH AUF VERIFIZIERUNG ]</string>
+
+    <!-- Auth registration validation reasons -->
+    <string name="auth_validation_nickname_short">DAS RUFZEICHEN MUSS MINDESTENS 3 ZEICHEN LANG SEIN.</string>
+    <string name="auth_validation_invalid_email">UNGÜLTIGES E-MAIL-FORMAT.</string>
+    <string name="auth_validation_email_mismatch">DIE E-MAILS STIMMEN NICHT ÜBEREIN.</string>
+    <string name="auth_validation_password_short">DAS PASSWORT MUSS MINDESTENS 8 ZEICHEN LANG SEIN.</string>
+    <string name="auth_validation_password_needs_upper">DAS PASSWORT MUSS MINDESTENS EINEN GROSSBUCHSTABEN ENTHALTEN.</string>
+    <string name="auth_validation_password_needs_lower">DAS PASSWORT MUSS MINDESTENS EINEN KLEINBUCHSTABEN ENTHALTEN.</string>
+    <string name="auth_validation_password_needs_digit">DAS PASSWORT MUSS MINDESTENS EINE ZIFFER ENTHALTEN.</string>
+    <string name="auth_validation_password_needs_symbol">DAS PASSWORT MUSS MINDESTENS EIN SONDERZEICHEN ENTHALTEN.</string>
+    <string name="auth_validation_password_mismatch">DIE PASSWÖRTER STIMMEN NICHT ÜBEREIN.</string>
+
+    <!-- Multiplayer lobby -->
+    <string name="mp_lobby_title">[ ONLINE-SPIEL ]</string>
+    <string name="mp_lobby_name_label">Dein Piloten-Rufzeichen</string>
+    <string name="mp_lobby_connecting">VERBINDUNG WIRD HERGESTELLT…</string>
+    <string name="mp_lobby_create_room">RAUM ERSTELLEN</string>
+    <string name="mp_lobby_room_code_label">Raumcode</string>
+    <string name="mp_lobby_join_room">RAUM BEITRETEN</string>
+    <string name="mp_lobby_default_name">Pilot</string>
+    <string name="mp_lobby_mode_label">SPIELMODUS</string>
+    <string name="mp_mode_mistake_title">FEHLER-MODUS</string>
+    <string name="mp_mode_mistake_desc">Ein Fehler und du bist raus. Der letzte verbliebene Pilot gewinnt.</string>
+    <string name="mp_mode_hot_potato_title">HEISSE KARTOFFEL</string>
+    <string name="mp_mode_hot_potato_desc">Eine richtige Antwort gibt den Zug weiter; falsch oder zu langsam bringt nur einen neuen Reiz. Eine versteckte Bombe kann jederzeit explodieren — wer sie gerade hält, scheidet aus.</string>
+    <string name="mp_mode_solo_survival_title">SOLO-ÜBERLEBEN</string>
+    <string name="mp_mode_solo_survival_desc">Keine Züge — alle spielen gleichzeitig ihre eigene Runde gegen eine gemeinsame Uhr. Ein Fehler beendet deinen Lauf, das Match läuft aber für die anderen weiter. Wer bei Ablauf der Zeit die meisten Punkte hat, gewinnt.</string>
+
+    <!-- Multiplayer waiting room -->
+    <string name="mp_waiting_title">[ WARTERAUM ]</string>
+    <string name="mp_waiting_room_code_label">RAUMCODE</string>
+    <string name="mp_waiting_tap_to_copy">zum Kopieren tippen</string>
+    <string name="mp_waiting_connected_pilots">VERBUNDENE PILOTEN (%1$d/%2$d)</string>
+    <string name="mp_waiting_host_badge">HOST</string>
+    <string name="mp_waiting_empty_slot">· wartet auf Piloten ·</string>
+    <string name="mp_waiting_start_game">[ SPIEL STARTEN ]</string>
+    <string name="mp_waiting_starting_game">STARTET…</string>
+    <string name="mp_waiting_scanning_host">WARTET AUF WEITERE PILOTEN…</string>
+    <string name="mp_waiting_scanning_guest">WARTET AUF DEN HOST…</string>
+
+    <!-- Multiplayer preload waiting room (shown while the match is starting) -->
+    <string name="mp_preload_title">[ MATCH WIRD GESTARTET ]</string>
+    <string name="mp_preload_subtitle">%1$d PILOTEN WERDEN SYNCHRONISIERT</string>
+    <string name="mp_preload_scanner_label">SCHLACHTFELD WIRD GELADEN…</string>
+    <string name="mp_loading_tip_1">Farbrezeptoren werden kalibriert…</string>
+    <string name="mp_loading_tip_2">Rot und Grün werden entwirrt…</string>
+    <string name="mp_loading_tip_3">Reflexe werden geweckt…</string>
+    <string name="mp_loading_tip_4">Neon-Pixel werden poliert…</string>
+    <string name="mp_loading_tip_5">Neuronale Bahnen werden synchronisiert…</string>
+    <string name="mp_loading_tip_6">Wird geprüft, ob Rot noch Rot ist…</string>
+    <string name="mp_loading_tip_7">Verbotene Farbkombinationen werden geladen…</string>
+    <string name="mp_loading_tip_8">Antwort-Buttons werden aufgeladen…</string>
+
+    <!-- Multiplayer game screen -->
+    <string name="mp_game_alive">AM LEBEN</string>
+    <string name="mp_game_eliminated">ELIMINIERT</string>
+    <string name="mp_game_turn_of">%1$s ist am Zug</string>
+    <string name="mp_game_preparing_round">Runde wird vorbereitet…</string>
+    <string name="mp_game_you_won">DU HAST GEWONNEN!</string>
+    <string name="mp_game_won_by">%1$s hat gewonnen</string>
+    <string name="mp_game_waiting">Warten…</string>
+    <string name="mp_game_unknown_player">…</string>
+    <string name="mp_game_match_summary">SPIELÜBERSICHT</string>
+    <string name="mp_game_exit_room">[ RAUM VERLASSEN ]</string>
+    <string name="mp_game_points_earned">+%1$d PUNKTE ERHALTEN</string>
+    <string name="mp_finish_duration">DAUER %1$s</string>
+    <string name="mp_finish_raw_score">Spielpunktzahl</string>
+    <string name="mp_finish_halved">Halbiert</string>
+    <string name="mp_finish_placement_bonus">Platzierungsbonus (×%1$s)</string>
+    <string name="mp_finish_eliminated_at">Eliminiert nach %1$ds</string>
+    <string name="mp_finish_rounds_reached">Runde %1$d erreicht</string>
+    <string name="mp_finish_survived_full">Das ganze Match überlebt</string>
+
+    <!-- Multiplayer solo_survival screen -->
+    <string name="mp_solo_time_left">NOCH %1$ds</string>
+    <string name="mp_solo_score_label">PUNKTE</string>
+    <string name="mp_solo_you_tag">DU</string>
+    <string name="mp_solo_busted_title">DU BIST RAUS</string>
+    <string name="mp_solo_busted_subtitle">Endpunktzahl: %1$d — das Match läuft ohne dich weiter.</string>
+    <string name="mp_solo_leaderboard_title">BESTENLISTE</string>
+    <string name="mp_solo_you_won">DU GEWINNST!</string>
+    <string name="mp_solo_won_by">%1$s gewinnt mit %2$d Punkten</string>
+
+    <!-- Multiplayer anonymous-account gate dialog -->
+    <string name="mp_anon_gate_title">ONLINE-ZUGANG GESPERRT</string>
+    <string name="mp_anon_gate_body">Gastpiloten können nicht an Online-Matches teilnehmen. Erstelle ein kostenloses Konto, um den Mehrspielermodus freizuschalten und Punkte sowie Level-Aufstiege zu sammeln.</string>
+    <string name="mp_anon_gate_dismiss">VERSTANDEN</string>
+
+    <!-- Multiplayer error fallbacks (shown only when the backend gives no detail message) -->
+    <string name="mp_error_create_room">Der Raum konnte nicht erstellt werden.</string>
+    <string name="mp_error_join_room">Dem Raum konnte nicht beigetreten werden.</string>
+    <string name="mp_error_start_game">Das Spiel konnte nicht gestartet werden.</string>
+    <string name="mp_error_connection_lost">Die Verbindung zum Raum wurde unterbrochen.</string>
+
+    <!-- Achievements -->
+    <string name="achievement_first_blood_title">NEURALE INITIATION</string>
+    <string name="achievement_first_blood_desc">Schließe einen Lauf mit mindestens 5 richtigen Treffern ab.</string>
+    <string name="achievement_ten_games_title">PILOTENKADETT</string>
+    <string name="achievement_ten_games_desc">Spiele insgesamt 10 Trainingsläufe.</string>
+    <string name="achievement_twenty_five_games_title">SYNAPTISCHER AUSZUBILDENDER</string>
+    <string name="achievement_twenty_five_games_desc">Spiele insgesamt 25 Trainingsläufe.</string>
+    <string name="achievement_fifty_games_title">VETERANEN-OPERATIV</string>
+    <string name="achievement_fifty_games_desc">Spiele insgesamt 50 Trainingsläufe.</string>
+    <string name="achievement_hundred_games_title">NEURALER KRIEGER</string>
+    <string name="achievement_hundred_games_desc">Spiele insgesamt 100 Trainingsläufe.</string>
+    <string name="achievement_two_hundred_games_title">CYBER-WÄCHTER</string>
+    <string name="achievement_two_hundred_games_desc">Spiele insgesamt 200 Trainingsläufe.</string>
+    <string name="achievement_five_hundred_games_title">SYNAPSEN-UNSTERBLICHER</string>
+    <string name="achievement_five_hundred_games_desc">Spiele insgesamt 500 Trainingsläufe.</string>
+    <string name="achievement_five_wins_title">SYNAPSENFUNKEN</string>
+    <string name="achievement_five_wins_desc">Gewinne 5 Herausforderungsläufe.</string>
+    <string name="achievement_fifteen_wins_title">KORTEX-SCHLÄGER</string>
+    <string name="achievement_fifteen_wins_desc">Gewinne 15 Herausforderungsläufe.</string>
+    <string name="achievement_thirty_wins_title">ORBITAL-ASS</string>
+    <string name="achievement_thirty_wins_desc">Gewinne 30 Herausforderungsläufe.</string>
+    <string name="achievement_fifty_wins_title">NEURALER DOMINATOR</string>
+    <string name="achievement_fifty_wins_desc">Gewinne 50 Herausforderungsläufe.</string>
+    <string name="achievement_hundred_wins_title">OBERSTER BEFEHLSHABER</string>
+    <string name="achievement_hundred_wins_desc">Gewinne 100 Herausforderungsläufe.</string>
+    <string name="achievement_two_hundred_wins_title">GROSSER CYBER-KAISER</string>
+    <string name="achievement_two_hundred_wins_desc">Gewinne 200 Herausforderungsläufe.</string>
+    <string name="achievement_centurion_title">CYBER-ZENTURIO</string>
+    <string name="achievement_centurion_desc">Erreiche 2500 Punkte in einem einzigen Lauf.</string>
+    <string name="achievement_score_3k_title">HYPER-FAHRER</string>
+    <string name="achievement_score_3k_desc">Erreiche 5000 Punkte in einem einzigen Lauf.</string>
+    <string name="achievement_score_titan_title">STROOP-OBERHERR</string>
+    <string name="achievement_score_titan_desc">Erziele über 7500 Punkte in einem einzigen Lauf.</string>
+    <string name="achievement_score_overlord_title">KOGNITIVER TITAN</string>
+    <string name="achievement_score_overlord_desc">Erziele über 10.500 Punkte in einem einzigen Lauf.</string>
+    <string name="achievement_score_god_title">QUANTEN-SINGULARITÄT</string>
+    <string name="achievement_score_god_desc">Erziele über 14.000 Punkte in einem einzigen Lauf.</string>
+    <string name="achievement_flawless_title">SYNAPTISCHE REINHEIT</string>
+    <string name="achievement_flawless_desc">Erziele 1 fehlerfreien Lauf (5+ Runden, 100 % Genauigkeit) in deiner Karriere.</string>
+    <string name="achievement_flawless_tier2_title">FEHLERFREIE AUSFÜHRUNG</string>
+    <string name="achievement_flawless_tier2_desc">Erziele 5 fehlerfreie Läufe in deiner Karriere.</string>
+    <string name="achievement_flawless_tier3_title">PERFEKTER GEIST</string>
+    <string name="achievement_flawless_tier3_desc">Erziele 15 fehlerfreie Läufe in deiner Karriere.</string>
+    <string name="achievement_flawless_tier4_title">ABSOLUTE PRÄZISION</string>
+    <string name="achievement_flawless_tier4_desc">Erziele 30 fehlerfreie Läufe in deiner Karriere.</string>
+    <string name="achievement_survival_expert_title">OVERCLOCK-ÜBERLEBENDER</string>
+    <string name="achievement_survival_expert_desc">Überlebe mehr als 30 Sekunden in einem einzigen Lauf.</string>
+    <string name="achievement_survival_master_title">ZEITSPRUNG</string>
+    <string name="achievement_survival_master_desc">Überlebe mehr als 50 Sekunden in einem einzigen Lauf.</string>
+    <string name="achievement_survival_legend_title">CHRONO-VERSCHIEBUNG</string>
+    <string name="achievement_survival_legend_desc">Überlebe mehr als 75 Sekunden in einem einzigen Lauf.</string>
+    <string name="achievement_survival_god_title">EWIGE SYNAPSE</string>
+    <string name="achievement_survival_god_desc">Überlebe mehr als 100 Sekunden in einem einzigen Lauf.</string>
+    <string name="achievement_streak_master_title">MOMENTUM-FUNKEN</string>
+    <string name="achievement_streak_master_desc">Erziele eine Siegesserie von 5 Spielen.</string>
+    <string name="achievement_streak_legend_title">UNAUFHALTSAME KRAFT</string>
+    <string name="achievement_streak_legend_desc">Erziele eine Siegesserie von 10 Spielen.</string>
+    <string name="achievement_streak_god_title">GOTT DER GESCHWINDIGKEIT</string>
+    <string name="achievement_streak_god_desc">Erziele eine Siegesserie von 20 Spielen.</string>
+    <string name="achievement_cyber_veteran_title">KYBERNETISCHE ELITE</string>
+    <string name="achievement_cyber_veteran_desc">Gewinne 25 Spiele im Schwierigkeitsgrad Cyber-Überlastung.</string>
+</resources>

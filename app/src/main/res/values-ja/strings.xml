@@ -1,0 +1,376 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Stroop Overload</string>
+
+    <!-- Common -->
+    <string name="common_back">戻る</string>
+    <string name="common_refresh">更新</string>
+    <string name="common_edit_profile">プロフィールを編集</string>
+    <string name="common_profile_icon_desc">プロフィール</string>
+    <string name="common_locked">ロック中</string>
+    <string name="common_cancel">キャンセル</string>
+    <string name="common_show_password">パスワードを表示</string>
+    <string name="common_hide_password">パスワードを隠す</string>
+
+    <!-- Stroop colors (shown as the gameplay word/answers) -->
+    <string name="color_red">赤</string>
+    <string name="color_green">緑</string>
+    <string name="color_blue">青</string>
+    <string name="color_yellow">黄</string>
+
+    <!-- Home screen -->
+    <string name="home_vip_badge">💎 VIP</string>
+    <string name="home_streak_badge">🔥 %1$d日</string>
+    <string name="home_player_badge">%1$s // LV %2$d</string>
+    <string name="home_tagline">[ コグニティブ・オーバークロック ]</string>
+    <string name="home_title_line1">STROOP</string>
+    <string name="home_title_line2">OVERLOAD</string>
+    <string name="home_subtitle">神経反応シナプステスト</string>
+    <string name="home_play_button">ニューラルリンク起動</string>
+    <string name="home_play_button_loading">リンク調整中…</string>
+    <string name="home_leaderboard_button">ランキング</string>
+    <string name="home_multiplayer_button">オンライン対戦</string>
+    <string name="home_footer">SYS_VER: 2.0 // サイバーパンクHUD起動中</string>
+
+    <!-- Level tier titles, every 10 levels (1-10, 11-20, ... 191-200+) -->
+    <string name="level_title_tier_01">ニューラル・イニシエイト</string>
+    <string name="level_title_tier_02">シナプス・カデット</string>
+    <string name="level_title_tier_03">反射見習い</string>
+    <string name="level_title_tier_04">色彩オペレーター</string>
+    <string name="level_title_tier_05">インクランナー</string>
+    <string name="level_title_tier_06">オーバーロード・アデプト</string>
+    <string name="level_title_tier_07">コーテックス・スペシャリスト</string>
+    <string name="level_title_tier_08">シナプスブレイカー</string>
+    <string name="level_title_tier_09">ニューラルファントム</string>
+    <string name="level_title_tier_10">反射ヴァンガード</string>
+    <string name="level_title_tier_11">サイバーデュエリスト</string>
+    <string name="level_title_tier_12">色彩の戦主</string>
+    <string name="level_title_tier_13">オーバーロード・センチネル</string>
+    <string name="level_title_tier_14">シナプティック・オラクル</string>
+    <string name="level_title_tier_15">ニューラル・アセンダント</string>
+    <string name="level_title_tier_16">コーテックス・オーバーロード</string>
+    <string name="level_title_tier_17">量子シナプス</string>
+    <string name="level_title_tier_18">虚無の反射</string>
+    <string name="level_title_tier_19">特異点の心</string>
+    <string name="level_title_tier_20">オーバーロード・デイティ</string>
+
+    <!-- Game mode select screen -->
+    <string name="game_mode_select_title">[ プロトコル選択 ]</string>
+    <string name="game_mode_endless_title">エンドレス</string>
+    <string name="game_mode_endless_desc">1回のミスで終了。純粋なサバイバル。</string>
+    <string name="game_mode_lives_title">ライフ制</string>
+    <string name="game_mode_lives_desc">ライフ3つ。ミスすると正解が点滅しライフが1つ減る。</string>
+    <string name="game_mode_time_title">タイムアタック</string>
+    <string name="game_mode_time_desc">制限時間60秒。ミスしても正解が点滅するだけで時間は止まらない。</string>
+
+    <!-- Game screen -->
+    <string name="game_hud_score">スコア</string>
+    <string name="game_hud_streak">連続正解</string>
+    <string name="game_hud_round">ラウンド</string>
+    <string name="game_hud_level">レベル</string>
+    <string name="game_hud_level_value">LV %1$d</string>
+    <string name="game_hud_lives">ライフ</string>
+    <string name="game_hud_time">残り時間</string>
+    <string name="game_stimulus_hint">[ シナプスターゲット // インクの色を選べ ]</string>
+
+    <!-- Countdown overlay (local + online game start) -->
+    <string name="countdown_get_ready">準備しろ</string>
+    <string name="countdown_go">スタート!</string>
+
+    <!-- Game over screen -->
+    <string name="game_over_victory_title">[ シナプス勝利 ]</string>
+    <string name="game_over_defeat_title">[ ニューラル・オーバーロード ]</string>
+    <string name="game_over_victory_subtitle">リンク制覇</string>
+    <string name="game_over_defeat_subtitle">システムクラッシュ</string>
+    <string name="game_over_new_high_score">★ 新コグニティブ・ハイスコア ★</string>
+    <string name="game_over_telemetry_header">[ 試合テレメトリー ]</string>
+    <string name="game_over_final_score">最終スコア</string>
+    <string name="game_over_accuracy">正答率</string>
+    <string name="game_over_rounds_survived">生存ラウンド数</string>
+    <string name="game_over_time_elapsed">経過時間</string>
+    <string name="game_over_perfect_bonus">パーフェクトボーナス</string>
+    <string name="game_over_flawless_100">パーフェクト 100%%</string>
+    <string name="game_over_xp_header">[ XP合成 ]</string>
+    <string name="game_over_xp_total">+%1$d XP</string>
+    <string name="game_over_xp_base">ベース（%1$s）</string>
+    <string name="game_over_xp_flawless_bonus">パーフェクトボーナス</string>
+    <string name="game_over_xp_time_bonus">オーバークロックタイム</string>
+    <string name="game_over_xp_streak_bonus">モメンタム連続ボーナス</string>
+    <string name="game_over_xp_daily_bonus">デイリーリンクボーナス</string>
+    <string name="game_over_xp_multiplier">ハイスコア倍率</string>
+    <string name="game_over_xp_multiplier_value">x%1$s</string>
+    <string name="game_over_new_trophies">[ 新しいシナプストロフィーを解除！ ]</string>
+    <string name="game_over_xp_reward">（+%1$d XP）</string>
+    <string name="game_over_play_again">[ リンク再起動 // もう一度プレイ ]</string>
+    <string name="game_over_share_score">スコアを共有</string>
+    <string name="game_over_main_menu">メインメニュー</string>
+    <string name="game_over_share_text">Stroop Overloadで%1$d点（+%2$d XP）獲得！正答率：%3$d%% — 私の反応速度を超えられるか？🧠⚡</string>
+
+    <!-- XP breakdown base labels -->
+    <string name="xp_base_afk">AFK // 信号なし</string>
+    <string name="xp_base_win">サイバー勝利</string>
+    <string name="xp_base_loss">シナプス敗北</string>
+
+    <!-- Leaderboard screen -->
+    <string name="leaderboard_title">ランキング</string>
+    <string name="leaderboard_your_rank">あなたのシナプスランク</string>
+    <string name="leaderboard_points">%1$d</string>
+    <string name="leaderboard_points_caption">ランキングPT</string>
+    <string name="leaderboard_highscore_caption">自己ベスト</string>
+    <string name="leaderboard_level">LV %1$d</string>
+    <string name="leaderboard_top_pilots">[ 世界トップパイロット ]</string>
+    <string name="leaderboard_empty">まだ接続したパイロットがいません。</string>
+    <string name="leaderboard_you_tag">[ 自分 ]</string>
+    <string name="leaderboard_high_score">%1$d</string>
+
+    <!-- Profile screen -->
+    <string name="profile_title">[ ニューラル // プロフィール ]</string>
+    <string name="profile_callsign_label">コールサイン</string>
+    <string name="profile_vip_badge">💎 広告なしVIPパイロット</string>
+    <string name="profile_save">リンクを保存</string>
+    <string name="profile_discard">破棄</string>
+    <string name="profile_xp_progress_label">シナプスXP進捗</string>
+    <string name="profile_xp_progress_value">%1$d / %2$d XP</string>
+    <string name="profile_audio_section_header">[ オーディオ ]</string>
+    <string name="profile_audio_music_toggle">音楽</string>
+    <string name="profile_audio_sfx_toggle">効果音</string>
+    <string name="profile_career_stats_header">[ テレメトリー // 通算成績 ]</string>
+    <string name="profile_stat_total_runs">総プレイ回数</string>
+    <string name="profile_stat_victories">勝利数</string>
+    <string name="profile_stat_flawless">パーフェクト</string>
+    <string name="profile_stat_max_streak_label">最大連続正解</string>
+    <string name="profile_stat_max_streak_value">%1$d 🔥</string>
+    <string name="profile_stat_max_survival_label">最長生存時間</string>
+    <string name="profile_stat_max_survival_value">%1$d秒 ⏱️</string>
+    <string name="profile_stat_high_score_label">ハイスコア</string>
+    <string name="profile_trophies_header">[ シナプストロフィー ]</string>
+    <string name="profile_trophies_count">%1$d / %2$d</string>
+    <string name="profile_demo_restore_button">[ 📸 ASO // VIPデモパイロットを復元 ]</string>
+    <string name="profile_change_password_button">パスワード変更</string>
+    <string name="profile_change_password_title">[ パスワード変更 ]</string>
+    <string name="profile_change_password_current_label">現在のパスワード</string>
+    <string name="profile_change_password_new_label">新しいパスワード</string>
+    <string name="profile_change_password_confirm_label">新しいパスワード（確認）</string>
+    <string name="profile_change_password_mismatch">新しいパスワードと確認用が一致しません。</string>
+    <string name="profile_change_password_success">パスワードを更新しました。</string>
+    <string name="profile_change_password_error_wrong_current">現在のパスワードが正しくありません。</string>
+    <string name="profile_change_password_error_recent_login">ログアウトして再度ログインしてから、もう一度お試しください。</string>
+    <string name="profile_change_password_error_network">ネットワークエラーです。もう一度お試しください。</string>
+    <string name="profile_change_password_error_generic">パスワードを変更できませんでした。もう一度お試しください。</string>
+    <string name="profile_delete_account_button">データを削除</string>
+    <string name="profile_delete_account_title">[ アカウント削除 ]</string>
+    <string name="profile_delete_account_warning">プロフィール、キャリア統計、実績、アカウントが完全に削除されます。元に戻せません。</string>
+    <string name="profile_delete_account_password_label">パスワード</string>
+    <string name="profile_delete_account_confirm_button">完全に削除する</string>
+    <string name="profile_delete_account_error_wrong_password">パスワードが正しくありません。</string>
+    <string name="profile_delete_account_error_recent_login">ログアウトして再度ログインしてから、もう一度お試しください。</string>
+    <string name="profile_delete_account_error_network">ネットワークエラーです。もう一度お試しください。</string>
+    <string name="profile_delete_account_error_generic">アカウントを削除できませんでした。もう一度お試しください。</string>
+    <string name="profile_sign_out">[ ニューラルセッション終了 // サインアウト ]</string>
+    <string name="profile_achievement_hidden_title">\?\?\?</string>
+    <string name="profile_achievement_hidden_desc">機密シナプストロフィー</string>
+
+    <!-- Auth screen -->
+    <string name="auth_brand">[ STROOP // OVERLOAD ]</string>
+    <string name="auth_headline">ニューラルリンク・アクセス</string>
+    <string name="auth_tab_login">パイロットログイン</string>
+    <string name="auth_tab_register">新規候補生</string>
+    <string name="auth_nickname_label">コールサイン / ニックネーム</string>
+    <string name="auth_email_label">ニューラル周波数（メール）</string>
+    <string name="auth_email_confirm_label">ニューラル周波数の確認</string>
+    <string name="auth_password_label">アクセス暗号（パスワード）</string>
+    <string name="auth_password_confirm_label">アクセス暗号の確認</string>
+    <string name="auth_register_button">ニューラルリンク初期化</string>
+    <string name="auth_login_button">リンク起動</string>
+    <string name="auth_guest_button">[ バイパス // ゲストパイロットとして入場 ]</string>
+    <string name="auth_legal_consent">続行することで、アプリの%1$sおよび%2$sに同意したことになります。</string>
+    <string name="auth_legal_terms_link">利用規約</string>
+    <string name="auth_legal_privacy_link">プライバシーポリシー</string>
+    <string name="auth_verify_pending_title">⚠️ ニューラルリンク保留中</string>
+    <string name="auth_verify_pending_message">確認用周波数を以下に送信しました：\n%1$s</string>
+    <string name="auth_verify_pending_hint">クラウド進捗を同期しオンラインランキングを解除するには、周波数を認証してください。</string>
+    <string name="auth_verify_status_button">状態を確認</string>
+    <string name="auth_resend_button">メールを再送信</string>
+    <string name="auth_abort_button">[ 中止 // サインアウト ]</string>
+    <string name="auth_default_pending_email">pilot@synapse.cyber</string>
+    <string name="auth_forgot_password_link">パスワードをお忘れですか?</string>
+    <string name="auth_forgot_password_title">[ ニューラル暗号のリセット ]</string>
+    <string name="auth_forgot_password_hint">ニューラル周波数（メール）を入力してください。アカウントが存在する場合、リセットリンクを送信します。</string>
+    <string name="auth_forgot_password_button">リセットリンクを送信</string>
+    <string name="auth_forgot_password_cancel">戻る</string>
+    <string name="auth_forgot_password_sent">[ 信号送信完了 // 受信トレイで手順を確認してください ]</string>
+
+    <!-- Auth view model messages -->
+    <string name="auth_error_missing_credentials">[ エラー // 認証情報がありません ]</string>
+    <string name="auth_error_wrong_password">[ 拒否 // パスワードが無効です ]</string>
+    <string name="auth_error_invalid_email">[ 拒否 // メールが不明か形式が不正です ]</string>
+    <string name="auth_error_network">[ オフライン // ネットワーク接続タイムアウト ]</string>
+    <string name="auth_error_unknown">[ 拒否 // %1$s ]</string>
+    <string name="auth_register_error_weak_password">[ 却下 // パスワードが弱すぎます ]</string>
+    <string name="auth_register_error_invalid_email">[ 却下 // メール形式が無効です ]</string>
+    <string name="auth_register_error_network">[ オフライン // 登録中にネットワークエラー ]</string>
+    <string name="auth_register_error_unknown">[ 却下 // %1$s ]</string>
+    <string name="auth_register_success">[ 登録完了 // 確認メールを送信しました ]</string>
+    <string name="auth_register_rejected">[ 登録却下 // %1$s ]</string>
+    <string name="auth_guest_error">[ エラー // ゲストのニューラルリンクに失敗 ]</string>
+    <string name="auth_resend_success">[ 信号送信完了 // 確認メールを再送信しました ]</string>
+    <string name="auth_resend_cooldown">[ クールダウン中 // 再送信まで%1$d秒お待ちください ]</string>
+    <string name="auth_resend_failed">[ エラー // 送信に失敗しました ]</string>
+    <string name="auth_verified_success">[ ニューラルリンク確認済み ]</string>
+    <string name="auth_still_pending">[ 状態 // メールはまだ確認待ちです ]</string>
+
+    <!-- Auth registration validation reasons -->
+    <string name="auth_validation_nickname_short">コールサインは3文字以上にしてください。</string>
+    <string name="auth_validation_invalid_email">メール形式が無効です。</string>
+    <string name="auth_validation_email_mismatch">メールアドレスが一致しません。</string>
+    <string name="auth_validation_password_short">パスワードは8文字以上にしてください。</string>
+    <string name="auth_validation_password_needs_upper">パスワードには大文字を1つ以上含めてください。</string>
+    <string name="auth_validation_password_needs_lower">パスワードには小文字を1つ以上含めてください。</string>
+    <string name="auth_validation_password_needs_digit">パスワードには数字を1つ以上含めてください。</string>
+    <string name="auth_validation_password_needs_symbol">パスワードには記号を1つ以上含めてください。</string>
+    <string name="auth_validation_password_mismatch">パスワードが一致しません。</string>
+
+    <!-- Multiplayer lobby -->
+    <string name="mp_lobby_title">[ オンライン対戦 ]</string>
+    <string name="mp_lobby_name_label">パイロットのコールサイン</string>
+    <string name="mp_lobby_connecting">接続中…</string>
+    <string name="mp_lobby_create_room">ルームを作成</string>
+    <string name="mp_lobby_room_code_label">ルームコード</string>
+    <string name="mp_lobby_join_room">ルームに参加</string>
+    <string name="mp_lobby_default_name">パイロット</string>
+    <string name="mp_lobby_mode_label">ゲームモード</string>
+    <string name="mp_mode_mistake_title">ミスモード</string>
+    <string name="mp_mode_mistake_desc">一度でも間違えると脱落。最後まで残ったパイロットの勝利。</string>
+    <string name="mp_mode_hot_potato_title">ホットポテト</string>
+    <string name="mp_mode_hot_potato_desc">正解すると手番が回ります。間違えても遅くても新しい問題が出るだけです。隠されたボムがいつ爆発するかは分かりません。その瞬間に手番を持っているパイロットが脱落します。</string>
+    <string name="mp_mode_solo_survival_title">ソロサバイバル</string>
+    <string name="mp_mode_solo_survival_desc">手番なし。全員が共通の制限時間の中で同時に自分のプレイを進めます。一度のミスでその場で脱落しますが、他のプレイヤーはそのまま続行します。時間切れの時点で最高得点のプレイヤーが勝利します。</string>
+
+    <!-- Multiplayer waiting room -->
+    <string name="mp_waiting_title">[ 待機ルーム ]</string>
+    <string name="mp_waiting_room_code_label">ルームコード</string>
+    <string name="mp_waiting_tap_to_copy">タップしてコピー</string>
+    <string name="mp_waiting_connected_pilots">接続中のパイロット（%1$d/%2$d）</string>
+    <string name="mp_waiting_host_badge">ホスト</string>
+    <string name="mp_waiting_empty_slot">・パイロット待機中・</string>
+    <string name="mp_waiting_start_game">[ 対戦開始 ]</string>
+    <string name="mp_waiting_starting_game">開始しています…</string>
+    <string name="mp_waiting_scanning_host">他のパイロットを待っています…</string>
+    <string name="mp_waiting_scanning_guest">ホストを待っています…</string>
+
+    <!-- Multiplayer preload waiting room (shown while the match is starting) -->
+    <string name="mp_preload_title">[ マッチ起動中 ]</string>
+    <string name="mp_preload_subtitle">%1$d人のパイロットを同期中</string>
+    <string name="mp_preload_scanner_label">戦場を読み込み中…</string>
+    <string name="mp_loading_tip_1">色受容体を調整中…</string>
+    <string name="mp_loading_tip_2">赤と緑をほどいています…</string>
+    <string name="mp_loading_tip_3">反射神経を目覚めさせています…</string>
+    <string name="mp_loading_tip_4">ネオンピクセルを磨いています…</string>
+    <string name="mp_loading_tip_5">神経経路を同期中…</string>
+    <string name="mp_loading_tip_6">赤がまだ赤いか確認中…</string>
+    <string name="mp_loading_tip_7">禁断の色の組み合わせを読み込み中…</string>
+    <string name="mp_loading_tip_8">回答ボタンを充電中…</string>
+
+    <!-- Multiplayer game screen -->
+    <string name="mp_game_alive">生存</string>
+    <string name="mp_game_eliminated">脱落</string>
+    <string name="mp_game_turn_of">%1$sの番</string>
+    <string name="mp_game_preparing_round">ラウンド準備中…</string>
+    <string name="mp_game_you_won">勝利！</string>
+    <string name="mp_game_won_by">%1$sの勝利</string>
+    <string name="mp_game_waiting">待機中…</string>
+    <string name="mp_game_unknown_player">…</string>
+    <string name="mp_game_match_summary">試合結果</string>
+    <string name="mp_game_exit_room">[ ルームを退出 ]</string>
+    <string name="mp_game_points_earned">+%1$dポイント獲得</string>
+    <string name="mp_finish_duration">試合時間 %1$s</string>
+    <string name="mp_finish_raw_score">試合スコア</string>
+    <string name="mp_finish_halved">半分</string>
+    <string name="mp_finish_placement_bonus">順位ボーナス（×%1$s）</string>
+    <string name="mp_finish_eliminated_at">%1$d秒で脱落</string>
+    <string name="mp_finish_rounds_reached">ラウンド%1$dまで到達</string>
+    <string name="mp_finish_survived_full">最後まで生き残った</string>
+
+    <!-- Multiplayer solo_survival screen -->
+    <string name="mp_solo_time_left">残り%1$d秒</string>
+    <string name="mp_solo_score_label">スコア</string>
+    <string name="mp_solo_you_tag">あなた</string>
+    <string name="mp_solo_busted_title">脱落しました</string>
+    <string name="mp_solo_busted_subtitle">最終スコア: %1$d — 試合は他のプレイヤーで続行中。</string>
+    <string name="mp_solo_leaderboard_title">ランキング</string>
+    <string name="mp_solo_you_won">勝利！</string>
+    <string name="mp_solo_won_by">%1$sが%2$dptsで勝利</string>
+
+    <!-- Multiplayer anonymous-account gate dialog -->
+    <string name="mp_anon_gate_title">オンライン機能はロック中</string>
+    <string name="mp_anon_gate_body">ゲストパイロットはオンライン対戦に参加できません。無料アカウントを作成すると、マルチプレイが解放され、ポイントの獲得やレベルアップができるようになります。</string>
+    <string name="mp_anon_gate_dismiss">了解</string>
+
+    <!-- Multiplayer error fallbacks (shown only when the backend gives no detail message) -->
+    <string name="mp_error_create_room">ルームを作成できませんでした。</string>
+    <string name="mp_error_join_room">ルームに参加できませんでした。</string>
+    <string name="mp_error_start_game">対戦を開始できませんでした。</string>
+    <string name="mp_error_connection_lost">ルームとの接続が失われました。</string>
+
+    <!-- Achievements -->
+    <string name="achievement_first_blood_title">ニューラル・イニシエーション</string>
+    <string name="achievement_first_blood_desc">1回のプレイで5回以上正解する。</string>
+    <string name="achievement_ten_games_title">パイロット候補生</string>
+    <string name="achievement_ten_games_desc">通算10回トレーニングをプレイする。</string>
+    <string name="achievement_twenty_five_games_title">シナプス訓練生</string>
+    <string name="achievement_twenty_five_games_desc">通算25回トレーニングをプレイする。</string>
+    <string name="achievement_fifty_games_title">ベテランオペレーター</string>
+    <string name="achievement_fifty_games_desc">通算50回トレーニングをプレイする。</string>
+    <string name="achievement_hundred_games_title">ニューラルウォリアー</string>
+    <string name="achievement_hundred_games_desc">通算100回トレーニングをプレイする。</string>
+    <string name="achievement_two_hundred_games_title">サイバーガーディアン</string>
+    <string name="achievement_two_hundred_games_desc">通算200回トレーニングをプレイする。</string>
+    <string name="achievement_five_hundred_games_title">シナプスイモータル</string>
+    <string name="achievement_five_hundred_games_desc">通算500回トレーニングをプレイする。</string>
+    <string name="achievement_five_wins_title">シナプススパーク</string>
+    <string name="achievement_five_wins_desc">チャレンジ5回勝利する。</string>
+    <string name="achievement_fifteen_wins_title">コルテックスストライカー</string>
+    <string name="achievement_fifteen_wins_desc">チャレンジ15回勝利する。</string>
+    <string name="achievement_thirty_wins_title">オービタルエース</string>
+    <string name="achievement_thirty_wins_desc">チャレンジ30回勝利する。</string>
+    <string name="achievement_fifty_wins_title">ニューラルドミネーター</string>
+    <string name="achievement_fifty_wins_desc">チャレンジ50回勝利する。</string>
+    <string name="achievement_hundred_wins_title">総司令官</string>
+    <string name="achievement_hundred_wins_desc">チャレンジ100回勝利する。</string>
+    <string name="achievement_two_hundred_wins_title">グランドサイバーエンペラー</string>
+    <string name="achievement_two_hundred_wins_desc">チャレンジ200回勝利する。</string>
+    <string name="achievement_centurion_title">サイバーセンチュリオン</string>
+    <string name="achievement_centurion_desc">1回のプレイで2,500点に到達する。</string>
+    <string name="achievement_score_3k_title">ハイパードライバー</string>
+    <string name="achievement_score_3k_desc">1回のプレイで5,000点に到達する。</string>
+    <string name="achievement_score_titan_title">ストループ・オーバーロード</string>
+    <string name="achievement_score_titan_desc">1回のプレイで7,500点を超える。</string>
+    <string name="achievement_score_overlord_title">コグニティブタイタン</string>
+    <string name="achievement_score_overlord_desc">1回のプレイで10,500点を超える。</string>
+    <string name="achievement_score_god_title">クオンタムシンギュラリティ</string>
+    <string name="achievement_score_god_desc">1回のプレイで14,000点を超える。</string>
+    <string name="achievement_flawless_title">シナプティックピュリティ</string>
+    <string name="achievement_flawless_desc">キャリアでパーフェクトラン（5ラウンド以上・正答率100%）を1回達成する。</string>
+    <string name="achievement_flawless_tier2_title">フローレスエクセキューション</string>
+    <string name="achievement_flawless_tier2_desc">キャリアでパーフェクトランを5回達成する。</string>
+    <string name="achievement_flawless_tier3_title">パーフェクトマインド</string>
+    <string name="achievement_flawless_tier3_desc">キャリアでパーフェクトランを15回達成する。</string>
+    <string name="achievement_flawless_tier4_title">アブソリュートプレシジョン</string>
+    <string name="achievement_flawless_tier4_desc">キャリアでパーフェクトランを30回達成する。</string>
+    <string name="achievement_survival_expert_title">オーバークロックサバイバー</string>
+    <string name="achievement_survival_expert_desc">1回のプレイで30秒以上生存する。</string>
+    <string name="achievement_survival_master_title">タイムワープ</string>
+    <string name="achievement_survival_master_desc">1回のプレイで50秒以上生存する。</string>
+    <string name="achievement_survival_legend_title">クロノシフト</string>
+    <string name="achievement_survival_legend_desc">1回のプレイで75秒以上生存する。</string>
+    <string name="achievement_survival_god_title">エターナルシナプス</string>
+    <string name="achievement_survival_god_desc">1回のプレイで100秒以上生存する。</string>
+    <string name="achievement_streak_master_title">モメンタムスパーク</string>
+    <string name="achievement_streak_master_desc">5連勝を達成する。</string>
+    <string name="achievement_streak_legend_title">アンストッパブルフォース</string>
+    <string name="achievement_streak_legend_desc">10連勝を達成する。</string>
+    <string name="achievement_streak_god_title">ゴッド・オブ・スピード</string>
+    <string name="achievement_streak_god_desc">20連勝を達成する。</string>
+    <string name="achievement_cyber_veteran_title">サイバネティックエリート</string>
+    <string name="achievement_cyber_veteran_desc">サイバーオーバーロード難易度で25勝する。</string>
+</resources>
