@@ -17,13 +17,19 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.softyorch.stroopoverload.R
+import com.softyorch.stroopoverload.core.LegalLinks
 import com.softyorch.stroopoverload.ui.theme.*
 
 @Composable
@@ -330,6 +336,12 @@ fun AuthScreen(
                         )
                     }
 
+                    LegalConsentText(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 12.dp)
+                    )
+
                     Button(
                         onClick = {
                             if (isRegisterTab) {
@@ -395,6 +407,48 @@ fun AuthScreen(
             }
         }
     }
+}
+
+@Composable
+private fun LegalConsentText(modifier: Modifier = Modifier) {
+    val termsLabel = stringResource(R.string.auth_legal_terms_link)
+    val privacyLabel = stringResource(R.string.auth_legal_privacy_link)
+    val fullText = stringResource(R.string.auth_legal_consent, termsLabel, privacyLabel)
+    val linkColor = MaterialTheme.colorScheme.primary
+
+    val annotatedText = remember(fullText, termsLabel, privacyLabel, linkColor) {
+        buildAnnotatedString {
+            append(fullText)
+            val linkStyle = TextLinkStyles(
+                style = SpanStyle(color = linkColor, textDecoration = TextDecoration.Underline)
+            )
+
+            val termsStart = fullText.indexOf(termsLabel)
+            if (termsStart >= 0) {
+                addLink(
+                    LinkAnnotation.Url(LegalLinks.TERMS_OF_USE_URL, linkStyle),
+                    termsStart,
+                    termsStart + termsLabel.length
+                )
+            }
+
+            val privacyStart = fullText.indexOf(privacyLabel)
+            if (privacyStart >= 0) {
+                addLink(
+                    LinkAnnotation.Url(LegalLinks.PRIVACY_POLICY_URL, linkStyle),
+                    privacyStart,
+                    privacyStart + privacyLabel.length
+                )
+            }
+        }
+    }
+
+    Text(
+        text = annotatedText,
+        style = MaterialTheme.typography.bodySmall,
+        color = Muted,
+        modifier = modifier
+    )
 }
 
 @Composable

@@ -183,6 +183,9 @@
     <string name="auth_register_button">INITIALIZE NEURAL LINK</string>
     <string name="auth_login_button">ENGAGE LINK</string>
     <string name="auth_guest_button">[ BYPASS // ENTER AS GUEST PILOT ]</string>
+    <string name="auth_legal_consent">By continuing, you accept the app\'s %1$s and %2$s.</string>
+    <string name="auth_legal_terms_link">Terms of Use</string>
+    <string name="auth_legal_privacy_link">Privacy Policy</string>
     <string name="auth_verify_pending_title">⚠️ NEURAL LINK PENDING</string>
     <string name="auth_verify_pending_message">A verification frequency has been transmitted to:\n%1$s</string>
     <string name="auth_verify_pending_hint">Please authenticate your frequency to synchronize cloud progress and unlock online leaderboards.</string>

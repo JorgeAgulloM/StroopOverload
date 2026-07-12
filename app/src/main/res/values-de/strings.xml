@@ -183,6 +183,9 @@
     <string name="auth_register_button">NEURALEN LINK INITIALISIEREN</string>
     <string name="auth_login_button">LINK AKTIVIEREN</string>
     <string name="auth_guest_button">[ UMGEHEN // ALS GAST-PILOT EINSTEIGEN ]</string>
+    <string name="auth_legal_consent">Wenn du fortfährst, akzeptierst du die %1$s und die %2$s der App.</string>
+    <string name="auth_legal_terms_link">Nutzungsbedingungen</string>
+    <string name="auth_legal_privacy_link">Datenschutzerklärung</string>
     <string name="auth_verify_pending_title">⚠️ NEURALER LINK AUSSTEHEND</string>
     <string name="auth_verify_pending_message">Eine Verifizierungsfrequenz wurde übertragen an:\n%1$s</string>
     <string name="auth_verify_pending_hint">Bestätige deine Frequenz, um den Cloud-Fortschritt zu synchronisieren und Online-Bestenlisten freizuschalten.</string>

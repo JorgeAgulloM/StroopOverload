@@ -1,0 +1,106 @@
+TÉRMINOS Y CONDICIONES DE USO — STROOP OVERLOAD
+
+Última actualización: 12 de julio de 2026
+
+1. OBJETO Y ACEPTACIÓN
+
+Los presentes Términos y Condiciones de Uso ("Términos") regulan el acceso y uso de la
+aplicación móvil Stroop Overload ("la App"), desarrollada y operada por SoftYorch
+("nosotros", "el titular").
+
+Al crear una cuenta, iniciar sesión o continuar usando la App, el usuario declara haber
+leído, entendido y aceptado estos Términos, así como la Política de Privacidad. Si no
+está de acuerdo, no debe usar la App.
+
+2. DESCRIPCIÓN DEL SERVICIO
+
+Stroop Overload es un videojuego de reflejos y velocidad de reacción basado en el efecto
+Stroop, disponible en modos individuales (Endless, Lives, Time) y modos online
+multijugador (Hot Potato, Solo Survival). La App incluye sistema de progreso (nivel,
+experiencia, logros), clasificaciones (leaderboard) y publicidad integrada.
+
+3. REGISTRO Y CUENTA DE USUARIO
+
+3.1. Edad mínima: el uso de la App está permitido a partir de 13 años. Si el usuario es
+menor de dicha edad, no debe crear una cuenta ni usar la App.
+
+3.2. Modalidades de acceso: el usuario puede jugar como invitado (cuenta anónima, datos
+asociados a un identificador temporal del dispositivo) o crear una cuenta registrada con
+correo electrónico y contraseña, lo que permite conservar el progreso y participar en
+funciones online.
+
+3.3. El usuario es responsable de mantener la confidencialidad de su contraseña y de toda
+actividad realizada desde su cuenta. Debe notificar de inmediato cualquier uso no
+autorizado.
+
+3.4. El usuario puede eliminar su cuenta y sus datos asociados en cualquier momento desde
+los ajustes de la App.
+
+4. NORMAS DE USO
+
+El usuario se compromete a:
+- No utilizar la App con fines ilícitos, fraudulentos o contrarios a estos Términos.
+- No usar bots, macros, exploits, ingeniería inversa u otros medios para alterar el
+  funcionamiento del juego, las clasificaciones o el sistema de puntuación.
+- No suplantar la identidad de terceros ni usar apodos (nickname) ofensivos, difamatorios
+  o que infrinjan derechos de terceros.
+- No interferir con la experiencia de otros jugadores en los modos multijugador.
+
+El incumplimiento de estas normas puede dar lugar a la suspensión o eliminación de la
+cuenta sin previo aviso.
+
+5. CONTENIDO GENERADO POR EL USUARIO
+
+El apodo (nickname) y avatar seleccionados por el usuario son visibles para otros
+jugadores en clasificaciones y partidas online. Nos reservamos el derecho de moderar,
+renombrar o eliminar contenido que incumpla estas normas.
+
+6. PUBLICIDAD
+
+La App muestra anuncios publicitarios de terceros a través de Google AdMob. La
+personalización de anuncios está sujeta al consentimiento del usuario, recabado mediante
+la plataforma de gestión de consentimiento (Google User Messaging Platform - UMP) en
+cumplimiento del RGPD. Consulta la Política de Privacidad para más detalle sobre los
+datos tratados con fines publicitarios.
+
+7. FUNCIONES DE PAGO
+
+La App puede ofrecer, actualmente o en el futuro, funciones opcionales de pago (por
+ejemplo, eliminación de anuncios o contenido premium). Dichas compras se gestionarán a
+través de los mecanismos de pago de la tienda de aplicaciones correspondiente y se regirán
+adicionalmente por sus propios términos.
+
+8. PROPIEDAD INTELECTUAL
+
+Todos los derechos de propiedad intelectual e industrial sobre la App (diseño, código,
+gráficos, logotipos, nombre "Stroop Overload") pertenecen a SoftYorch o a sus
+licenciantes. Queda prohibida su reproducción, distribución o modificación sin
+autorización expresa.
+
+9. DISPONIBILIDAD Y MODIFICACIONES DEL SERVICIO
+
+Nos reservamos el derecho de modificar, suspender o discontinuar la App o cualquiera de
+sus funciones (total o parcialmente) en cualquier momento, sin que ello genere derecho a
+compensación, salvo lo exigido por la legislación aplicable.
+
+10. LIMITACIÓN DE RESPONSABILIDAD
+
+La App se ofrece "tal cual". No garantizamos que el servicio esté libre de interrupciones
+o errores. En la medida permitida por la ley, no seremos responsables de daños indirectos
+derivados del uso o imposibilidad de uso de la App.
+
+11. MODIFICACIÓN DE ESTOS TÉRMINOS
+
+Podemos actualizar estos Términos en cualquier momento. Los cambios sustanciales se
+comunicarán a través de la propia App o de la web. El uso continuado tras la publicación
+de los cambios implica su aceptación.
+
+12. LEY APLICABLE Y JURISDICCIÓN
+
+Estos Términos se rigen por la legislación española. Para cualquier controversia, las
+partes se someterán a los juzgados y tribunales que correspondan conforme a la normativa
+de protección de consumidores aplicable.
+
+13. CONTACTO
+
+Para consultas relacionadas con estos Términos: agullojorge@gmail.com

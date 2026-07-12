@@ -183,6 +183,9 @@
     <string name="auth_register_button">ニューラルリンク初期化</string>
     <string name="auth_login_button">リンク起動</string>
     <string name="auth_guest_button">[ バイパス // ゲストパイロットとして入場 ]</string>
+    <string name="auth_legal_consent">続行することで、アプリの%1$sおよび%2$sに同意したことになります。</string>
+    <string name="auth_legal_terms_link">利用規約</string>
+    <string name="auth_legal_privacy_link">プライバシーポリシー</string>
     <string name="auth_verify_pending_title">⚠️ ニューラルリンク保留中</string>
     <string name="auth_verify_pending_message">確認用周波数を以下に送信しました：\n%1$s</string>
     <string name="auth_verify_pending_hint">クラウド進捗を同期しオンラインランキングを解除するには、周波数を認証してください。</string>

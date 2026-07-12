@@ -183,6 +183,9 @@
     <string name="auth_register_button">INICIALIZAR ENLACE NEURAL</string>
     <string name="auth_login_button">ACTIVAR ENLACE</string>
     <string name="auth_guest_button">[ OMITIR // ENTRAR COMO PILOTO INVITADO ]</string>
+    <string name="auth_legal_consent">Al continuar, aceptas los %1$s y la %2$s de la aplicación.</string>
+    <string name="auth_legal_terms_link">Términos de Uso</string>
+    <string name="auth_legal_privacy_link">Política de Privacidad</string>
     <string name="auth_verify_pending_title">⚠️ ENLACE NEURAL PENDIENTE</string>
     <string name="auth_verify_pending_message">Se ha transmitido una frecuencia de verificación a:\n%1$s</string>
     <string name="auth_verify_pending_hint">Autentica tu frecuencia para sincronizar el progreso en la nube y desbloquear las clasificaciones online.</string>
