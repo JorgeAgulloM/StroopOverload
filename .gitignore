@@ -1,36 +1,46 @@
-# Android
-*.iml
-*.class
-*.log
-.DS_Store
-.idea/
+# Gradle files
 .gradle/
 build/
-/local.properties
+!gradle/wrapper/gradle-wrapper.jar
+!gradlew
+!gradlew.bat
+*.aab
 
-# Gradle wrapper jar (binary)
-gradle/wrapper/gradle-wrapper.jar
+# Local configuration file (sdk path, etc)
+local.properties
 
-# Firebase — must be added manually from Firebase console
-app/google-services.json
+# Log/OS Files
+*.log
 
-# AdMob — real ad unit IDs, not test IDs; see admob/admob.properties.example
-admob/admob.properties
+# Android Studio generated files and folders
+captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+output.json
 
-# Firebase Cloud Functions
-functions/node_modules/
-functions/lib/
+# IntelliJ
+*.iml
+.idea/
+misc.xml
+deploymentTargetDropDown.xml
+render.experimental.xml
 
-# Firebase emulator debug logs
-firebase-debug.log
-firestore-debug.log
-database-debug.log
-ui-debug.log
-.firebase/
-functions/coverage/
+# Keystore files
+*.jks
+*.keystore
 
-# Shell crash dumps
-*.stackdump
+# Android Profiling
+*.hprof
 
-# MobiAI tool cache
-.mobiai/
+# Secret Properties
+# signing/millAndFriends.jks
+signing.properties
+
+# Google Services (e.g. APIs or Firebase)
+google-services.json
+
+# Admob Pproperties
+admob.properties
+# GitHub Package credentials
+secrets/
