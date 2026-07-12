@@ -339,6 +339,18 @@ fun ProfileScreen(
                     }
                     Spacer(modifier = Modifier.height(12.dp))
                 }
+                if (!state.profile.isAnonymous) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    OutlinedButton(
+                        onClick = { showDeleteAccountDialog = true },
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
+                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.5f)),
+                        shape = RoundedCornerShape(4.dp),
+                        modifier = Modifier.fillMaxWidth().padding(bottom = 40.dp).height(48.dp)
+                    ) {
+                        Text(stringResource(R.string.profile_delete_account_button), style = MaterialTheme.typography.labelLarge)
+                    }
+                }
                 OutlinedButton(
                     onClick = { viewModel.signOut(onSignedOut) },
                     colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
@@ -347,18 +359,6 @@ fun ProfileScreen(
                     modifier = Modifier.fillMaxWidth().height(48.dp)
                 ) {
                     Text(stringResource(R.string.profile_sign_out), style = MaterialTheme.typography.labelLarge)
-                }
-                if (!state.profile.isAnonymous) {
-                    Spacer(modifier = Modifier.height(12.dp))
-                    OutlinedButton(
-                        onClick = { showDeleteAccountDialog = true },
-                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.error),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.5f)),
-                        shape = RoundedCornerShape(4.dp),
-                        modifier = Modifier.fillMaxWidth().height(48.dp)
-                    ) {
-                        Text(stringResource(R.string.profile_delete_account_button), style = MaterialTheme.typography.labelLarge)
-                    }
                 }
                 Spacer(modifier = Modifier.height(32.dp))
             }

@@ -17,6 +17,10 @@ val adMobProperties = Properties().apply {
 }
 fun adMobProperty(key: String): String = (adMobProperties[key] as? String)?.trim().orEmpty()
 
+val keystorePropertiesFile: File = file("../signing/signing.properties")
+val keystoreProperties = Properties()
+keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+
 android {
     namespace = "com.softyorch.stroopoverload"
     compileSdk = 36
@@ -25,14 +29,24 @@ android {
         applicationId = "com.softyorch.stroopoverload"
         minSdk = 26
         targetSdk = 36
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 3
+        versionName = "0.0.3"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    signingConfigs {
+        create("release") {
+            keyAlias = keystoreProperties["RELEASE_KEY_ALIAS"] as String
+            keyPassword = keystoreProperties["RELEASE_KEY_PASSWORD"] as String
+            storeFile = file(keystoreProperties["RELEASE_KEYSTORE_PATH"] as String)
+            storePassword = keystoreProperties["RELEASE_KEYSTORE_PASSWORD"] as String
+        }
+    }
+
     buildTypes {
         release {
+            manifestPlaceholders += mapOf()
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
@@ -46,23 +60,15 @@ android {
             buildConfigField("String", "AD_UNIT_NATIVE_DASHBOARD", "\"${adMobProperty("PROD_KEY_ID_NATIVE_DASHBOARD")}\"")
             buildConfigField("String", "AD_UNIT_NATIVE_GAME", "\"${adMobProperty("PROD_KEY_ID_NATIVE_GAME")}\"")
             buildConfigField("String", "AD_UNIT_INTERSTITIAL_ONLINE", "\"${adMobProperty("PROD_KEY_ID_INTERSTITIAL_ONLINE")}\"")
-        }
-    }
-    flavorDimensions += "environment"
-    productFlavors {
-        create("dev") {
-            dimension = "environment"
-            applicationIdSuffix = ".dev"
-            versionNameSuffix = "-dev"
-            manifestPlaceholders["admobAppId"] = adMobProperty("DEV_KEY_ID_ADMOB_APP")
-                .ifBlank { "ca-app-pub-3940256099942544~3347511713" } // Google's public test app ID
-            buildConfigField("boolean", "ADS_ENABLED", "true")
-            buildConfigField("String", "AD_UNIT_NATIVE_DASHBOARD", "\"${adMobProperty("DEV_KEY_ID_NATIVE_DASHBOARD")}\"")
-            buildConfigField("String", "AD_UNIT_NATIVE_GAME", "\"${adMobProperty("DEV_KEY_ID_NATIVE_GAME")}\"")
-            buildConfigField("String", "AD_UNIT_INTERSTITIAL_ONLINE", "\"${adMobProperty("DEV_KEY_ID_INTERSTITIAL_ONLINE")}\"")
+            signingConfig = signingConfigs.getByName("release")
+
+            buildConfigField("String", "FLAVOR", "\"release\"")
+
+            ndk {
+                debugSymbolLevel = "FULL"
+            }
         }
         create("demo") {
-            dimension = "environment"
             versionNameSuffix = "-demo"
             // Demo builds are the App Store review/showcase flavor -- never show ads there.
             manifestPlaceholders["admobAppId"] = "ca-app-pub-3940256099942544~3347511713"
@@ -70,6 +76,18 @@ android {
             buildConfigField("String", "AD_UNIT_NATIVE_DASHBOARD", "\"\"")
             buildConfigField("String", "AD_UNIT_NATIVE_GAME", "\"\"")
             buildConfigField("String", "AD_UNIT_INTERSTITIAL_ONLINE", "\"\"")
+
+            buildConfigField("String", "FLAVOR", "\"demo\"")
+        }
+        debug {
+            // Demo builds are the App Store review/showcase flavor -- never show ads there.
+            manifestPlaceholders["admobAppId"] = "ca-app-pub-3940256099942544~3347511713"
+            buildConfigField("boolean", "ADS_ENABLED", "false")
+            buildConfigField("String", "AD_UNIT_NATIVE_DASHBOARD", "\"\"")
+            buildConfigField("String", "AD_UNIT_NATIVE_GAME", "\"\"")
+            buildConfigField("String", "AD_UNIT_INTERSTITIAL_ONLINE", "\"\"")
+
+            buildConfigField("String", "FLAVOR", "\"debug\"")
         }
     }
     compileOptions {
