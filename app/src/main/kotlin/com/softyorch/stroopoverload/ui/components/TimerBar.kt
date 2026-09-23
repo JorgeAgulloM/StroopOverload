@@ -18,6 +18,13 @@ import androidx.compose.ui.graphics.lerp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.StateFlow
+import androidx.compose.ui.tooling.preview.Preview
+import com.softyorch.stroopoverload.ui.theme.StroopTheme
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.ui.unit.dp
 
 /** How often a deadline-driven bar re-renders. Fine for a bar a few hundred pixels wide. */
 private const val TICK_MS = 100L
@@ -83,6 +90,18 @@ private fun LaunchedTicker(enabled: Boolean, onTick: (Long) -> Unit) {
         while (true) {
             delay(TICK_MS)
             onTick(System.currentTimeMillis())
+        }
+    }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF000000, widthDp = 360)
+@Composable
+private fun TimerBarPreview() {
+    StroopTheme {
+        Column(modifier = Modifier.padding(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            for (progress in listOf(1f, 0.5f, 0.1f)) {
+                TimerBar(progress, Modifier.fillMaxWidth().height(8.dp), MaterialTheme.colorScheme.surfaceVariant)
+            }
         }
     }
 }

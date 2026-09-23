@@ -22,6 +22,13 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.softyorch.stroopoverload.core.StroopColor
+import androidx.compose.ui.tooling.preview.Preview
+import com.softyorch.stroopoverload.ui.theme.StroopTheme
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.fillMaxHeight
 
 /**
  * One answer quadrant of the 2x2 board, shared by local play and every online
@@ -61,6 +68,21 @@ fun QuadrantBox(
         )
         if (flashAlpha > 0f) {
             Box(modifier = Modifier.fillMaxSize().background(Color.White.copy(alpha = flashAlpha)))
+        }
+    }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF000000, widthDp = 360)
+@Composable
+private fun QuadrantBoxPreview() {
+    StroopTheme {
+        Row(
+            modifier = Modifier.padding(8.dp).height(96.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            QuadrantBox(StroopColor.RED, modifier = Modifier.weight(1f).fillMaxHeight()) {}
+            QuadrantBox(StroopColor.BLUE, isFlashing = true, modifier = Modifier.weight(1f).fillMaxHeight()) {}
+            QuadrantBox(StroopColor.GREEN, enabled = false, modifier = Modifier.weight(1f).fillMaxHeight()) {}
         }
     }
 }

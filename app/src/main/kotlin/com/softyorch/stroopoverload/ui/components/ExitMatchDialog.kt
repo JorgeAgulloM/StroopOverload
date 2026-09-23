@@ -8,6 +8,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.res.stringResource
 import com.softyorch.stroopoverload.R
+import androidx.compose.ui.tooling.preview.Preview
+import com.softyorch.stroopoverload.ui.theme.StroopTheme
 
 /**
  * Confirms abandoning a match in progress. The system back button used to drop the
@@ -39,4 +41,12 @@ fun ExitMatchDialog(@StringRes messageRes: Int, onConfirm: () -> Unit, onDismiss
             TextButton(onClick = onDismiss) { Text(stringResource(R.string.exit_match_stay)) }
         },
     )
+}
+
+@Preview
+@Composable
+private fun ExitMatchDialogPreview() {
+    StroopTheme {
+        ExitMatchDialog(messageRes = R.string.exit_match_online_message, onConfirm = {}, onDismiss = {})
+    }
 }
