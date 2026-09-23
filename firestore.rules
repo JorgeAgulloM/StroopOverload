@@ -16,6 +16,12 @@ service cloud.firestore {
       }
     }
 
+    // Per-uid call counters written only by Cloud Functions (see rateLimit.ts).
+    // A client that could read or write these could sidestep its own limits.
+    match /rateLimits/{uid} {
+      allow read, write: if false;
+    }
+
     // Profile + leaderboard. Read is open to any authenticated user (the leaderboard query
     // needs to read every user's doc, not just the caller's own). Write is restricted to the
     // doc's own uid — nobody can write another user's profile or progress.

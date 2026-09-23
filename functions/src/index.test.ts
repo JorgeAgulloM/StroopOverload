@@ -20,6 +20,7 @@ import {
 } from "./index";
 import * as resolveRoundModule from "./resolveRound";
 import { scheduleBombExplosion, scheduleSoloPlayerTimeoutCheck, scheduleTimeoutCheck } from "./taskQueue";
+import { CREATE_ROOM_LIMIT, JOIN_ROOM_LIMIT } from "./rateLimit";
 
 // deleteMyMultiplayerData also removes each deleted room's Realtime Database
 // presence node. There's no RTDB emulator in this test run (only Firestore,
@@ -383,6 +384,43 @@ describe("startGame", () => {
     expect(room.startsAtMs).toBe((result as { startsAtMs: number }).startsAtMs);
     expect(room.stimulus).toBeNull();
     expect(room.deadlineAtMs).toBeNull();
+  });
+});
+
+describe("rate limiting", () => {
+  test("rejects room creation past the per-uid limit", async () => {
+    for (let i = 0; i < CREATE_ROOM_LIMIT; i++) {
+      await createRoom.run(buildRequest({ displayName: "Neo" }, "spammer-uid"));
+    }
+
+    await expect(createRoom.run(buildRequest({ displayName: "Neo" }, "spammer-uid"))).rejects.toMatchObject({
+      code: "resource-exhausted",
+      details: { reason: "RATE_LIMITED" },
+    });
+  });
+
+  test("rejects join attempts past the per-uid limit, so room codes can't be brute-forced", async () => {
+    // Every attempt uses a code no room has, i.e. the not-found path a
+    // brute-forcer would hit -- failures must count toward the limit too.
+    for (let i = 0; i < JOIN_ROOM_LIMIT; i++) {
+      await expect(joinRoom.run(buildRequest({ code: "ZZZZZ", displayName: "Trinity" }, "guesser-uid"))).rejects.toMatchObject({
+        details: { reason: "ROOM_NOT_FOUND" },
+      });
+    }
+
+    await expect(joinRoom.run(buildRequest({ code: "ZZZZZ", displayName: "Trinity" }, "guesser-uid"))).rejects.toMatchObject({
+      details: { reason: "RATE_LIMITED" },
+    });
+  });
+
+  test("counts per uid, so one player's spam doesn't block anyone else", async () => {
+    for (let i = 0; i < CREATE_ROOM_LIMIT; i++) {
+      await createRoom.run(buildRequest({ displayName: "Neo" }, "spammer-uid"));
+    }
+
+    await expect(createRoom.run(buildRequest({ displayName: "Trinity" }, "other-uid"))).resolves.toMatchObject({
+      roomId: expect.any(String),
+    });
   });
 });
 

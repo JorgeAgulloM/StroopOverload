@@ -5,8 +5,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.softyorch.stroopoverload.core.StroopColor
 import com.softyorch.stroopoverload.data.FirebaseMultiplayerRepository
-import com.softyorch.stroopoverload.data.JoinRoomException
-import com.softyorch.stroopoverload.data.JoinRoomFailure
+import com.softyorch.stroopoverload.data.MultiplayerCallException
+import com.softyorch.stroopoverload.data.MultiplayerCallFailure
 import com.softyorch.stroopoverload.data.MultiplayerRepository
 import com.softyorch.stroopoverload.domain.multiplayer.RoomMode
 import kotlinx.coroutines.CancellationException
@@ -33,7 +33,9 @@ class MultiplayerViewModel(
         viewModelScope.launch {
             repository.createRoom(displayName, mode)
                 .onSuccess { (roomId, _) -> observeRoom(roomId) }
-                .onFailure { _state.value = MultiplayerUiState.Error(MultiplayerErrorReason.CreateRoomFailed) }
+                .onFailure { err ->
+                    _state.value = MultiplayerUiState.Error(MultiplayerErrorReason.CreateRoomFailed(err.callFailure()))
+                }
         }
     }
 
@@ -45,8 +47,7 @@ class MultiplayerViewModel(
             repository.joinRoom(code, displayName)
                 .onSuccess { roomId -> observeRoom(roomId) }
                 .onFailure { err ->
-                    val failure = (err as? JoinRoomException)?.failure ?: JoinRoomFailure.UNKNOWN
-                    _state.value = MultiplayerUiState.Error(MultiplayerErrorReason.JoinRoomFailed(failure))
+                    _state.value = MultiplayerUiState.Error(MultiplayerErrorReason.JoinRoomFailed(err.callFailure()))
                 }
         }
     }
@@ -109,6 +110,9 @@ class MultiplayerViewModel(
             }
         }
     }
+
+    private fun Throwable.callFailure(): MultiplayerCallFailure =
+        (this as? MultiplayerCallException)?.failure ?: MultiplayerCallFailure.UNKNOWN
 
     override fun onCleared() {
         observeRoomJob?.cancel()

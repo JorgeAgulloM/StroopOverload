@@ -315,6 +315,7 @@
     <string name="mp_error_room_full">Der Raum ist voll (max. 4 Spieler).</string>
     <string name="mp_error_room_already_started">Dieses Match hat bereits begonnen.</string>
     <string name="mp_error_invalid_code">Ungültiger Code: 5 Buchstaben/Ziffern.</string>
+    <string name="mp_error_rate_limited">Zu viele Versuche. Warte einen Moment.</string>
 
     <!-- Achievements -->
     <string name="achievement_first_blood_title">NEURALE INITIATION</string>

@@ -69,6 +69,7 @@ android {
             }
         }
         create("demo") {
+            manifestPlaceholders += mapOf()
             versionNameSuffix = "-demo"
             // Demo builds are the App Store review/showcase flavor -- never show ads there.
             manifestPlaceholders["admobAppId"] = "ca-app-pub-3940256099942544~3347511713"
@@ -78,6 +79,7 @@ android {
             buildConfigField("String", "AD_UNIT_INTERSTITIAL_ONLINE", "\"\"")
 
             buildConfigField("String", "FLAVOR", "\"demo\"")
+            signingConfig = signingConfigs.getByName("debug")
         }
         debug {
             // Demo builds are the App Store review/showcase flavor -- never show ads there.
@@ -119,6 +121,13 @@ dependencies {
     implementation(libs.firebase.firestore)
     implementation(libs.firebase.database)
     implementation(libs.firebase.functions)
+    implementation(libs.firebase.appcheck.playintegrity)
+    // Debug/demo builds aren't Play-signed, so Play Integrity can't attest them:
+    // they use the debug provider instead, which each build type supplies through
+    // its own appCheckProviderFactory() (src/<buildType>/kotlin). The debug
+    // provider is deliberately absent from the release build.
+    debugImplementation(libs.firebase.appcheck.debug)
+    "demoImplementation"(libs.firebase.appcheck.debug)
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.play.services.ads)
     implementation(libs.google.ump)

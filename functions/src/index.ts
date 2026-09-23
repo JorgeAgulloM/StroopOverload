@@ -13,6 +13,12 @@ import { finishSoloSurvivalSession, resolveSoloAnswer } from "./soloSurvival";
 import { beginMatch } from "./matchStart";
 import { purgeExpiredRooms as purgeExpiredRoomsFn, sweepStuckRooms as sweepStuckRoomsFn } from "./roomWatchdog";
 import { scheduleGameStart } from "./taskQueue";
+import {
+  assertWithinRateLimit,
+  CREATE_ROOM_LIMIT,
+  JOIN_ROOM_LIMIT,
+  RATE_LIMIT_WINDOW_MS,
+} from "./rateLimit";
 
 initializeApp();
 
@@ -25,7 +31,22 @@ const VALID_GAME_MODES: readonly GameModeId[] = ["mistake", "hot_potato", "solo_
 // how long the countdown animation plays, never match fairness.
 const STARTING_COUNTDOWN_MS = 4000;
 
-export const createRoom = onCall(async (request) => {
+// App Check proves a call came from a genuine, unmodified build of this app.
+// Enforcement is OFF until a build that actually sends App Check tokens is the
+// one players are running: flipping it on rejects every already-installed
+// client outright, which would break live matches. Steps: ship the client that
+// initializes App Check (see StroopApplication), register the app in the
+// Firebase console (Play Integrity), watch the "unverified requests" metric
+// drop, then set this to true and redeploy.
+const ENFORCE_APP_CHECK = false;
+
+// Caps the blast radius of a traffic spike (accidental or hostile) on the
+// Firestore/Cloud Tasks bill. Well above any plausible real concurrency here.
+const MAX_INSTANCES = 10;
+
+const CALLABLE_OPTIONS = { enforceAppCheck: ENFORCE_APP_CHECK, maxInstances: MAX_INSTANCES } as const;
+
+export const createRoom = onCall(CALLABLE_OPTIONS, async (request) => {
   const uid = request.auth?.uid;
   if (!uid) throw new HttpsError("unauthenticated", "Debes iniciar sesión.");
   const displayName =
@@ -36,6 +57,7 @@ export const createRoom = onCall(async (request) => {
   const mode: GameModeId = VALID_GAME_MODES.includes(requestedMode) ? requestedMode : "mistake";
 
   try {
+    await assertWithinRateLimit(uid, "createRoom", CREATE_ROOM_LIMIT, RATE_LIMIT_WINDOW_MS);
     const code = await generateUniqueRoomCode();
     const roomRef = roomsCol().doc();
     const hostPlayer: RoomPlayerDoc = {
@@ -70,14 +92,14 @@ export const createRoom = onCall(async (request) => {
   }
 });
 
-export const joinRoom = onCall(async (request) => {
+export const joinRoom = onCall(CALLABLE_OPTIONS, async (request) => {
   const uid = request.auth?.uid;
   if (!uid) throw new HttpsError("unauthenticated", "Debes iniciar sesión.");
   const code = String(request.data?.code ?? "")
     .toUpperCase()
     .trim();
   if (!/^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{5}$/.test(code)) {
-    throw new HttpsError("invalid-argument", "Código de sala inválido.");
+    throw new HttpsError("invalid-argument", "Código de sala inválido.", { reason: "INVALID_CODE" });
   }
   const displayName =
     String(request.data?.displayName ?? "")
@@ -85,18 +107,19 @@ export const joinRoom = onCall(async (request) => {
       .slice(0, MAX_DISPLAY_NAME_LENGTH) || "Pilot";
 
   try {
+    await assertWithinRateLimit(uid, "joinRoom", JOIN_ROOM_LIMIT, RATE_LIMIT_WINDOW_MS);
     const existingDoc = await findJoinableRoomByCode(code);
-    if (!existingDoc) throw new HttpsError("not-found", "Sala no encontrada o ya empezada.");
+    if (!existingDoc) throw new HttpsError("not-found", "Sala no encontrada o ya empezada.", { reason: "ROOM_NOT_FOUND" });
     const roomRef = existingDoc.ref;
 
     return await getFirestore().runTransaction(async (tx) => {
       const doc = await tx.get(roomRef);
-      if (!doc.exists) throw new HttpsError("not-found", "Sala no existe.");
+      if (!doc.exists) throw new HttpsError("not-found", "Sala no existe.", { reason: "ROOM_NOT_FOUND" });
       const room = doc.data() as RoomDoc;
-      if (room.status !== "waiting") throw new HttpsError("failed-precondition", "La partida ya empezó.");
+      if (room.status !== "waiting") throw new HttpsError("failed-precondition", "La partida ya empezó.", { reason: "ALREADY_STARTED" });
       if (room.players[uid]) return { roomId: roomRef.id };
       if (Object.keys(room.players).length >= MAX_PLAYERS_PER_ROOM) {
-        throw new HttpsError("resource-exhausted", "Sala llena.");
+        throw new HttpsError("resource-exhausted", "Sala llena.", { reason: "ROOM_FULL" });
       }
 
       const order = Object.keys(room.players).length;
@@ -119,7 +142,7 @@ export const joinRoom = onCall(async (request) => {
   }
 });
 
-export const startGame = onCall(async (request) => {
+export const startGame = onCall(CALLABLE_OPTIONS, async (request) => {
   const uid = request.auth?.uid;
   if (!uid) throw new HttpsError("unauthenticated", "Debes iniciar sesión.");
   const roomId = String(request.data?.roomId ?? "").trim();
@@ -154,7 +177,7 @@ export const startGame = onCall(async (request) => {
 // synchronous call happened -- so every client's answer window is the full
 // configured duration regardless of how long their local countdown/render took.
 export const beginRound = onTaskDispatched<{ roomId: string }>(
-  { retryConfig: { maxAttempts: 5, minBackoffSeconds: 1 } },
+  { retryConfig: { maxAttempts: 5, minBackoffSeconds: 1 }, maxInstances: MAX_INSTANCES },
   async (req) => {
     const { roomId } = req.data;
     try {
@@ -168,7 +191,7 @@ export const beginRound = onTaskDispatched<{ roomId: string }>(
 
 // Fired by the Cloud Task armBomb schedules. See resolveHotPotato.ts for the logic.
 export const explodeBomb = onTaskDispatched<{ roomId: string; bombAtMs?: number }>(
-  { retryConfig: { maxAttempts: 5, minBackoffSeconds: 1 } },
+  { retryConfig: { maxAttempts: 5, minBackoffSeconds: 1 }, maxInstances: MAX_INSTANCES },
   async (req) => {
     const { roomId, bombAtMs } = req.data;
     try {
@@ -180,7 +203,7 @@ export const explodeBomb = onTaskDispatched<{ roomId: string; bombAtMs?: number 
   }
 );
 
-export const submitAnswer = onCall(async (request) => {
+export const submitAnswer = onCall(CALLABLE_OPTIONS, async (request) => {
   const uid = request.auth?.uid;
   if (!uid) throw new HttpsError("unauthenticated", "Debes iniciar sesión.");
   const roomId = String(request.data?.roomId ?? "").trim();
@@ -241,7 +264,7 @@ export const submitAnswer = onCall(async (request) => {
 // retained history, so wiping the whole doc is safe: it removes this
 // user's uid/nickname without needing to special-case "redact vs delete"
 // for the other player's copy of a finished match.
-export const deleteMyMultiplayerData = onCall(async (request) => {
+export const deleteMyMultiplayerData = onCall(CALLABLE_OPTIONS, async (request) => {
   const uid = request.auth?.uid;
   if (!uid) throw new HttpsError("unauthenticated", "Debes iniciar sesión.");
 
@@ -271,7 +294,7 @@ interface ResolveTimeoutTaskData {
 }
 
 export const resolveTimeout = onTaskDispatched<ResolveTimeoutTaskData>(
-  { retryConfig: { maxAttempts: 5, minBackoffSeconds: 1 } },
+  { retryConfig: { maxAttempts: 5, minBackoffSeconds: 1 }, maxInstances: MAX_INSTANCES },
   async (req) => {
     const { roomId, round } = req.data;
     try {
@@ -317,7 +340,7 @@ interface ResolveSoloPlayerTimeoutTaskData {
 // their own stimulus/deadline, so each gets its own scheduled check instead
 // of sharing one room-level timeout.
 export const resolveSoloPlayerTimeout = onTaskDispatched<ResolveSoloPlayerTimeoutTaskData>(
-  { retryConfig: { maxAttempts: 5, minBackoffSeconds: 1 } },
+  { retryConfig: { maxAttempts: 5, minBackoffSeconds: 1 }, maxInstances: MAX_INSTANCES },
   async (req) => {
     const { roomId, uid, round } = req.data;
     try {
@@ -338,7 +361,9 @@ export const resolveSoloPlayerTimeout = onTaskDispatched<ResolveSoloPlayerTimeou
   }
 );
 
-export const onPresenceChanged = onValueWritten("presence/{roomId}/{uid}", async (event) => {
+export const onPresenceChanged = onValueWritten(
+  { ref: "presence/{roomId}/{uid}", maxInstances: MAX_INSTANCES },
+  async (event) => {
   const roomId = event.params.roomId;
   const uid = event.params.uid;
   try {

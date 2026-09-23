@@ -6,6 +6,7 @@ import com.google.firebase.database.ServerValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.functions.FirebaseFunctions
 import com.google.firebase.functions.FirebaseFunctionsException
+import com.google.firebase.functions.HttpsCallableResult
 import com.softyorch.stroopoverload.core.StroopColor
 import com.softyorch.stroopoverload.core.runCatchingCancellable
 import com.softyorch.stroopoverload.domain.multiplayer.MultiplayerRoom
@@ -26,19 +27,14 @@ class FirebaseMultiplayerRepository(
 
     override suspend fun createRoom(displayName: String, mode: RoomMode): Result<Pair<String, String>> = call("createRoom") {
         val data = mapOf("displayName" to displayName, "mode" to mode.toFirestoreValue())
-        val result = functions.getHttpsCallable("createRoom").call(data).await()
+        val result = callTyped("createRoom", data)
         val map = result.data as Map<*, *>
         (map["roomId"] as String) to (map["code"] as String)
     }
 
     override suspend fun joinRoom(code: String, displayName: String): Result<String> = call("joinRoom") {
         val data = mapOf("code" to code, "displayName" to displayName)
-        val result = try {
-            functions.getHttpsCallable("joinRoom").call(data).await()
-        } catch (e: FirebaseFunctionsException) {
-            throw JoinRoomException(joinRoomFailureFor(e.code.name), e)
-        }
-        (result.data as Map<*, *>)["roomId"] as String
+        (callTyped("joinRoom", data).data as Map<*, *>)["roomId"] as String
     }
 
     override suspend fun startGame(roomId: String): Result<Unit> = call("startGame") {
@@ -79,6 +75,13 @@ class FirebaseMultiplayerRepository(
     override suspend fun deleteMyMultiplayerData(): Result<Unit> = call("deleteMyMultiplayerData") {
         functions.getHttpsCallable("deleteMyMultiplayerData").call().await()
         Unit
+    }
+
+    /** Invokes a callable, converting a rejection into a [MultiplayerCallException] the UI can explain. */
+    private suspend fun callTyped(name: String, data: Map<String, Any?>): HttpsCallableResult = try {
+        functions.getHttpsCallable(name).call(data).await()
+    } catch (e: FirebaseFunctionsException) {
+        throw MultiplayerCallException(multiplayerCallFailureFor(e.code.name, reasonDetailOf(e.details)), e)
     }
 
     /** Runs a callable: cancellation propagates, failures are logged here (the UI only ever gets a typed reason). */

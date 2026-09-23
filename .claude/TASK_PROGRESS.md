@@ -1189,5 +1189,7 @@ this round.
   - Backend: bomb token idempotency (explodeBomb), roomWatchdog.ts (sweepStuckRooms every 1 min, purgeExpiredRooms every 60 min, TTL 6h), matchStart.beginMatch extracted from beginRound.
   - Client: observeRoom close() on error/doc gone, runCatchingCancellable, typed JoinRoomFailure, no raw server text in UI, 4 strings x 6 locales.
   - Review: APPROVE (legacy-task MEDIUM fixed, functions 129/129). Deploy needs Cloud Scheduler API enabled.
+- [x] #4 Node 22 runtime + firebase-admin 14 + firebase-functions 7 (commit 8ea7284). Jest needs the jose stub; tests use the modular admin API.
+- [x] #3 App Check (client installs it; backend enforcement OFF until installed base sends tokens — flip ENFORCE_APP_CHECK in functions/src/index.ts), per-uid rate limits (createRoom 10/min, joinRoom 20/min), maxInstances=10, typed HttpsError details.reason. functions 137/137, Kotlin 76/76, all build types compile.
 - [ ] #2 Leaderboard anti-cheat — BLOCKED on user decision (offline games count toward leaderboard?)
 - [ ] #3.. see list in conversation / brain audit entry

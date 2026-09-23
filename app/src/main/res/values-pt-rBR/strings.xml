@@ -315,6 +315,7 @@
     <string name="mp_error_room_full">A sala está cheia (máx. 4 jogadores).</string>
     <string name="mp_error_room_already_started">Essa partida já começou.</string>
     <string name="mp_error_invalid_code">Código inválido: 5 letras/números.</string>
+    <string name="mp_error_rate_limited">Tentativas demais. Espere um momento.</string>
 
     <!-- Achievements -->
     <string name="achievement_first_blood_title">INICIAÇÃO NEURAL</string>

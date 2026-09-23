@@ -315,6 +315,7 @@
     <string name="mp_error_room_full">ルームは満員です（最大4人）。</string>
     <string name="mp_error_room_already_started">その試合はすでに始まっています。</string>
     <string name="mp_error_invalid_code">無効なコード：英数字5文字で入力してください。</string>
+    <string name="mp_error_rate_limited">試行回数が多すぎます。少し待ってください。</string>
 
     <!-- Achievements -->
     <string name="achievement_first_blood_title">ニューラル・イニシエーション</string>

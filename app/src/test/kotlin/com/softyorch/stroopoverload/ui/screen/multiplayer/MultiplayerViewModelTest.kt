@@ -2,8 +2,8 @@ package com.softyorch.stroopoverload.ui.screen.multiplayer
 
 import app.cash.turbine.test
 import com.softyorch.stroopoverload.core.StroopColor
-import com.softyorch.stroopoverload.data.JoinRoomException
-import com.softyorch.stroopoverload.data.JoinRoomFailure
+import com.softyorch.stroopoverload.data.MultiplayerCallException
+import com.softyorch.stroopoverload.data.MultiplayerCallFailure
 import com.softyorch.stroopoverload.domain.multiplayer.MultiplayerRoom
 import com.softyorch.stroopoverload.domain.multiplayer.RoomMode
 import com.softyorch.stroopoverload.domain.multiplayer.RoomPlayer
@@ -314,7 +314,7 @@ class MultiplayerViewModelTest {
             dispatcher.scheduler.advanceUntilIdle()
 
             val error = awaitItem() as MultiplayerUiState.Error
-            assertEquals(MultiplayerErrorReason.CreateRoomFailed, error.reason)
+            assertEquals(MultiplayerErrorReason.CreateRoomFailed(MultiplayerCallFailure.UNKNOWN), error.reason)
         }
     }
 
@@ -333,14 +333,14 @@ class MultiplayerViewModelTest {
 
             val error = awaitItem() as MultiplayerUiState.Error
             // Raw exception text never reaches the UI (it isn't localized).
-            assertEquals(MultiplayerErrorReason.JoinRoomFailed(JoinRoomFailure.UNKNOWN), error.reason)
+            assertEquals(MultiplayerErrorReason.JoinRoomFailed(MultiplayerCallFailure.UNKNOWN), error.reason)
         }
     }
 
     @Test
     fun `joinRoom typed failure is carried through so the UI can explain it`() = runTest {
         val fake = FakeMultiplayerRepository()
-        fake.joinRoomResult = Result.failure(JoinRoomException(JoinRoomFailure.ROOM_FULL))
+        fake.joinRoomResult = Result.failure(MultiplayerCallException(MultiplayerCallFailure.ROOM_FULL))
         val viewModel = MultiplayerViewModel(fake)
 
         viewModel.state.test {
@@ -351,7 +351,25 @@ class MultiplayerViewModelTest {
             dispatcher.scheduler.advanceUntilIdle()
 
             val error = awaitItem() as MultiplayerUiState.Error
-            assertEquals(MultiplayerErrorReason.JoinRoomFailed(JoinRoomFailure.ROOM_FULL), error.reason)
+            assertEquals(MultiplayerErrorReason.JoinRoomFailed(MultiplayerCallFailure.ROOM_FULL), error.reason)
+        }
+    }
+
+    @Test
+    fun `createRoom rate-limited failure is carried through so the UI can explain it`() = runTest {
+        val fake = FakeMultiplayerRepository()
+        fake.createRoomResult = Result.failure(MultiplayerCallException(MultiplayerCallFailure.RATE_LIMITED))
+        val viewModel = MultiplayerViewModel(fake)
+
+        viewModel.state.test {
+            assertEquals(MultiplayerUiState.Idle, awaitItem())
+
+            viewModel.createRoom(uid = "host-1", displayName = "Neo")
+            assertEquals(MultiplayerUiState.Connecting, awaitItem())
+            dispatcher.scheduler.advanceUntilIdle()
+
+            val error = awaitItem() as MultiplayerUiState.Error
+            assertEquals(MultiplayerErrorReason.CreateRoomFailed(MultiplayerCallFailure.RATE_LIMITED), error.reason)
         }
     }
 
