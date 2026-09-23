@@ -41,6 +41,7 @@ import com.softyorch.stroopoverload.ui.screen.profile.ProfileScreen
 import com.softyorch.stroopoverload.ui.screen.profile.ProfileViewModel
 import com.softyorch.stroopoverload.ui.components.AnonymousGateDialog
 import kotlinx.coroutines.launch
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 private const val ROUTE_AUTH = "auth"
 private const val ROUTE_HOME = "home"
@@ -187,7 +188,7 @@ fun StroopNavGraph() {
         }
         composable(ROUTE_GAME) {
             val gameVm: GameViewModel = viewModel()
-            val gameState by gameVm.state.collectAsState()
+            val gameState by gameVm.state.collectAsStateWithLifecycle()
             LaunchedEffect(Unit) { gameVm.startGame(selectedGameMode, previousHighScore) }
 
             GameScreen(

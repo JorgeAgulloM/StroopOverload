@@ -32,6 +32,7 @@ import com.softyorch.stroopoverload.domain.Achievement
 import com.softyorch.stroopoverload.domain.XpSystem
 import com.softyorch.stroopoverload.ui.screen.auth.PasswordVisibilityToggle
 import com.softyorch.stroopoverload.ui.theme.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,15 +41,15 @@ fun ProfileScreen(
     onBack: () -> Unit,
     onSignedOut: () -> Unit,
 ) {
-    val state by viewModel.state.collectAsState()
+    val state by viewModel.state.collectAsStateWithLifecycle()
     val rarity = remember(state.profile.level) { XpSystem.levelRarity(state.profile.level) }
     val achievementPairs = remember(state.achievements) { state.achievements.chunked(2) }
     var showChangePasswordDialog by remember { mutableStateOf(false) }
     var showDeleteAccountDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val audioSettingsStore = remember { AudioSettingsStore(context) }
-    val musicEnabled by audioSettingsStore.musicEnabled.collectAsState()
-    val sfxEnabled by audioSettingsStore.sfxEnabled.collectAsState()
+    val musicEnabled by audioSettingsStore.musicEnabled.collectAsStateWithLifecycle()
+    val sfxEnabled by audioSettingsStore.sfxEnabled.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {

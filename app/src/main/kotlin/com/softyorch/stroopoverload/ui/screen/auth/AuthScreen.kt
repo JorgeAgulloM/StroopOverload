@@ -31,13 +31,14 @@ import androidx.compose.ui.unit.sp
 import com.softyorch.stroopoverload.R
 import com.softyorch.stroopoverload.core.LegalLinks
 import com.softyorch.stroopoverload.ui.theme.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @Composable
 fun AuthScreen(
     viewModel: AuthViewModel,
     onNavigateHome: () -> Unit,
 ) {
-    val state by viewModel.state.collectAsState()
+    val state by viewModel.state.collectAsStateWithLifecycle()
     var isRegisterTab by remember { mutableStateOf(false) }
     var showForgotPassword by remember { mutableStateOf(false) }
 

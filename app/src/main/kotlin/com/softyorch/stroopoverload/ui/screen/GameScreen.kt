@@ -40,6 +40,8 @@ import com.softyorch.stroopoverload.game.GameState
 import com.softyorch.stroopoverload.game.GameViewModel
 import com.softyorch.stroopoverload.ui.components.CountdownOverlay
 import com.softyorch.stroopoverload.ui.theme.*
+import com.softyorch.stroopoverload.ui.components.TimerBarHost
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @Composable
 fun GameScreen(
@@ -51,9 +53,8 @@ fun GameScreen(
     val audioPlayer = remember { AudioPlayer(context) }
     DisposableEffect(Unit) { onDispose { audioPlayer.release() } }
 
-    val state by viewModel.state.collectAsState()
-    val stimulus by viewModel.stimulus.collectAsState()
-    val timerProgress by viewModel.timerProgress.collectAsState()
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val stimulus by viewModel.stimulus.collectAsStateWithLifecycle()
 
     LaunchedEffect(stimulus) {
         stimulus?.audioColor?.let { audioPlayer.play(it) }
@@ -141,13 +142,14 @@ fun GameScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             // Cyber Timer Gauge
-            TimerBar(
-                progress = timerProgress,
+            TimerBarHost(
+                progress = viewModel.timerProgress,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(8.dp)
                     .clip(RoundedCornerShape(4.dp))
                     .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(4.dp)),
+                trackColor = CyberDark,
             )
 
             Spacer(modifier = Modifier.height(10.dp))
@@ -265,18 +267,3 @@ private fun QuadrantBox(color: StroopColor, isFlashing: Boolean, modifier: Modif
     }
 }
 
-@Composable
-private fun TimerBar(progress: Float, modifier: Modifier) {
-    val barColor = lerp(MaterialTheme.colorScheme.error, MaterialTheme.colorScheme.primary, progress)
-    val animatedColor by animateColorAsState(targetValue = barColor, label = "timerColor")
-
-    Box(modifier = modifier) {
-        Box(modifier = Modifier.fillMaxSize().background(CyberDark))
-        Box(
-            modifier = Modifier
-                .fillMaxHeight()
-                .fillMaxWidth(fraction = progress.coerceIn(0f, 1f))
-                .background(animatedColor)
-        )
-    }
-}
