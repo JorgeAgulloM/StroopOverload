@@ -1,6 +1,7 @@
 import {
   applyCorrectAnswer,
   finalScoreForPlacement,
+  finishedMatchUpdate,
   placementMultiplier,
   rankMistakeOrHotPotatoPlayers,
   rankSoloSurvivalPlayers,
@@ -104,6 +105,31 @@ describe("rankMistakeOrHotPotatoPlayers", () => {
     const ranked = rankMistakeOrHotPotatoPlayers(players, "a");
     expect(ranked.find((r) => r.uid === "a")?.finalScore).toBe(1000); // 1000/2 * 2
     expect(ranked.find((r) => r.uid === "b")?.finalScore).toBe(750); // 1000/2 * 1.5, NOT *0.5
+  });
+});
+
+describe("finishedMatchUpdate", () => {
+  test("finishes the room with the survivor, clears the board and ranks everyone", () => {
+    const players = {
+      a: player({ uid: "a", order: 0, matchScore: 300 }),
+      b: player({ uid: "b", order: 1, matchScore: 500, alive: false, eliminatedAtMs: 2000 }),
+      c: player({ uid: "c", order: 2, matchScore: 100, alive: false, eliminatedAtMs: 1000 }),
+    };
+
+    const update = finishedMatchUpdate(players, "a");
+
+    expect(update).toMatchObject({ status: "finished", winnerUid: "a", stimulus: null, deadlineAtMs: null });
+    const ranked = rankMistakeOrHotPotatoPlayers(players, "a");
+    for (const r of ranked) {
+      expect(update.players[r.uid]).toMatchObject({ placement: r.placement, finalScore: r.finalScore });
+    }
+    expect(update.players.b.matchScore).toBe(500); // everything else kept
+  });
+
+  test("does not mutate the players it was given", () => {
+    const players = { a: player({ uid: "a" }), b: player({ uid: "b", alive: false, eliminatedAtMs: 1 }) };
+    finishedMatchUpdate(players, "a");
+    expect(players.a.placement).toBeUndefined();
   });
 });
 

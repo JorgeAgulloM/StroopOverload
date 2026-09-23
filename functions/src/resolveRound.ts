@@ -4,7 +4,7 @@ import { nextAliveIndex, soleSurvivor, timeLimitMsForRound } from "./turnLogic";
 import { ResolutionReason, RoomDoc } from "./types";
 import { roomsCol } from "./roomRepo";
 import { scheduleTimeoutCheck } from "./taskQueue";
-import { applyCorrectAnswer, rankMistakeOrHotPotatoPlayers } from "./scoring";
+import { applyCorrectAnswer, finishedMatchUpdate } from "./scoring";
 
 export type ScheduledTimeout = { round: number; deadlineAtMs: number } | null;
 
@@ -46,17 +46,7 @@ export function applyRoundResolution(
 
   const survivor = soleSurvivor(players);
   if (survivor) {
-    const finishedPlayers = { ...players };
-    for (const r of rankMistakeOrHotPotatoPlayers(players, survivor)) {
-      finishedPlayers[r.uid] = { ...finishedPlayers[r.uid], placement: r.placement, finalScore: r.finalScore };
-    }
-    tx.update(roomRef, {
-      players: finishedPlayers,
-      status: "finished",
-      winnerUid: survivor,
-      stimulus: null,
-      deadlineAtMs: null,
-    });
+    tx.update(roomRef, finishedMatchUpdate(players, survivor));
     return { applied: true, scheduled: null };
   }
 

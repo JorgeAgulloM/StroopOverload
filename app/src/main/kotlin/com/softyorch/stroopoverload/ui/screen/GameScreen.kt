@@ -1,9 +1,6 @@
 package com.softyorch.stroopoverload.ui.screen
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
@@ -11,7 +8,6 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -20,8 +16,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -39,6 +33,7 @@ import com.softyorch.stroopoverload.domain.GameResult
 import com.softyorch.stroopoverload.game.GameState
 import com.softyorch.stroopoverload.game.GameViewModel
 import com.softyorch.stroopoverload.ui.components.CountdownOverlay
+import com.softyorch.stroopoverload.ui.components.QuadrantBox
 import com.softyorch.stroopoverload.ui.theme.*
 import com.softyorch.stroopoverload.ui.components.TimerBarHost
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -253,36 +248,3 @@ private fun formatMillisAsClock(millis: Long): String {
     val seconds = totalSeconds % 60
     return "%d:%02d".format(minutes, seconds)
 }
-
-@Composable
-private fun QuadrantBox(color: StroopColor, isFlashing: Boolean, modifier: Modifier, onTap: () -> Unit) {
-    val bgAlpha = remember { mutableFloatStateOf(0.15f) }
-    val flashAlpha by animateFloatAsState(
-        targetValue = if (isFlashing) 0.85f else 0f,
-        animationSpec = tween(if (isFlashing) 120 else 400),
-        label = "quadrantFlash",
-    )
-
-    Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(8.dp))
-            .border(2.dp, color.composeColor.copy(alpha = 0.7f), RoundedCornerShape(8.dp))
-            .background(color.composeColor.copy(alpha = bgAlpha.floatValue))
-            .clickable(onClick = onTap),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text = stringResource(color.displayNameRes),
-            color = color.composeColor,
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Black,
-            letterSpacing = 3.sp,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-        if (flashAlpha > 0f) {
-            Box(modifier = Modifier.fillMaxSize().background(Color.White.copy(alpha = flashAlpha)))
-        }
-    }
-}
-

@@ -1,6 +1,5 @@
 package com.softyorch.stroopoverload.ui.screen.multiplayer
 
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.EaseOut
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -11,7 +10,6 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -35,6 +33,7 @@ import com.softyorch.stroopoverload.core.StroopColor
 import com.softyorch.stroopoverload.domain.multiplayer.MultiplayerRoom
 import com.softyorch.stroopoverload.domain.multiplayer.RoomMode
 import com.softyorch.stroopoverload.domain.multiplayer.RoomStatus
+import com.softyorch.stroopoverload.ui.components.QuadrantBox
 import com.softyorch.stroopoverload.ui.theme.Muted
 import com.softyorch.stroopoverload.ui.theme.NeonRed
 import com.softyorch.stroopoverload.ui.theme.NeonYellow
@@ -333,39 +332,6 @@ private fun HotPotatoBalloon(room: MultiplayerRoom) {
 
 private fun tricolorLerp(start: Color, mid: Color, end: Color, t: Float): Color =
     if (t <= 0.5f) lerp(start, mid, (t / 0.5f).coerceIn(0f, 1f)) else lerp(mid, end, ((t - 0.5f) / 0.5f).coerceIn(0f, 1f))
-
-@Composable
-internal fun QuadrantBox(color: StroopColor, enabled: Boolean, isFlashing: Boolean, modifier: Modifier, onTap: () -> Unit) {
-    // Same white-flash-on-miss treatment as local GameScreen's QuadrantBox.
-    val flashAlpha by animateFloatAsState(
-        targetValue = if (isFlashing) 0.85f else 0f,
-        animationSpec = tween(if (isFlashing) 120 else 400),
-        label = "mpQuadrantFlash",
-    )
-
-    Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(8.dp))
-            .border(2.dp, color.composeColor.copy(alpha = if (enabled) 0.7f else 0.25f), RoundedCornerShape(8.dp))
-            .background(color.composeColor.copy(alpha = if (enabled) 0.15f else 0.05f))
-            .clickable(enabled = enabled, onClick = onTap),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text = stringResource(color.displayNameRes),
-            color = color.composeColor.copy(alpha = if (enabled) 1f else 0.4f),
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Black,
-            letterSpacing = 3.sp,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-        if (flashAlpha > 0f) {
-            Box(modifier = Modifier.fillMaxSize().background(Color.White.copy(alpha = flashAlpha)))
-        }
-    }
-}
-
 
 /** Mirrors turnLogic.ts's timeLimitMsForRound so the client can render a countdown bar without the server pushing a redundant "total ms" field. */
 internal fun timeLimitMsForRound(round: Int): Long {

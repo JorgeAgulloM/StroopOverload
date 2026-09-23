@@ -1,4 +1,4 @@
-import { RoomPlayerDoc } from "./types";
+import { RoomDoc, RoomPlayerDoc } from "./types";
 
 // Mirrors the Android client's local single-player formula (GameConfig.kt):
 // 100 pts per correct answer + a streak bonus (streak*10, capped at 100).
@@ -75,4 +75,21 @@ export function rankSoloSurvivalPlayers(players: Readonly<Record<string, RoomPla
     const placement = i + 1;
     return { uid: p.uid, placement, finalScore: finalScoreForPlacement(p.soloScore ?? 0, placement) };
   });
+}
+
+/**
+ * The room update that ends a mistake/hot_potato match with `survivor` as the
+ * sole player left: every player ranked and scored, the board cleared. Shared by
+ * an answer that eliminates the second-to-last player (resolveRound) and a bomb
+ * that does (explodeBomb).
+ */
+export function finishedMatchUpdate(
+  players: Readonly<Record<string, RoomPlayerDoc>>,
+  survivor: string
+): Pick<RoomDoc, "players" | "status" | "winnerUid" | "stimulus" | "deadlineAtMs"> {
+  const finishedPlayers = { ...players };
+  for (const r of rankMistakeOrHotPotatoPlayers(players, survivor)) {
+    finishedPlayers[r.uid] = { ...finishedPlayers[r.uid], placement: r.placement, finalScore: r.finalScore };
+  }
+  return { players: finishedPlayers, status: "finished", winnerUid: survivor, stimulus: null, deadlineAtMs: null };
 }

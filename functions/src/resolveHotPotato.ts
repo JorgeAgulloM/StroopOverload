@@ -4,7 +4,7 @@ import { nextAliveIndex, soleSurvivor, timeLimitMsForRound } from "./turnLogic";
 import { ResolutionReason, RoomDoc } from "./types";
 import { roomsCol, privateBombDoc } from "./roomRepo";
 import { scheduleBombExplosion } from "./taskQueue";
-import { applyCorrectAnswer, rankMistakeOrHotPotatoPlayers } from "./scoring";
+import { applyCorrectAnswer, finishedMatchUpdate } from "./scoring";
 
 export const BOMB_MIN_DELAY_MS = 15_000;
 export const BOMB_MAX_DELAY_MS = 30_000;
@@ -116,11 +116,7 @@ export async function explodeBomb(roomId: string, expectedBombAtMs?: number): Pr
 
     const survivor = soleSurvivor(players);
     if (survivor) {
-      const finishedPlayers = { ...players };
-      for (const r of rankMistakeOrHotPotatoPlayers(players, survivor)) {
-        finishedPlayers[r.uid] = { ...finishedPlayers[r.uid], placement: r.placement, finalScore: r.finalScore };
-      }
-      tx.update(roomRef, { players: finishedPlayers, status: "finished", winnerUid: survivor, stimulus: null, deadlineAtMs: null });
+      tx.update(roomRef, finishedMatchUpdate(players, survivor));
       return "finished";
     }
 
