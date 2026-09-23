@@ -1199,4 +1199,6 @@ this round.
 - [x] #6 i18n holes (4eb6777): @pilot- handle, Rarity label, "(YOU)" concatenation, locale-aware multipliers. StringsParityTest guards key parity + unused keys. Wired the orphaned change-password success message.
 - [x] #7 + #8 perf (343786c): TimerBarHost/DeadlineTimerBar own their ticking; collectAsStateWithLifecycle everywhere. NOT measured on device — worth a Layout Inspector pass.
 - [x] #11 build (2373129): optional release signing, real R8 rules, assembleRelease VERIFIED (signed 11MB APK, R8+lintVital clean).
-- [ ] Remaining: #9 BackHandler mid-match, #10 AsoDemoSeeder I/O in remember{}, #12 DI + ViewModel tests, #13 submitAnswer double read, #14 QuadrantBox duplication (TimerBar done), #15 misc low (allowBackup rules, previews, large files, ESLint, NavGraph fake uid).
+- [x] #9 + #10 (316e5c5): ExitMatchDialog on back during a live local/online match; seeding + profile load moved to LaunchedEffect on Dispatchers.IO.
+- [ ] Follow-up from #9: leaving an online match doesn't clear the RTDB presence node, so the forfeit only registers when the round times out.
+- [ ] Remaining: #12 DI + ViewModel tests, #13 submitAnswer double read, #14 QuadrantBox duplication (TimerBar done), #15 misc low (allowBackup rules, previews, large files, ESLint, NavGraph fake uid).
