@@ -1179,26 +1179,86 @@ this round.
 
 ---
 
-## Sub-task: Refresh brain/graph + full audit (2026-09-22)
+## Sub-task: full audit + hardening pass (2026-09-22 / 2026-09-23)
 
-- [x] `mobiai brain scan` + `mobiai graph init` (68 files / 346 symbols)
-- [x] Brain memories populated from git history (11 decisions, 5 bugfixes, 3 testing, integrations, releases)
-- [x] Audit: app core, Compose UI, Firebase functions/rules — findings recorded in brain entry "Auditoría 2026-09-22"
-- [x] Prioritized bug list delivered to user (15 items)
-- [x] #1 Stuck online rooms (backend+client) — implemented, functions 127/127, Kotlin 72/72, release+demo compile. NOT deployed, NOT committed.
-  - Backend: bomb token idempotency (explodeBomb), roomWatchdog.ts (sweepStuckRooms every 1 min, purgeExpiredRooms every 60 min, TTL 6h), matchStart.beginMatch extracted from beginRound.
-  - Client: observeRoom close() on error/doc gone, runCatchingCancellable, typed JoinRoomFailure, no raw server text in UI, 4 strings x 6 locales.
-  - Review: APPROVE (legacy-task MEDIUM fixed, functions 129/129). Deploy needs Cloud Scheduler API enabled.
-- [x] #4 Node 22 runtime + firebase-admin 14 + firebase-functions 7 (commit 8ea7284). Jest needs the jose stub; tests use the modular admin API.
-- [x] #3 App Check (client installs it; backend enforcement OFF until installed base sends tokens — flip ENFORCE_APP_CHECK in functions/src/index.ts), per-uid rate limits (createRoom 10/min, joinRoom 20/min), maxInstances=10, typed HttpsError details.reason. functions 137/137, Kotlin 76/76, all build types compile.
-- [x] #5 Swallowed CancellationException — 15 sites fixed (AuthService, FirebaseGameRepository, AuthViewModel), guarded by NoSwallowedCancellationTest which scans the app sources. Also removed AuthService's dead getInstance() fallback and the fake "guest_local_0001" uid returned on anonymous sign-in failure.
-- [ ] Known leftover: NavGraph.kt:239 still falls back to "guest_local_0001" for the multiplayer screen's uid (unreachable in practice: unauthenticated users can't reach Home, anonymous ones are gated) — decide whether to drop it.
-- [x] #2 Leaderboard anti-cheat (commits 8b19c35 + client follow-up). Server owns points/highScore/experience/level/match counters/dailyStreak/awardedAchievements + isAdFree/isPremium; firestore.rules denies client writes. submitSoloRun validates+recomputes solo runs; onRoomFinished pays out verified multiplayer results (idempotent via awardsAppliedAtMs). Client stopped writing those fields and pulls server values back.
-  - LIMIT (stated, not hidden): a solo run cannot be verified server-side (stimuli are generated on the device) — only bounded (impossible counts/score/duration rejected, rate-limited). Multiplayer IS verified.
-  - DEPLOY ORDER: rules+functions and the app must go out together. Old clients will have their profile writes rejected (they send scoring fields) and cannot call submitSoloRun, so their solo progress stays local.
-- [x] #6 i18n holes (4eb6777): @pilot- handle, Rarity label, "(YOU)" concatenation, locale-aware multipliers. StringsParityTest guards key parity + unused keys. Wired the orphaned change-password success message.
-- [x] #7 + #8 perf (343786c): TimerBarHost/DeadlineTimerBar own their ticking; collectAsStateWithLifecycle everywhere. NOT measured on device — worth a Layout Inspector pass.
-- [x] #11 build (2373129): optional release signing, real R8 rules, assembleRelease VERIFIED (signed 11MB APK, R8+lintVital clean).
-- [x] #9 + #10 (316e5c5): ExitMatchDialog on back during a live local/online match; seeding + profile load moved to LaunchedEffect on Dispatchers.IO.
-- [ ] Follow-up from #9: leaving an online match doesn't clear the RTDB presence node, so the forfeit only registers when the round times out.
-- [ ] Remaining: #12 DI + ViewModel tests, #13 submitAnswer double read, #14 QuadrantBox duplication (TimerBar done), #15 misc low (allowBackup rules, previews, large files, ESLint, NavGraph fake uid).
+**State at session end (2026-09-23): 13 commits on `develop`, nothing pushed, nothing deployed, working tree clean.**
+Range: `git log --oneline 70fc64f..HEAD`. Test status at the last commit: functions 191/191, Kotlin 88/88,
+`assembleRelease` verified (signed 11 MB APK, R8 + lintVital clean).
+
+### How to resume
+
+```bash
+export JAVA_HOME="/c/Program Files/Java/jdk-21.0.10"   # the Firestore emulator needs JDK 21+, not the 17 on PATH
+cd functions && npm test                                # 191 tests, emulator-backed, maxWorkers=1
+cd .. && ./gradlew.bat :app:testDebugUnitTest           # 88 tests
+```
+
+Brain (`mobiai brain context`) holds the decisions behind all of this; it was empty before this pass and now
+carries the architecture decisions, bugfixes, testing patterns, integrations and release state.
+Graph reindexed 2026-09-22 (`mobiai graph init`, 68 files / 346 symbols).
+
+### Done, in commit order
+
+| Commit | Item | What |
+|---|---|---|
+| `00268d9` | #1 | Stuck online rooms: bomb-token idempotency in `explodeBomb`, `roomWatchdog.ts` (sweep every 1 min, purge every 60 min, 6 h TTL), `matchStart.beginMatch` extracted. Client: room listener `close()`s on error/doc-gone, typed join failures, no raw server text. |
+| `8ea7284` | #4 | Node 22 + firebase-admin 14 + firebase-functions 7. Tests moved to the modular admin API; `jose` stubbed in Jest (`test-support/jose-stub.js`). |
+| `2f51b67` | #3 | App Check installed client-side (**enforcement still OFF**), per-uid rate limits, `maxInstances=10`, typed `details.reason` on callable errors. |
+| `0f2deef` | #5 | 15 swallowed `CancellationException` sites fixed; `NoSwallowedCancellationTest` scans the sources. Removed dead `getInstance()` fallback and the fake `guest_local_0001` uid on anonymous sign-in failure. |
+| `8b19c35` + `5b0d926` | #2 | Server is the only writer of leaderboard scores. `submitSoloRun` validates/recomputes solo runs, `onRoomFinished` pays out verified multiplayer results, rules deny client writes to scoring fields + `isAdFree`/`isPremium`. |
+| `4eb6777` | #6 | i18n holes closed (`@pilot-`, `Rarity.name`, "(YOU)" concatenation, locale-aware decimals). `StringsParityTest` guards parity + unused keys. Wired the orphaned change-password success message. |
+| `343786c` | #7 #8 | `TimerBarHost`/`DeadlineTimerBar` own their own ticking; `collectAsStateWithLifecycle` everywhere. |
+| `2373129` | #11 | Release signing optional, real R8 rules, `assembleRelease` verified end to end. |
+| `316e5c5` | #9 #10 | `ExitMatchDialog` on back during a live match; seeding + profile load off the composition phase. |
+
+### Before deploying — manual steps, in this order
+
+1. Enable the **Cloud Scheduler API** (first `onSchedule` functions in this project: `sweepStuckRooms`, `purgeExpiredRooms`).
+2. Register the app in **App Check → Play Integrity**. Signing cert SHA-256:
+   `ed456dc64112d436b6c77ae3ecc6f2bad50dc75400be33c8cdd24ddcdd9f1105`. For emulator/dev runs, register the
+   debug token printed to logcat on first launch.
+3. **Deploy `firestore.rules`, the functions and the app together.** An older client sends scoring fields in its
+   profile merge, so its profile writes get rejected once the rules land, and it has no `submitSoloRun` to call —
+   its solo progress stays on the device until the user updates.
+4. Keep `app/build/outputs/mapping/release/mapping.txt` for every published version: there is no Crashlytics here,
+   so it is the only way to read a release stack trace.
+5. Only after the installed base is on the new client: set `ENFORCE_APP_CHECK = true` in `functions/src/index.ts`
+   and redeploy. Flipping it early rejects every older client mid-match.
+
+### Remaining plan
+
+- **#12 — DI + ViewModel tests (next, highest value).** `AuthViewModel` and `ProfileViewModel` construct
+  `AuthService` and `FirebaseGameRepository` internally, and neither is an interface, so login/registration/
+  change-password/delete-account — the flows touching sensitive data — cannot be unit tested at all.
+  First step: extract interfaces mirroring `MultiplayerRepository` (which already has a fake and real tests),
+  inject through the existing `*ViewModelFactory`, then add the missing tests. Also untested:
+  `FirebaseGameRepository.recordGameResult`'s arithmetic and `applyMultiplayerScore`'s idempotency guard.
+- **#13** `submitAnswer` reads the room doc outside the transaction purely to pre-validate, then the engine reads
+  it again inside. Cost, not correctness.
+- **#14** `QuadrantBox` still duplicated between `GameScreen` and `MultiplayerGameScreen` (the `TimerBar` half of
+  this was done in `343786c`). Backend: the "sole survivor → rank → finish" block is verbatim in
+  `resolveRound.ts` and `resolveHotPotato.ts`.
+- **#15 (low)** `android:allowBackup="true"` with no `dataExtractionRules`; no `@Preview` anywhere;
+  `ProfileScreen.kt` 622 lines / `AuthScreen.kt` 535; no ESLint config in `functions/`; junk in the repo root
+  (`hs_err_pid*.log`, `replay_pid*.log`, `*.stackdump`).
+
+### Known leftovers, deliberately not fixed
+
+- Leaving an online match does not write the RTDB presence node offline, so a forfeit only registers when the
+  round times out (~3 s in `mistake`, up to the bomb in `hot_potato`). Fix = a `clearPresence` method on
+  `MultiplayerRepository` called from the exit path.
+- `NavGraph.kt` still falls back to `"guest_local_0001"` for the multiplayer screen's uid. Unreachable in
+  practice (no session → no Home; anonymous → gated), but inconsistent now that `AuthService` stopped inventing it.
+- A solo run **cannot be verified** server-side — the stimuli are generated on the device. `submitSoloRun` only
+  rejects the impossible and rate-limits. If a fully trustworthy ranking is ever wanted, rank by multiplayer
+  results only, which are genuinely verified.
+- The timer/recomposition work (#7) was **not measured on a device**. Worth a Layout Inspector pass on a real match.
+- `app/build.gradle.kts` also carries two pre-existing lines from the working tree that were not mine
+  (a no-op `manifestPlaceholders`, since removed, and the demo build type signed with the debug key).
+
+### Gotchas worth remembering
+
+- Firestore emulator suites need **JDK 21+**; `jest.config.js` pins `maxWorkers: 1` because they share one emulator.
+- An **unescaped apostrophe** in a `<string>` resource fails the build with "Invalid unicode escape sequence".
+- `diff().affectedKeys()` in Firestore rules does not report a field rewritten with its current value, so echoing
+  a scoring field back is allowed (it changes nothing). Any different value is denied.
