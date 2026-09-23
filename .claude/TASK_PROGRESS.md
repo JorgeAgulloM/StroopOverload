@@ -1214,6 +1214,9 @@ Graph reindexed 2026-09-22 (`mobiai graph init`, 68 files / 346 symbols).
 | `b65e2cd` | #13 | `submitAnswer` is one transaction (judge in `answerJudge.ts` + engine halves `apply*`). **Real bug found and fixed**: no `round` in the request, so a double tap was scored against the next stimulus (solo_survival bust 3/4). Optional `round` → `STALE_ROUND`; safe in either deploy order. functions 191 -> 203. |
 | `0d61b3c` | #14 | One `ui/components/QuadrantBox` for local + online; `finishedMatchUpdate` in `scoring.ts` replaces the verbatim sole-survivor block. No behaviour change. functions 205. |
 | `6c144e3` + `3c67cda` | #15 | ESLint 9 (+ type-aware no-floating-promises) in functions predeploy; removed unused `firebase-functions-test` (blocked installs); gitignore junk; dialogs/subcomponents out of ProfileScreen/AuthScreen; first `@Preview`s; `allowBackup` kept on and documented. |
+| `c315c2f` + `0f6df80` | leftover | Leaving an online room writes presence "offline" (onDisconnect hook left armed as fallback). Before, a player who confirmed "leave" stayed online until their turn timed out / the bomb went off. |
+| `f82d4c8` | leftover | No more `"guest_local_0001"` fallback uid in NavGraph. |
+| `99f259a` + `0f6df80` | leftover | Client sends one answer per (room, round); retry allowed after a failed call. Kotlin 133. |
 
 ### Before deploying — manual steps, in this order
 
@@ -1240,9 +1243,7 @@ Resume with `git switch refactor/audit-hardening`.
 - **#12 — done in `cc56650`.** Still untested: `syncMatchResult`'s client-side guard (needs
   `MultiplayerAwardStore` behind an interface; the award itself is idempotent server-side and tested there),
   `syncUserProfile`'s three account-switch cases (same reason: the local stores are concrete classes).
-- **#13 — done in `b65e2cd`.** Leftover: the client still fires the second tap (sound + a wasted
-  callable that the server now rejects). A per-round in-flight guard in `MultiplayerViewModel.submitAnswer`
-  would stop it; not done, the server is authoritative. The double-tap fix only reaches players on the new client.
+- **#13 — done in `b65e2cd`** (client-side double-tap guard followed later, see table).
 - **#14 — done in `0d61b3c`.**
 - **#15 — done in `6c144e3` + `3c67cda`.** Not done on purpose: the two main screen composables are still
   350+ lines each; splitting them needs visual checking on a device. `allowBackup` guest-restore claim untested.
@@ -1251,11 +1252,6 @@ Resume with `git switch refactor/audit-hardening`.
 
 ### Known leftovers, deliberately not fixed
 
-- Leaving an online match does not write the RTDB presence node offline, so a forfeit only registers when the
-  round times out (~3 s in `mistake`, up to the bomb in `hot_potato`). Fix = a `clearPresence` method on
-  `MultiplayerRepository` called from the exit path.
-- `NavGraph.kt` still falls back to `"guest_local_0001"` for the multiplayer screen's uid. Unreachable in
-  practice (no session → no Home; anonymous → gated), but inconsistent now that `AuthService` stopped inventing it.
 - A solo run **cannot be verified** server-side — the stimuli are generated on the device. `submitSoloRun` only
   rejects the impossible and rate-limits. If a fully trustworthy ranking is ever wanted, rank by multiplayer
   results only, which are genuinely verified.
