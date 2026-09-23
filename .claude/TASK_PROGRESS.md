@@ -1212,6 +1212,7 @@ Graph reindexed 2026-09-22 (`mobiai graph init`, 68 files / 346 symbols).
 | `316e5c5` | #9 #10 | `ExitMatchDialog` on back during a live match; seeding + profile load off the composition phase. |
 | `cc56650` | #12 | `AuthRepository`/`GameRepository` interfaces + injected `StringResolver`; `AuthViewModel`/`ProfileViewModel` are plain ViewModels with 29 new tests; `recordGameResult` arithmetic extracted to `LocalRunScoring.kt`. Kotlin 88 -> 128. Reviewer HIGH fixed before commit (resolver must not `String.format` argument-less strings). |
 | `b65e2cd` | #13 | `submitAnswer` is one transaction (judge in `answerJudge.ts` + engine halves `apply*`). **Real bug found and fixed**: no `round` in the request, so a double tap was scored against the next stimulus (solo_survival bust 3/4). Optional `round` → `STALE_ROUND`; safe in either deploy order. functions 191 -> 203. |
+| `0d61b3c` | #14 | One `ui/components/QuadrantBox` for local + online; `finishedMatchUpdate` in `scoring.ts` replaces the verbatim sole-survivor block. No behaviour change. functions 205. |
 
 ### Before deploying — manual steps, in this order
 
@@ -1235,10 +1236,8 @@ Graph reindexed 2026-09-22 (`mobiai graph init`, 68 files / 346 symbols).
 - **#13 — done in `b65e2cd`.** Leftover: the client still fires the second tap (sound + a wasted
   callable that the server now rejects). A per-round in-flight guard in `MultiplayerViewModel.submitAnswer`
   would stop it; not done, the server is authoritative. The double-tap fix only reaches players on the new client.
-- **#14 (next)** `QuadrantBox` still duplicated between `GameScreen` and `MultiplayerGameScreen` (the `TimerBar` half of
-  this was done in `343786c`). Backend: the "sole survivor → rank → finish" block is verbatim in
-  `resolveRound.ts` and `resolveHotPotato.ts`.
-- **#15 (low)** `android:allowBackup="true"` with no `dataExtractionRules`; no `@Preview` anywhere;
+- **#14 — done in `0d61b3c`.**
+- **#15 (low, next)** `android:allowBackup="true"` with no `dataExtractionRules`; no `@Preview` anywhere;
   `ProfileScreen.kt` 622 lines / `AuthScreen.kt` 535; no ESLint config in `functions/`; junk in the repo root
   (`hs_err_pid*.log`, `replay_pid*.log`, `*.stackdump`).
 
