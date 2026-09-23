@@ -1,0 +1,18 @@
+<en-US>
+Test build (MVP). Solo modes (Endless, Lives, Time Attack) plus real-time online multiplayer (Hot Potato, Solo Survival). XP, achievements, daily streak, avatars, and full audio. This is an early test version — send us your feedback.
+</en-US>
+<de-DE>
+Testversion (MVP). Solo-Modi (Endlos, Leben, Zeitrennen) sowie Echtzeit-Online-Multiplayer (Heiße Kartoffel, Solo-Survival). XP, Erfolge, tägliche Serie, Avatare und vollständiger Sound. Dies ist eine frühe Testversion — sende uns dein Feedback.
+</de-DE>
+<es-ES>
+Versión de prueba (MVP). Modos en solitario (Sin Fin, Vidas, Contrarreloj) y multijugador online en tiempo real (Patata Caliente, Supervivencia). XP, logros, racha diaria, avatares y audio completo. Es una versión de prueba temprana — envíanos tu feedback.
+</es-ES>
+<fr-FR>
+Version de test (MVP). Modes solo (Sans Fin, Vies, Contre-la-Montre) et multijoueur en ligne en temps réel (Patate Chaude, Survie Solo). XP, succès, série quotidienne, avatars et son complet. C'est une version de test précoce — envoyez-nous vos retours.
+</fr-FR>
+<ja-JP>
+テスト版(MVP)。ソロモード(エンドレス、ライフ、タイムアタック)とリアルタイムオンライン対戦(ホットポテト、ソロサバイバル)を収録。XP、実績、デイリーストリーク、アバター、フル音声対応。初期テスト版です、ぜひフィードバックをお願いします。
+</ja-JP>
+<pt-BR>
+Versão de teste (MVP). Modos solo (Sem Fim, Vidas, Contra o Tempo) e multijogador online em tempo real (Batata Quente, Sobrevivência Solo). XP, conquistas, sequência diária, avatares e áudio completo. É uma versão de teste inicial — envie seu feedback.
+</pt-BR>
