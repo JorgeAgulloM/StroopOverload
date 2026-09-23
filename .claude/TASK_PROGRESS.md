@@ -1198,4 +1198,5 @@ this round.
   - DEPLOY ORDER: rules+functions and the app must go out together. Old clients will have their profile writes rejected (they send scoring fields) and cannot call submitSoloRun, so their solo progress stays local.
 - [x] #6 i18n holes (4eb6777): @pilot- handle, Rarity label, "(YOU)" concatenation, locale-aware multipliers. StringsParityTest guards key parity + unused keys. Wired the orphaned change-password success message.
 - [x] #7 + #8 perf (343786c): TimerBarHost/DeadlineTimerBar own their ticking; collectAsStateWithLifecycle everywhere. NOT measured on device — worth a Layout Inspector pass.
-- [ ] Remaining: #9 BackHandler mid-match, #10 AsoDemoSeeder I/O in remember{}, #11 build (signing.properties unconditional, empty proguard w/ minify), #12 DI + ViewModel tests, #13 submitAnswer double read, #14 QuadrantBox duplication (TimerBar done), #15 misc low (allowBackup rules, previews, large files, ESLint, NavGraph fake uid).
+- [x] #11 build (2373129): optional release signing, real R8 rules, assembleRelease VERIFIED (signed 11MB APK, R8+lintVital clean).
+- [ ] Remaining: #9 BackHandler mid-match, #10 AsoDemoSeeder I/O in remember{}, #12 DI + ViewModel tests, #13 submitAnswer double read, #14 QuadrantBox duplication (TimerBar done), #15 misc low (allowBackup rules, previews, large files, ESLint, NavGraph fake uid).
