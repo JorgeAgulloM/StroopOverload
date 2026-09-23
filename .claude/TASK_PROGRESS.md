@@ -1210,6 +1210,7 @@ Graph reindexed 2026-09-22 (`mobiai graph init`, 68 files / 346 symbols).
 | `343786c` | #7 #8 | `TimerBarHost`/`DeadlineTimerBar` own their own ticking; `collectAsStateWithLifecycle` everywhere. |
 | `2373129` | #11 | Release signing optional, real R8 rules, `assembleRelease` verified end to end. |
 | `316e5c5` | #9 #10 | `ExitMatchDialog` on back during a live match; seeding + profile load off the composition phase. |
+| `cc56650` | #12 | `AuthRepository`/`GameRepository` interfaces + injected `StringResolver`; `AuthViewModel`/`ProfileViewModel` are plain ViewModels with 29 new tests; `recordGameResult` arithmetic extracted to `LocalRunScoring.kt`. Kotlin 88 -> 128. Reviewer HIGH fixed before commit (resolver must not `String.format` argument-less strings). |
 
 ### Before deploying — manual steps, in this order
 
@@ -1227,13 +1228,10 @@ Graph reindexed 2026-09-22 (`mobiai graph init`, 68 files / 346 symbols).
 
 ### Remaining plan
 
-- **#12 — DI + ViewModel tests (next, highest value).** `AuthViewModel` and `ProfileViewModel` construct
-  `AuthService` and `FirebaseGameRepository` internally, and neither is an interface, so login/registration/
-  change-password/delete-account — the flows touching sensitive data — cannot be unit tested at all.
-  First step: extract interfaces mirroring `MultiplayerRepository` (which already has a fake and real tests),
-  inject through the existing `*ViewModelFactory`, then add the missing tests. Also untested:
-  `FirebaseGameRepository.recordGameResult`'s arithmetic and `applyMultiplayerScore`'s idempotency guard.
-- **#13** `submitAnswer` reads the room doc outside the transaction purely to pre-validate, then the engine reads
+- **#12 — done in `cc56650`.** Still untested: `syncMatchResult`'s client-side guard (needs
+  `MultiplayerAwardStore` behind an interface; the award itself is idempotent server-side and tested there),
+  `syncUserProfile`'s three account-switch cases (same reason: the local stores are concrete classes).
+- **#13 (next)** `submitAnswer` reads the room doc outside the transaction purely to pre-validate, then the engine reads
   it again inside. Cost, not correctness.
 - **#14** `QuadrantBox` still duplicated between `GameScreen` and `MultiplayerGameScreen` (the `TimerBar` half of
   this was done in `343786c`). Backend: the "sole survivor → rank → finish" block is verbatim in
