@@ -525,4 +525,60 @@ class MultiplayerViewModelTest {
 
         assertTrue(fake.leftPresence.isEmpty())
     }
+
+    private suspend fun enterPlayingRoom(fake: FakeMultiplayerRepository, viewModel: MultiplayerViewModel, round: Int) {
+        viewModel.createRoom(uid = "player-1", displayName = "Neo")
+        dispatcher.scheduler.advanceUntilIdle()
+        emitHotPotatoRound(fake, round)
+    }
+
+    @Test
+    fun `a double tap on the same stimulus sends one answer`() = runTest {
+        val fake = FakeMultiplayerRepository()
+        val viewModel = MultiplayerViewModel(fake)
+        enterPlayingRoom(fake, viewModel, round = 3)
+
+        viewModel.submitAnswer(StroopColor.RED)
+        viewModel.submitAnswer(StroopColor.BLUE) // before the first call even ran
+        dispatcher.scheduler.advanceUntilIdle()
+        viewModel.submitAnswer(StroopColor.GREEN) // after it succeeded, snapshot not updated yet
+        dispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(1, fake.submitAnswerCallCount)
+    }
+
+    @Test
+    fun `a new round can be answered again`() = runTest {
+        val fake = FakeMultiplayerRepository()
+        val viewModel = MultiplayerViewModel(fake)
+        enterPlayingRoom(fake, viewModel, round = 3)
+
+        viewModel.submitAnswer(StroopColor.RED)
+        dispatcher.scheduler.advanceUntilIdle()
+        emitHotPotatoRound(fake, round = 4) // hot_potato: a wrong answer re-prompts the same holder
+        viewModel.submitAnswer(StroopColor.RED)
+        dispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(2, fake.submitAnswerCallCount)
+        assertEquals(4, fake.lastSubmittedRound)
+    }
+
+    /** player-1 holds the turn. */
+    private suspend fun emitHotPotatoRound(fake: FakeMultiplayerRepository, round: Int) {
+        fake.emitRoom(
+            MultiplayerRoom(
+                roomId = "room-1",
+                status = RoomStatus.PLAYING,
+                mode = RoomMode.HOT_POTATO,
+                players = listOf(
+                    RoomPlayer(uid = "player-1", displayName = "Neo"),
+                    RoomPlayer(uid = "player-2", displayName = "Trinity"),
+                ),
+                turnOrder = listOf("player-1", "player-2"),
+                turnIndex = 0,
+                round = round,
+            )
+        )
+        dispatcher.scheduler.advanceUntilIdle()
+    }
 }

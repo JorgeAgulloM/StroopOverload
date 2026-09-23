@@ -27,6 +27,9 @@ class MultiplayerViewModel(
     private var observeRoomJob: Job? = null
     private var presenceRoomId: String? = null
 
+    /** (roomId, round) of the last answer sent and not rejected; see [submitAnswer]. */
+    private var answeredTarget: Pair<String, Int>? = null
+
     fun createRoom(uid: String, displayName: String, mode: RoomMode = RoomMode.MISTAKE) {
         if (_state.value !is MultiplayerUiState.Idle && _state.value !is MultiplayerUiState.Error) return
         myUid = uid
@@ -94,14 +97,25 @@ class MultiplayerViewModel(
     fun submitAnswer(color: StroopColor) {
         val current = _state.value as? MultiplayerUiState.InRoom ?: return
         if (!current.room.canAnswer(current.myUid)) return
+        // One answer per stimulus. The board stays tappable until the next Firestore
+        // snapshot arrives, so a quick double tap would send a second answer for the
+        // same round -- which the backend rejects as STALE_ROUND. Drop it here and
+        // save the round trip. A failed call clears this so the player can retry.
+        val round = current.room.answerRound(current.myUid)
+        val target = current.room.roomId to round
+        if (answeredTarget == target) return
+        answeredTarget = target
         viewModelScope.launch {
             // Best-effort: a rejected answer (e.g. lost a race against the deadline
             // or the turn already moved on) self-corrects on the next Firestore
             // snapshot, which is why this doesn't surface a UI error state -- but
             // it must not fail silently with no trace when debugging reports like
             // "my tap didn't register".
-            repository.submitAnswer(current.room.roomId, color, current.room.answerRound(current.myUid))
-                .onFailure { Log.w("MultiplayerViewModel", "submitAnswer rejected: ${it.message}") }
+            repository.submitAnswer(current.room.roomId, color, round)
+                .onFailure {
+                    if (answeredTarget == target) answeredTarget = null
+                    Log.w("MultiplayerViewModel", "submitAnswer rejected: ${it.message}")
+                }
         }
     }
 

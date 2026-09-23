@@ -52,10 +52,12 @@ class FakeMultiplayerRepository : MultiplayerRepository {
         return startGameResult
     }
 
+    var submitAnswerResult: Result<Unit> = Result.success(Unit)
+
     override suspend fun submitAnswer(roomId: String, selectedColor: StroopColor, round: Int): Result<Unit> {
         submitAnswerCallCount++
         lastSubmittedRound = round
-        return Result.success(Unit)
+        return submitAnswerResult
     }
 
     override fun observeRoom(roomId: String): Flow<MultiplayerRoom> = observeRoomFlow ?: roomFlow
