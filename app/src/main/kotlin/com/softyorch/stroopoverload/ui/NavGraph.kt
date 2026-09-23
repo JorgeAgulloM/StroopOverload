@@ -248,8 +248,16 @@ fun StroopNavGraph() {
             LeaderboardScreen(onBack = { navController.popBackStack() })
         }
         composable(ROUTE_MULTIPLAYER) {
+            val myUid = authService.currentUid
+            if (myUid == null) {
+                // Only reachable if the session ended on the way here. Online play needs a
+                // real Firebase uid -- the backend identifies players by it -- so go back
+                // rather than join with a made-up one.
+                LaunchedEffect(Unit) { navController.popBackStack() }
+                return@composable
+            }
             MultiplayerScreen(
-                myUid = authService.currentUid ?: "guest_local_0001",
+                myUid = myUid,
                 onLeaveMatch = { navController.popBackStack() },
                 myNickname = currentProfile.displayName,
                 repository = repository,
