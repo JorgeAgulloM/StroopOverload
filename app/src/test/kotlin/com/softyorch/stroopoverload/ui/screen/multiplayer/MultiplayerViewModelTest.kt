@@ -501,4 +501,28 @@ class MultiplayerViewModelTest {
             assertEquals(MultiplayerErrorReason.ConnectionLost, error.reason)
         }
     }
+
+    @Test
+    fun `exitRoom marks the player offline in the room they leave, once`() = runTest {
+        val fake = FakeMultiplayerRepository()
+        val viewModel = MultiplayerViewModel(fake)
+        viewModel.createRoom(uid = "host-1", displayName = "Neo")
+        dispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.exitRoom()
+        viewModel.exitRoom()
+
+        assertEquals(listOf("room-1" to "host-1"), fake.leftPresence)
+        assertEquals(MultiplayerUiState.Idle, viewModel.state.value)
+    }
+
+    @Test
+    fun `exitRoom without ever entering a room marks nothing offline`() = runTest {
+        val fake = FakeMultiplayerRepository()
+        val viewModel = MultiplayerViewModel(fake)
+
+        viewModel.exitRoom()
+
+        assertTrue(fake.leftPresence.isEmpty())
+    }
 }

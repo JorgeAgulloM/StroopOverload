@@ -25,6 +25,7 @@ class MultiplayerViewModel(
 
     private var myUid: String = ""
     private var observeRoomJob: Job? = null
+    private var presenceRoomId: String? = null
 
     fun createRoom(uid: String, displayName: String, mode: RoomMode = RoomMode.MISTAKE) {
         if (_state.value !is MultiplayerUiState.Idle && _state.value !is MultiplayerUiState.Error) return
@@ -70,11 +71,24 @@ class MultiplayerViewModel(
         }
     }
 
-    /** Leaves a FINISHED match's result screen back to the lobby, stopping the room listener. */
+    /**
+     * Leaves the room back to the lobby: from a finished match's result screen, or
+     * mid-match after the player confirmed forfeiting. Going offline is what makes
+     * the forfeit real -- the backend eliminates a player who drops out of a
+     * "mistake" or solo_survival match straight away instead of waiting for their
+     * turn to time out.
+     */
     fun exitRoom() {
+        leavePresence()
         observeRoomJob?.cancel()
         observeRoomJob = null
         _state.value = MultiplayerUiState.Idle
+    }
+
+    private fun leavePresence() {
+        val roomId = presenceRoomId ?: return
+        presenceRoomId = null
+        repository.leavePresence(roomId, myUid)
     }
 
     fun submitAnswer(color: StroopColor) {
@@ -97,6 +111,7 @@ class MultiplayerViewModel(
         // rather than a live, test-covered path -- kept in case that guard ever changes.
         observeRoomJob?.cancel()
         repository.trackPresence(roomId, myUid)
+        presenceRoomId = roomId
         observeRoomJob = viewModelScope.launch {
             try {
                 repository.observeRoom(roomId).collect { room ->
@@ -115,6 +130,7 @@ class MultiplayerViewModel(
         (this as? MultiplayerCallException)?.failure ?: MultiplayerCallFailure.UNKNOWN
 
     override fun onCleared() {
+        leavePresence()
         observeRoomJob?.cancel()
         super.onCleared()
     }

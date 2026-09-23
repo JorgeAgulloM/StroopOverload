@@ -64,6 +64,12 @@ class FakeMultiplayerRepository : MultiplayerRepository {
         presenceTracked = true
     }
 
+    val leftPresence = mutableListOf<Pair<String, String>>()
+
+    override fun leavePresence(roomId: String, uid: String) {
+        leftPresence += roomId to uid
+    }
+
     var deleteMyMultiplayerDataResult: Result<Unit> = Result.success(Unit)
     var deleteMyMultiplayerDataCallCount = 0
         private set

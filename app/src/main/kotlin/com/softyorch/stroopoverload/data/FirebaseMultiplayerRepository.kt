@@ -98,6 +98,15 @@ class FirebaseMultiplayerRepository(
             .addOnFailureListener { Log.w(TAG, "Failed to write online presence for room $roomId: ${it.message}") }
     }
 
+    override fun leavePresence(roomId: String, uid: String) {
+        val presenceRef = database.getReference("presence/$roomId/$uid")
+        // The hook is for losing the connection; this is an explicit leave, and a hook
+        // left registered would rewrite "offline" for a room long gone.
+        presenceRef.onDisconnect().cancel()
+        presenceRef.setValue(mapOf("state" to "offline", "lastChanged" to ServerValue.TIMESTAMP))
+            .addOnFailureListener { Log.w(TAG, "Failed to write offline presence for room $roomId: ${it.message}") }
+    }
+
     private fun mapRoom(roomId: String, data: Map<String, Any?>): MultiplayerRoom {
         @Suppress("UNCHECKED_CAST")
         val playersMap = data["players"] as? Map<String, Map<String, Any?>> ?: emptyMap()
