@@ -5,6 +5,7 @@ import android.util.Log
 import com.google.firebase.firestore.AggregateSource
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.functions.FirebaseFunctions
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.SetOptions
 import com.softyorch.stroopoverload.core.GameConfig
@@ -16,6 +17,8 @@ import com.softyorch.stroopoverload.domain.AchievementDefinitions
 import com.softyorch.stroopoverload.domain.AchievementEngine
 import com.softyorch.stroopoverload.domain.CareerStats
 import com.softyorch.stroopoverload.domain.GameResult
+import com.softyorch.stroopoverload.domain.applyServerScoring
+import com.softyorch.stroopoverload.domain.serverScoringFrom
 import com.softyorch.stroopoverload.domain.UserProfile
 import com.softyorch.stroopoverload.domain.XpSystem
 import kotlinx.coroutines.CancellationException
@@ -30,6 +33,7 @@ class FirebaseGameRepository private constructor(
     private val achievementEngine: AchievementEngine = AchievementEngine(),
     private val multiplayerAwardStore: MultiplayerAwardStore = MultiplayerAwardStore(context),
     private val db: FirebaseFirestore? = try { FirebaseFirestore.getInstance() } catch (e: Exception) { null },
+    private val functions: FirebaseFunctions = FirebaseFunctions.getInstance(),
 ) {
     private val users get() = db?.collection("users")
 
@@ -57,15 +61,10 @@ class FirebaseGameRepository private constructor(
                 "displayName" to profile.displayName,
                 "isAnonymous" to profile.isAnonymous,
                 "avatarIndex" to profile.avatarIndex,
-                "points" to profile.points,
-                "highScore" to profile.highScore,
-                "matchesPlayed" to profile.matchesPlayed,
-                "matchesWon" to profile.matchesWon,
-                "matchesLost" to profile.matchesLost,
-                "experience" to profile.experience,
-                "level" to profile.level,
-                "dailyStreak" to profile.dailyStreak,
-                "lastPlayedAtEpochMs" to profile.lastPlayedAtEpochMs,
+                // Scoring fields are deliberately absent: points, highScore, experience,
+                // level, the match counters and dailyStreak are written only by Cloud
+                // Functions (submitSoloRun / onRoomFinished) and firestore.rules rejects
+                // any write to them from here. Sending them would fail the whole merge.
                 "profileCreated" to profile.profileCreated,
                 "unlockedPalettes" to profile.unlockedPalettes,
                 "updatedAt" to FieldValue.serverTimestamp(),
@@ -198,7 +197,7 @@ class FirebaseGameRepository private constructor(
         clearLocalProgress()
     }
 
-    suspend fun recordGameResult(result: GameResult, xpEarned: Int): List<Achievement> = withContext(Dispatchers.IO) {
+    suspend fun recordGameResult(result: GameResult, xpEarned: Int, winStreak: Int = 0): List<Achievement> = withContext(Dispatchers.IO) {
         if (result.correctHits == 0 || result.finalScore <= 0) {
             return@withContext emptyList()
         }
@@ -260,39 +259,93 @@ class FirebaseGameRepository private constructor(
                 .filter { it.isUnlocked }
                 .associate { it.id to it.unlockedAt }
             syncProgressToCloud(finalUpdated.userId, updatedCareer, allUnlockedMap)
+            submitRunToServer(result, newIds, winStreak)
         }
 
         return@withContext newlyUnlockedAchievements
     }
 
     /**
-     * Applies a finished multiplayer match's server-computed [pointsEarned] (see
-     * functions/src/scoring.ts -- already halved and placement-multiplied) to the
-     * local profile's points/XP/level/match counters. Idempotent per [roomId]:
-     * returns false and does nothing if this room's score was already applied
-     * (guards against a Firestore listener re-emitting the same FINISHED room).
-     * No-ops for anonymous profiles -- defense in depth, multiplayer entry is
-     * already gated on a non-anonymous account before a room can be joined.
+     * Reports a finished run to the backend, which recomputes the score and XP and
+     * writes the profile itself -- the local numbers above are provisional until it
+     * answers, and are replaced by whatever it returns.
+     *
+     * A failure here (offline, rate-limited, rejected as implausible) is not an error
+     * for the player: the run still counted locally. It just never reaches the
+     * leaderboard, which is the point -- offline play does not rank.
      */
-    suspend fun applyMultiplayerScore(roomId: String, pointsEarned: Int, won: Boolean): Boolean = withContext(Dispatchers.IO) {
+    private suspend fun submitRunToServer(
+        result: GameResult,
+        unlockedAchievementIds: Collection<String>,
+        winStreak: Int,
+    ) {
+        val payload = mapOf(
+            "mode" to result.mode.name,
+            "correctHits" to result.correctHits,
+            "totalRounds" to result.totalRounds,
+            "survivalMs" to result.survivalMs,
+            "finalScore" to result.finalScore,
+            "achievementIds" to unlockedAchievementIds.toList(),
+            // Feeds the same XP bonus the player already saw on the game-over screen;
+            // the server clamps it to the run's correct answers.
+            "winStreak" to winStreak,
+        )
+        try {
+            val response = functions.getHttpsCallable("submitSoloRun").call(payload).await()
+            @Suppress("UNCHECKED_CAST")
+            val scoring = serverScoringFrom(response.data as? Map<String, Any?>)
+            if (scoring == null) {
+                Log.w("FirebaseRepo", "submitSoloRun returned no scoring fields")
+                return
+            }
+            profileStore.saveProfile(getProfile().applyServerScoring(scoring))
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.w("FirebaseRepo", "submitSoloRun failed; run stays local only: ${e.message}")
+        }
+    }
+
+    /**
+     * Pulls the backend's copy of the scoring fields into the local profile. Used
+     * after a multiplayer match is settled server-side (onRoomFinished), since the
+     * client no longer computes those points itself.
+     */
+    suspend fun refreshScoringFromCloud(uid: String) = withContext(Dispatchers.IO) {
+        val collection = users ?: return@withContext
+        try {
+            val remote = collection.document(uid).get().await()
+            val scoring = serverScoringFrom(remote.data) ?: return@withContext
+            profileStore.saveProfile(getProfile().applyServerScoring(scoring))
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.w("FirebaseRepo", "Could not refresh scoring from cloud: ${e.message}")
+        }
+    }
+
+    /**
+     * Pulls in a finished multiplayer match's points once the backend has settled
+     * them (onRoomFinished writes every player's profile from the finalScore it
+     * computed in functions/src/scoring.ts). The client used to apply those points
+     * to its own profile, which meant the server computed an authoritative number
+     * and then trusted the client to store it.
+     *
+     * [multiplayerAwardStore] now only keeps this from re-reading the same settled
+     * room; the award itself is idempotent server-side. No-ops for anonymous
+     * profiles, which never sync and never rank.
+     *
+     * @return true if this call pulled in the match's result.
+     */
+    suspend fun syncMatchResult(roomId: String): Boolean = withContext(Dispatchers.IO) {
         if (multiplayerAwardStore.hasAwarded(roomId)) return@withContext false
         val current = getProfile()
-        if (current.isAnonymous) {
+        if (current.isAnonymous || current.userId.isBlank()) {
             multiplayerAwardStore.markAwarded(roomId)
             return@withContext false
         }
 
-        val newXp = current.experience + pointsEarned.coerceAtLeast(0)
-        val updated = current.copy(
-            points = (current.points + pointsEarned).coerceAtLeast(0),
-            experience = newXp,
-            level = XpSystem.levelFromTotalXp(newXp),
-            matchesPlayed = current.matchesPlayed + 1,
-            matchesWon = if (won) current.matchesWon + 1 else current.matchesWon,
-            matchesLost = if (!won) current.matchesLost + 1 else current.matchesLost,
-            lastPlayedAtEpochMs = System.currentTimeMillis(),
-        )
-        updateProfile(updated)
+        refreshScoringFromCloud(current.userId)
         multiplayerAwardStore.markAwarded(roomId)
         true
     }

@@ -92,16 +92,14 @@ fun MultiplayerScreen(
         )
         is MultiplayerUiState.InRoom -> {
             val room = current.room
-            if (room.status == RoomStatus.FINISHED) {
-                // Fires once per unique roomId reaching FINISHED in this composition
-                // (recomposition alone won't re-key it) -- applyMultiplayerScore is
-                // also idempotent per-roomId itself (survives app restarts/reconnects).
+            if (room.status == RoomStatus.FINISHED && room.awardsAppliedAtMs != null) {
+                // The backend credits every player's profile itself (onRoomFinished) and
+                // stamps awardsAppliedAtMs when it is done; this just pulls the settled
+                // numbers back into the local profile. Keyed on the room so recomposition
+                // alone won't repeat it, and guarded again per-room inside the repository
+                // (which survives app restarts and reconnects).
                 LaunchedEffect(room.roomId) {
-                    val me = room.player(myUid)
-                    val finalScore = me?.finalScore
-                    if (finalScore != null) {
-                        repository.applyMultiplayerScore(room.roomId, finalScore, me.placement == 1)
-                    }
+                    repository.syncMatchResult(room.roomId)
                 }
             }
             when (room.status) {

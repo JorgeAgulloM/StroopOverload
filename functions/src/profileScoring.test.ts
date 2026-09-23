@@ -1,5 +1,6 @@
 import {
   achievementXpFor,
+  clampWinStreak,
   calculateRunXp,
   levelFromTotalXp,
   maxPlausibleScore,
@@ -90,6 +91,21 @@ describe("achievementXpFor", () => {
 
   test("ignores duplicates of the same id inside one submission", () => {
     expect(achievementXpFor(["first_blood", "first_blood"])).toBe(250);
+  });
+});
+
+describe("clampWinStreak", () => {
+  test("keeps a streak the run could actually have produced", () => {
+    expect(clampWinStreak(7, 10)).toBe(7);
+  });
+
+  test("caps a claimed streak at the run's correct answers", () => {
+    expect(clampWinStreak(9999, 10)).toBe(10);
+  });
+
+  test("treats nonsense as no streak", () => {
+    expect(clampWinStreak(-5, 10)).toBe(0);
+    expect(clampWinStreak(Number.NaN, 10)).toBe(0);
   });
 });
 

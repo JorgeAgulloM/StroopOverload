@@ -200,7 +200,7 @@ fun StroopNavGraph() {
                     scope.launch {
                         val prof = repository.getProfile()
                         val xpBreakdown = XpSystem.calculateGameXp(result, prof.dailyStreak, streak)
-                        val newAch = repository.recordGameResult(result, xpBreakdown.total)
+                        val newAch = repository.recordGameResult(result, xpBreakdown.total, streak)
                         lastXpBreakdown = xpBreakdown
                         lastNewAchievements = newAch
                         currentProfile = repository.getProfile()

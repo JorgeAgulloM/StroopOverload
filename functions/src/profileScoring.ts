@@ -148,6 +148,17 @@ export function achievementXpFor(ids: readonly string[]): number {
 }
 
 /**
+ * The client reports the win streak the run ended on, because it feeds the XP
+ * bonus the player already saw on the game-over screen. It can't be verified, so
+ * it is clamped: a streak can never exceed the run's correct answers, and the
+ * bonus itself is capped at 150 XP in calculateRunXp anyway.
+ */
+export function clampWinStreak(claimed: number, correctHits: number): number {
+  if (!Number.isFinite(claimed) || claimed < 0) return 0;
+  return Math.min(Math.trunc(claimed), correctHits);
+}
+
+/**
  * Rejects runs that could not have happened. This bounds a forged submission; it
  * cannot verify one, because the stimuli of a solo run are generated on the device.
  * Returns null when the run is acceptable, or a short reason when it is not.

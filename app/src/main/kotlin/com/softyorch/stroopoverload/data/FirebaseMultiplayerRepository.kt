@@ -142,6 +142,7 @@ class FirebaseMultiplayerRepository(
             winnerUid = data["winnerUid"] as? String,
             startsAtMs = data["startsAtMs"] as? Long,
             createdAtMs = data["createdAtMs"] as? Long ?: 0L,
+            awardsAppliedAtMs = data["awardsAppliedAtMs"] as? Long,
         )
     }
 

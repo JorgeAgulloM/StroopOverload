@@ -86,6 +86,12 @@ data class MultiplayerRoom(
     val winnerUid: String? = null,
     val startsAtMs: Long? = null,
     val createdAtMs: Long = 0L,
+    /**
+     * Set by the backend (onRoomFinished) once every player's profile has been
+     * credited with this match's points. The client waits for it before reading its
+     * profile back, instead of guessing when the award landed.
+     */
+    val awardsAppliedAtMs: Long? = null,
 ) {
     val currentTurnUid: String? get() = turnOrder.getOrNull(turnIndex)
     fun isMyTurn(uid: String): Boolean = currentTurnUid == uid

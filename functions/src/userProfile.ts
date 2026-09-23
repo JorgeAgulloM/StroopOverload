@@ -82,6 +82,7 @@ export async function applySoloRun(
   uid: string,
   run: SoloRunReport,
   claimedAchievementIds: readonly string[],
+  winStreak: number = 0,
   nowMs: number = Date.now()
 ): Promise<AppliedScore> {
   const ref = userRef(uid);
@@ -95,7 +96,7 @@ export async function applySoloRun(
     const dailyStreak = nextDailyStreak(current.dailyStreak, current.lastPlayedAtEpochMs, nowMs);
 
     const newAchievementIds = claimedAchievementIds.filter((id) => !(id in current.awardedAchievements));
-    const xpAwarded = calculateRunXp(run, dailyStreak, 0, isNewHighScore) + achievementXpFor(newAchievementIds);
+    const xpAwarded = calculateRunXp(run, dailyStreak, winStreak, isNewHighScore) + achievementXpFor(newAchievementIds);
 
     const experience = current.experience + xpAwarded;
     const awardedAchievements = { ...current.awardedAchievements };

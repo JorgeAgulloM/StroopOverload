@@ -21,7 +21,7 @@ import {
   RATE_LIMIT_WINDOW_MS,
   SUBMIT_SOLO_RUN_LIMIT,
 } from "./rateLimit";
-import { SoloMode, validateSoloRun } from "./profileScoring";
+import { clampWinStreak, SoloMode, validateSoloRun } from "./profileScoring";
 import { applyMatchAwards, applySoloRun } from "./userProfile";
 
 initializeApp();
@@ -300,9 +300,11 @@ export const submitSoloRun = onCall(CALLABLE_OPTIONS, async (request) => {
     ? (request.data.achievementIds as unknown[]).slice(0, MAX_CLAIMED_ACHIEVEMENTS_PER_RUN).map(String)
     : [];
 
+  const winStreak = clampWinStreak(Number(request.data?.winStreak), run.correctHits);
+
   try {
     await assertWithinRateLimit(uid, "submitSoloRun", SUBMIT_SOLO_RUN_LIMIT, RATE_LIMIT_WINDOW_MS);
-    return await applySoloRun(uid, run, claimedAchievementIds);
+    return await applySoloRun(uid, run, claimedAchievementIds, winStreak);
   } catch (err) {
     if (err instanceof HttpsError) throw err;
     console.error(`submitSoloRun failed for uid ${uid}`, err);
