@@ -12,6 +12,7 @@ import com.softyorch.stroopoverload.data.RegistrationError
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
 data class AuthUiState(
@@ -154,6 +155,8 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 _state.value = _state.value.copy(
                     errorMessage = string(R.string.auth_resend_cooldown, e.remainingCooldownSeconds)
                 )
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 _state.value = _state.value.copy(errorMessage = string(R.string.auth_resend_failed))
             }

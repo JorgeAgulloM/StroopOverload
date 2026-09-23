@@ -18,6 +18,7 @@ import com.softyorch.stroopoverload.domain.CareerStats
 import com.softyorch.stroopoverload.domain.GameResult
 import com.softyorch.stroopoverload.domain.UserProfile
 import com.softyorch.stroopoverload.domain.XpSystem
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
@@ -70,6 +71,8 @@ class FirebaseGameRepository private constructor(
                 "updatedAt" to FieldValue.serverTimestamp(),
             )
             collection.document(profile.userId).set(map, SetOptions.merge()).await()
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Log.w("FirebaseRepo", "Best-effort profile push failed (offline or unconfigured): ${e.message}")
         }
@@ -98,7 +101,13 @@ class FirebaseGameRepository private constructor(
 
         val collection = users
         val remoteDoc = if (collection != null) {
-            try { collection.document(uid).get().await() } catch (e: Exception) { null }
+            try {
+                collection.document(uid).get().await()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                null
+            }
         } else null
 
         if (remoteDoc != null && remoteDoc.exists()) {
@@ -167,6 +176,8 @@ class FirebaseGameRepository private constructor(
             achievementsMap.forEach { (id, time) ->
                 achievementsStore.unlock(id, time)
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Log.w("FirebaseRepo", "Error restoring cloud progress: ${e.message}")
         }
@@ -299,6 +310,8 @@ class FirebaseGameRepository private constructor(
                 "updatedAt" to FieldValue.serverTimestamp()
             )
             collection.document(uid).set(map, SetOptions.merge()).await()
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Log.w("FirebaseRepo", "Failed to sync progress to cloud: ${e.message}")
         }
@@ -337,6 +350,8 @@ class FirebaseGameRepository private constructor(
                     lastLeaderboardFetchEpochMs = now
                     return@withContext remoteEntries
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 Log.w("FirebaseRepo", "Leaderboard fetch error (offline or unconfigured): ${e.message}")
             }
@@ -363,6 +378,8 @@ class FirebaseGameRepository private constructor(
                     .get(AggregateSource.SERVER)
                     .await()
                 return@withContext (agg.count + 1).toInt()
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 Log.w("FirebaseRepo", "Rank query fallback: ${e.message}")
             }

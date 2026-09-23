@@ -1191,5 +1191,7 @@ this round.
   - Review: APPROVE (legacy-task MEDIUM fixed, functions 129/129). Deploy needs Cloud Scheduler API enabled.
 - [x] #4 Node 22 runtime + firebase-admin 14 + firebase-functions 7 (commit 8ea7284). Jest needs the jose stub; tests use the modular admin API.
 - [x] #3 App Check (client installs it; backend enforcement OFF until installed base sends tokens — flip ENFORCE_APP_CHECK in functions/src/index.ts), per-uid rate limits (createRoom 10/min, joinRoom 20/min), maxInstances=10, typed HttpsError details.reason. functions 137/137, Kotlin 76/76, all build types compile.
-- [ ] #2 Leaderboard anti-cheat — BLOCKED on user decision (offline games count toward leaderboard?)
+- [x] #5 Swallowed CancellationException — 15 sites fixed (AuthService, FirebaseGameRepository, AuthViewModel), guarded by NoSwallowedCancellationTest which scans the app sources. Also removed AuthService's dead getInstance() fallback and the fake "guest_local_0001" uid returned on anonymous sign-in failure.
+- [ ] Known leftover: NavGraph.kt:239 still falls back to "guest_local_0001" for the multiplayer screen's uid (unreachable in practice: unauthenticated users can't reach Home, anonymous ones are gated) — decide whether to drop it.
+- [ ] #2 Leaderboard anti-cheat — DECIDED 2026-09-23: offline games do NOT count toward the leaderboard, so server-side validation can be strict.
 - [ ] #3.. see list in conversation / brain audit entry
