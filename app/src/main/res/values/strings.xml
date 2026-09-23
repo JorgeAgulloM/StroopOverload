@@ -9,6 +9,7 @@
     <string name="common_profile_icon_desc">Profile</string>
     <string name="common_locked">LOCKED</string>
     <string name="common_cancel">Cancel</string>
+    <string name="common_ok">OK</string>
     <string name="common_show_password">Show password</string>
     <string name="common_hide_password">Hide password</string>
 
@@ -237,7 +238,6 @@
     <string name="mp_lobby_create_room">CREATE ROOM</string>
     <string name="mp_lobby_room_code_label">Room code</string>
     <string name="mp_lobby_join_room">JOIN ROOM</string>
-    <string name="mp_lobby_default_name">Pilot</string>
     <string name="mp_lobby_mode_label">GAME MODE</string>
     <string name="mp_mode_mistake_title">MISTAKE MODE</string>
     <string name="mp_mode_mistake_desc">One wrong tap and you\'re out. Last pilot standing wins.</string>
@@ -292,14 +292,15 @@
     <string name="mp_finish_survived_full">Survived the full match</string>
 
     <!-- Multiplayer solo_survival screen -->
-    <string name="mp_solo_time_left">%1$ds LEFT</string>
-    <string name="mp_solo_score_label">SCORE</string>
-    <string name="mp_solo_you_tag">YOU</string>
+    <string name="common_pilot_handle_fallback">@pilot-%1$s</string>
+    <string name="rarity_common">Common</string>
+    <string name="rarity_uncommon">Uncommon</string>
+    <string name="rarity_rare">Rare</string>
+    <string name="rarity_epic">Epic</string>
+    <string name="rarity_legendary">Legendary</string>
+    <string name="mp_finish_name_you">%1$s (YOU)</string>
     <string name="mp_solo_busted_title">YOU\'RE OUT</string>
     <string name="mp_solo_busted_subtitle">Final score: %1$d — the match continues without you.</string>
-    <string name="mp_solo_leaderboard_title">LEADERBOARD</string>
-    <string name="mp_solo_you_won">YOU WIN!</string>
-    <string name="mp_solo_won_by">%1$s wins with %2$d pts</string>
 
     <!-- Multiplayer anonymous-account gate dialog -->
     <string name="mp_anon_gate_title">ONLINE ACCESS LOCKED</string>

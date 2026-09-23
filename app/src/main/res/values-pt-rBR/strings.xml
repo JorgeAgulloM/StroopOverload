@@ -9,6 +9,7 @@
     <string name="common_profile_icon_desc">Perfil</string>
     <string name="common_locked">BLOQUEADO</string>
     <string name="common_cancel">Cancelar</string>
+    <string name="common_ok">OK</string>
     <string name="common_show_password">Mostrar senha</string>
     <string name="common_hide_password">Ocultar senha</string>
 
@@ -237,7 +238,6 @@
     <string name="mp_lobby_create_room">CRIAR SALA</string>
     <string name="mp_lobby_room_code_label">Código da sala</string>
     <string name="mp_lobby_join_room">ENTRAR NA SALA</string>
-    <string name="mp_lobby_default_name">Piloto</string>
     <string name="mp_lobby_mode_label">MODO DE JOGO</string>
     <string name="mp_mode_mistake_title">MODO ERRO</string>
     <string name="mp_mode_mistake_desc">Um erro e você está fora. Vence o último piloto de pé.</string>
@@ -292,14 +292,15 @@
     <string name="mp_finish_survived_full">Sobreviveu a partida inteira</string>
 
     <!-- Multiplayer solo_survival screen -->
-    <string name="mp_solo_time_left">%1$ds RESTANTES</string>
-    <string name="mp_solo_score_label">PONTOS</string>
-    <string name="mp_solo_you_tag">VOCÊ</string>
+    <string name="common_pilot_handle_fallback">@pilot-%1$s</string>
+    <string name="rarity_common">Comum</string>
+    <string name="rarity_uncommon">Incomum</string>
+    <string name="rarity_rare">Raro</string>
+    <string name="rarity_epic">Épico</string>
+    <string name="rarity_legendary">Lendário</string>
+    <string name="mp_finish_name_you">%1$s (VOCÊ)</string>
     <string name="mp_solo_busted_title">VOCÊ SAIU</string>
     <string name="mp_solo_busted_subtitle">Pontuação final: %1$d — a partida continua sem você.</string>
-    <string name="mp_solo_leaderboard_title">CLASSIFICAÇÃO</string>
-    <string name="mp_solo_you_won">VOCÊ VENCEU!</string>
-    <string name="mp_solo_won_by">%1$s vence com %2$d pts</string>
 
     <!-- Multiplayer anonymous-account gate dialog -->
     <string name="mp_anon_gate_title">ACESSO ONLINE BLOQUEADO</string>

@@ -19,6 +19,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.softyorch.stroopoverload.R
+import com.softyorch.stroopoverload.core.formatMultiplier
 import com.softyorch.stroopoverload.domain.Achievement
 import com.softyorch.stroopoverload.domain.GameMode
 import com.softyorch.stroopoverload.domain.GameResult
@@ -130,7 +131,7 @@ fun GameOverScreen(
                         if (xpBreakdown.timeBonus > 0) XpRow(stringResource(R.string.game_over_xp_time_bonus), "+${xpBreakdown.timeBonus}")
                         if (xpBreakdown.streakBonus > 0) XpRow(stringResource(R.string.game_over_xp_streak_bonus), "+${xpBreakdown.streakBonus}")
                         if (xpBreakdown.dailyStreakBonus > 0) XpRow(stringResource(R.string.game_over_xp_daily_bonus), "+${xpBreakdown.dailyStreakBonus}")
-                        if (xpBreakdown.multiplier > 1.0) XpRow(stringResource(R.string.game_over_xp_multiplier), stringResource(R.string.game_over_xp_multiplier_value, xpBreakdown.multiplier.toString()))
+                        if (xpBreakdown.multiplier > 1.0) XpRow(stringResource(R.string.game_over_xp_multiplier), stringResource(R.string.game_over_xp_multiplier_value, formatMultiplier(xpBreakdown.multiplier)))
                     }
                 }
             }

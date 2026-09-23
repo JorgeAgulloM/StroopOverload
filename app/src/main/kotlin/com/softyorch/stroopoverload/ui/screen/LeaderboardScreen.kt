@@ -21,6 +21,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.softyorch.stroopoverload.R
+import com.softyorch.stroopoverload.ui.components.pilotHandleFallback
 import com.softyorch.stroopoverload.data.FirebaseGameRepository
 import com.softyorch.stroopoverload.domain.UserProfile
 import com.softyorch.stroopoverload.ui.theme.*
@@ -196,7 +197,7 @@ fun LeaderboardScreen(onBack: () -> Unit) {
                                             }
                                         }
                                         Text(
-                                            text = user.uniqueName.ifBlank { "@pilot-${user.userId.takeLast(4)}" },
+                                            text = user.uniqueName.ifBlank { pilotHandleFallback(user.userId) },
                                             style = MaterialTheme.typography.bodySmall,
                                             color = Muted,
                                             fontSize = 11.sp,

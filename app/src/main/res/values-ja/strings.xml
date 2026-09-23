@@ -9,6 +9,7 @@
     <string name="common_profile_icon_desc">プロフィール</string>
     <string name="common_locked">ロック中</string>
     <string name="common_cancel">キャンセル</string>
+    <string name="common_ok">OK</string>
     <string name="common_show_password">パスワードを表示</string>
     <string name="common_hide_password">パスワードを隠す</string>
 
@@ -237,7 +238,6 @@
     <string name="mp_lobby_create_room">ルームを作成</string>
     <string name="mp_lobby_room_code_label">ルームコード</string>
     <string name="mp_lobby_join_room">ルームに参加</string>
-    <string name="mp_lobby_default_name">パイロット</string>
     <string name="mp_lobby_mode_label">ゲームモード</string>
     <string name="mp_mode_mistake_title">ミスモード</string>
     <string name="mp_mode_mistake_desc">一度でも間違えると脱落。最後まで残ったパイロットの勝利。</string>
@@ -292,14 +292,15 @@
     <string name="mp_finish_survived_full">最後まで生き残った</string>
 
     <!-- Multiplayer solo_survival screen -->
-    <string name="mp_solo_time_left">残り%1$d秒</string>
-    <string name="mp_solo_score_label">スコア</string>
-    <string name="mp_solo_you_tag">あなた</string>
+    <string name="common_pilot_handle_fallback">@pilot-%1$s</string>
+    <string name="rarity_common">コモン</string>
+    <string name="rarity_uncommon">アンコモン</string>
+    <string name="rarity_rare">レア</string>
+    <string name="rarity_epic">エピック</string>
+    <string name="rarity_legendary">レジェンダリー</string>
+    <string name="mp_finish_name_you">%1$s（あなた）</string>
     <string name="mp_solo_busted_title">脱落しました</string>
     <string name="mp_solo_busted_subtitle">最終スコア: %1$d — 試合は他のプレイヤーで続行中。</string>
-    <string name="mp_solo_leaderboard_title">ランキング</string>
-    <string name="mp_solo_you_won">勝利！</string>
-    <string name="mp_solo_won_by">%1$sが%2$dptsで勝利</string>
 
     <!-- Multiplayer anonymous-account gate dialog -->
     <string name="mp_anon_gate_title">オンライン機能はロック中</string>

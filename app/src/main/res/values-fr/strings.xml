@@ -9,6 +9,7 @@
     <string name="common_profile_icon_desc">Profil</string>
     <string name="common_locked">VERROUILLÉ</string>
     <string name="common_cancel">Annuler</string>
+    <string name="common_ok">OK</string>
     <string name="common_show_password">Afficher le mot de passe</string>
     <string name="common_hide_password">Masquer le mot de passe</string>
 
@@ -237,7 +238,6 @@
     <string name="mp_lobby_create_room">CRÉER UNE SALLE</string>
     <string name="mp_lobby_room_code_label">Code de la salle</string>
     <string name="mp_lobby_join_room">REJOINDRE UNE SALLE</string>
-    <string name="mp_lobby_default_name">Pilote</string>
     <string name="mp_lobby_mode_label">MODE DE JEU</string>
     <string name="mp_mode_mistake_title">MODE ERREUR</string>
     <string name="mp_mode_mistake_desc">Une erreur et vous êtes éliminé. Le dernier pilote en lice gagne.</string>
@@ -292,14 +292,15 @@
     <string name="mp_finish_survived_full">A survécu toute la partie</string>
 
     <!-- Multiplayer solo_survival screen -->
-    <string name="mp_solo_time_left">%1$ds RESTANTES</string>
-    <string name="mp_solo_score_label">SCORE</string>
-    <string name="mp_solo_you_tag">TOI</string>
+    <string name="common_pilot_handle_fallback">@pilot-%1$s</string>
+    <string name="rarity_common">Commun</string>
+    <string name="rarity_uncommon">Peu commun</string>
+    <string name="rarity_rare">Rare</string>
+    <string name="rarity_epic">Épique</string>
+    <string name="rarity_legendary">Légendaire</string>
+    <string name="mp_finish_name_you">%1$s (TOI)</string>
     <string name="mp_solo_busted_title">TU ES ÉLIMINÉ</string>
     <string name="mp_solo_busted_subtitle">Score final : %1$d — la partie continue sans toi.</string>
-    <string name="mp_solo_leaderboard_title">CLASSEMENT</string>
-    <string name="mp_solo_you_won">VICTOIRE !</string>
-    <string name="mp_solo_won_by">%1$s gagne avec %2$d pts</string>
 
     <!-- Multiplayer anonymous-account gate dialog -->
     <string name="mp_anon_gate_title">ACCÈS EN LIGNE VERROUILLÉ</string>

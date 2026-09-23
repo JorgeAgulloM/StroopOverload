@@ -9,6 +9,7 @@
     <string name="common_profile_icon_desc">Profil</string>
     <string name="common_locked">GESPERRT</string>
     <string name="common_cancel">Abbrechen</string>
+    <string name="common_ok">OK</string>
     <string name="common_show_password">Passwort anzeigen</string>
     <string name="common_hide_password">Passwort verbergen</string>
 
@@ -237,7 +238,6 @@
     <string name="mp_lobby_create_room">RAUM ERSTELLEN</string>
     <string name="mp_lobby_room_code_label">Raumcode</string>
     <string name="mp_lobby_join_room">RAUM BEITRETEN</string>
-    <string name="mp_lobby_default_name">Pilot</string>
     <string name="mp_lobby_mode_label">SPIELMODUS</string>
     <string name="mp_mode_mistake_title">FEHLER-MODUS</string>
     <string name="mp_mode_mistake_desc">Ein Fehler und du bist raus. Der letzte verbliebene Pilot gewinnt.</string>
@@ -292,14 +292,15 @@
     <string name="mp_finish_survived_full">Das ganze Match überlebt</string>
 
     <!-- Multiplayer solo_survival screen -->
-    <string name="mp_solo_time_left">NOCH %1$ds</string>
-    <string name="mp_solo_score_label">PUNKTE</string>
-    <string name="mp_solo_you_tag">DU</string>
+    <string name="common_pilot_handle_fallback">@pilot-%1$s</string>
+    <string name="rarity_common">Gewöhnlich</string>
+    <string name="rarity_uncommon">Ungewöhnlich</string>
+    <string name="rarity_rare">Selten</string>
+    <string name="rarity_epic">Episch</string>
+    <string name="rarity_legendary">Legendär</string>
+    <string name="mp_finish_name_you">%1$s (DU)</string>
     <string name="mp_solo_busted_title">DU BIST RAUS</string>
     <string name="mp_solo_busted_subtitle">Endpunktzahl: %1$d — das Match läuft ohne dich weiter.</string>
-    <string name="mp_solo_leaderboard_title">BESTENLISTE</string>
-    <string name="mp_solo_you_won">DU GEWINNST!</string>
-    <string name="mp_solo_won_by">%1$s gewinnt mit %2$d Punkten</string>
 
     <!-- Multiplayer anonymous-account gate dialog -->
     <string name="mp_anon_gate_title">ONLINE-ZUGANG GESPERRT</string>

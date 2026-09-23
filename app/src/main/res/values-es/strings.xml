@@ -9,6 +9,7 @@
     <string name="common_profile_icon_desc">Perfil</string>
     <string name="common_locked">BLOQUEADO</string>
     <string name="common_cancel">Cancelar</string>
+    <string name="common_ok">Aceptar</string>
     <string name="common_show_password">Mostrar contraseña</string>
     <string name="common_hide_password">Ocultar contraseña</string>
 
@@ -237,7 +238,6 @@
     <string name="mp_lobby_create_room">CREAR SALA</string>
     <string name="mp_lobby_room_code_label">Código de sala</string>
     <string name="mp_lobby_join_room">UNIRSE A SALA</string>
-    <string name="mp_lobby_default_name">Piloto</string>
     <string name="mp_lobby_mode_label">MODO DE JUEGO</string>
     <string name="mp_mode_mistake_title">MODO ERROR</string>
     <string name="mp_mode_mistake_desc">Un fallo y estás fuera. Gana el último piloto en pie.</string>
@@ -292,14 +292,15 @@
     <string name="mp_finish_survived_full">Sobrevivió toda la partida</string>
 
     <!-- Multiplayer solo_survival screen -->
-    <string name="mp_solo_time_left">%1$ds RESTANTES</string>
-    <string name="mp_solo_score_label">PUNTOS</string>
-    <string name="mp_solo_you_tag">TÚ</string>
+    <string name="common_pilot_handle_fallback">@pilot-%1$s</string>
+    <string name="rarity_common">Común</string>
+    <string name="rarity_uncommon">Poco común</string>
+    <string name="rarity_rare">Raro</string>
+    <string name="rarity_epic">Épico</string>
+    <string name="rarity_legendary">Legendario</string>
+    <string name="mp_finish_name_you">%1$s (TÚ)</string>
     <string name="mp_solo_busted_title">HAS CAÍDO</string>
     <string name="mp_solo_busted_subtitle">Puntuación final: %1$d — la partida continúa sin ti.</string>
-    <string name="mp_solo_leaderboard_title">CLASIFICACIÓN</string>
-    <string name="mp_solo_you_won">¡GANASTE!</string>
-    <string name="mp_solo_won_by">%1$s gana con %2$d pts</string>
 
     <!-- Multiplayer anonymous-account gate dialog -->
     <string name="mp_anon_gate_title">ACCESO ONLINE BLOQUEADO</string>

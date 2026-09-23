@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.softyorch.stroopoverload.R
+import com.softyorch.stroopoverload.core.formatMultiplier
 import com.softyorch.stroopoverload.audio.AudioPlayer
 import com.softyorch.stroopoverload.audio.GameSfx
 import com.softyorch.stroopoverload.domain.multiplayer.MultiplayerRoom
@@ -182,7 +183,7 @@ private fun PlayerBreakdownCard(
                     fontWeight = FontWeight.Black,
                 )
                 Text(
-                    text = player.displayName + if (isMe) " (${stringResource(R.string.mp_solo_you_tag)})" else "",
+                    text = if (isMe) stringResource(R.string.mp_finish_name_you, player.displayName) else player.displayName,
                     style = MaterialTheme.typography.bodyLarge,
                     color = if (isWinner) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onSurface,
                     fontWeight = if (isWinner) FontWeight.Bold else FontWeight.Normal,
@@ -239,12 +240,14 @@ private fun movesDetailText(player: RoomPlayer, mode: RoomMode, matchStartMs: Lo
     else -> stringResource(R.string.mp_finish_survived_full)
 }
 
-private fun placementMultiplierLabel(placement: Int?): String = when (placement) {
-    1 -> "2.0"
-    2 -> "1.5"
-    3 -> "1.0"
-    else -> "0.5"
-}
+private fun placementMultiplierLabel(placement: Int?): String = formatMultiplier(
+    when (placement) {
+        1 -> 2.0
+        2 -> 1.5
+        3 -> 1.0
+        else -> 0.5
+    }
+)
 
 private fun formatDuration(totalSeconds: Int): String {
     val minutes = totalSeconds / 60

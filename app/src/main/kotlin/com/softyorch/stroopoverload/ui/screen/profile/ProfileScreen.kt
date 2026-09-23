@@ -26,6 +26,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.softyorch.stroopoverload.R
+import com.softyorch.stroopoverload.ui.components.pilotHandleFallback
 import com.softyorch.stroopoverload.audio.AudioSettingsStore
 import com.softyorch.stroopoverload.domain.Achievement
 import com.softyorch.stroopoverload.domain.XpSystem
@@ -121,7 +122,7 @@ fun ProfileScreen(
                                     overflow = TextOverflow.Ellipsis,
                                 )
                                 Text(
-                                    text = state.profile.uniqueName.ifBlank { "@pilot-${state.profile.userId.takeLast(4)}" },
+                                    text = state.profile.uniqueName.ifBlank { pilotHandleFallback(state.profile.userId) },
                                     style = MaterialTheme.typography.labelMedium,
                                     color = TechAccent
                                 )
@@ -401,14 +402,19 @@ private fun ChangePasswordDialog(
     var newPasswordVisible by remember { mutableStateOf(false) }
     var confirmPasswordVisible by remember { mutableStateOf(false) }
 
-    LaunchedEffect(state.changePasswordSuccess) {
-        if (state.changePasswordSuccess) onDismiss()
-    }
-
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text(stringResource(R.string.profile_change_password_title), color = MaterialTheme.colorScheme.primary) },
         text = {
+            if (state.changePasswordSuccess) {
+                // Dismissing straight away (what this used to do) left the player with no
+                // confirmation that anything happened.
+                Text(
+                    text = stringResource(R.string.profile_change_password_success),
+                    color = MaterialTheme.colorScheme.tertiary,
+                )
+                return@AlertDialog
+            }
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 OutlinedTextField(
                     value = currentPassword,
@@ -455,15 +461,21 @@ private fun ChangePasswordDialog(
             }
         },
         confirmButton = {
-            TextButton(
-                onClick = { onSubmit(currentPassword, newPassword, confirmPassword) },
-                enabled = !state.isProcessingAccountAction && currentPassword.isNotBlank() && newPassword.isNotBlank() && confirmPassword.isNotBlank(),
-            ) {
-                Text(stringResource(R.string.profile_change_password_button))
+            if (state.changePasswordSuccess) {
+                TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_ok)) }
+            } else {
+                TextButton(
+                    onClick = { onSubmit(currentPassword, newPassword, confirmPassword) },
+                    enabled = !state.isProcessingAccountAction && currentPassword.isNotBlank() && newPassword.isNotBlank() && confirmPassword.isNotBlank(),
+                ) {
+                    Text(stringResource(R.string.profile_change_password_button))
+                }
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_cancel)) }
+            if (!state.changePasswordSuccess) {
+                TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_cancel)) }
+            }
         },
     )
 }
@@ -590,7 +602,7 @@ private fun AchievementCard(achievement: Achievement, modifier: Modifier = Modif
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Text(text = achievement.iconEmoji, fontSize = 24.sp)
             Text(
-                text = if (unlocked) achievement.rarity.name else stringResource(R.string.common_locked),
+                text = stringResource(if (unlocked) achievement.rarity.labelRes else R.string.common_locked),
                 style = MaterialTheme.typography.bodySmall,
                 color = if (unlocked) Color(achievement.rarity.composeColorArgb) else Muted,
                 fontSize = 9.sp,
