@@ -5,7 +5,9 @@ import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ServerValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.functions.FirebaseFunctions
+import com.google.firebase.functions.FirebaseFunctionsException
 import com.softyorch.stroopoverload.core.StroopColor
+import com.softyorch.stroopoverload.core.runCatchingCancellable
 import com.softyorch.stroopoverload.domain.multiplayer.MultiplayerRoom
 import com.softyorch.stroopoverload.domain.multiplayer.MultiplayerStimulus
 import com.softyorch.stroopoverload.domain.multiplayer.RoomMode
@@ -22,56 +24,75 @@ class FirebaseMultiplayerRepository(
     private val database: FirebaseDatabase = FirebaseDatabase.getInstance(),
 ) : MultiplayerRepository {
 
-    override suspend fun createRoom(displayName: String, mode: RoomMode): Result<Pair<String, String>> = runCatching {
+    override suspend fun createRoom(displayName: String, mode: RoomMode): Result<Pair<String, String>> = call("createRoom") {
         val data = mapOf("displayName" to displayName, "mode" to mode.toFirestoreValue())
         val result = functions.getHttpsCallable("createRoom").call(data).await()
         val map = result.data as Map<*, *>
         (map["roomId"] as String) to (map["code"] as String)
     }
 
-    override suspend fun joinRoom(code: String, displayName: String): Result<String> = runCatching {
+    override suspend fun joinRoom(code: String, displayName: String): Result<String> = call("joinRoom") {
         val data = mapOf("code" to code, "displayName" to displayName)
-        val result = functions.getHttpsCallable("joinRoom").call(data).await()
+        val result = try {
+            functions.getHttpsCallable("joinRoom").call(data).await()
+        } catch (e: FirebaseFunctionsException) {
+            throw JoinRoomException(joinRoomFailureFor(e.code.name), e)
+        }
         (result.data as Map<*, *>)["roomId"] as String
     }
 
-    override suspend fun startGame(roomId: String): Result<Unit> = runCatching {
+    override suspend fun startGame(roomId: String): Result<Unit> = call("startGame") {
         functions.getHttpsCallable("startGame").call(mapOf("roomId" to roomId)).await()
         Unit
     }
 
-    override suspend fun submitAnswer(roomId: String, selectedColor: StroopColor): Result<Unit> = runCatching {
+    override suspend fun submitAnswer(roomId: String, selectedColor: StroopColor): Result<Unit> = call("submitAnswer") {
         val data = mapOf("roomId" to roomId, "selectedColor" to selectedColor.name)
         functions.getHttpsCallable("submitAnswer").call(data).await()
         Unit
     }
 
+    /**
+     * Terminates with an error (instead of silently going quiet) when the listener
+     * fails or the room document disappears, so the ViewModel can leave the room
+     * and tell the player rather than leaving them on a frozen screen.
+     */
     override fun observeRoom(roomId: String): Flow<MultiplayerRoom> = callbackFlow {
         val ref = firestore.collection("rooms").document(roomId)
         val registration = ref.addSnapshotListener { snapshot, error ->
             if (error != null) {
-                Log.w("MultiplayerRepo", "Room listener error: ${error.message}")
+                Log.w(TAG, "Room listener error for room $roomId: ${error.message}")
+                close(error)
                 return@addSnapshotListener
             }
-            val data = snapshot?.data ?: return@addSnapshotListener
+            if (snapshot == null) return@addSnapshotListener
+            val data = snapshot.data
+            if (!snapshot.exists() || data == null) {
+                close(RoomUnavailableException(roomId))
+                return@addSnapshotListener
+            }
             trySend(mapRoom(roomId, data))
         }
         awaitClose { registration.remove() }
     }
 
-    override suspend fun deleteMyMultiplayerData(): Result<Unit> = runCatching {
+    override suspend fun deleteMyMultiplayerData(): Result<Unit> = call("deleteMyMultiplayerData") {
         functions.getHttpsCallable("deleteMyMultiplayerData").call().await()
         Unit
     }
+
+    /** Runs a callable: cancellation propagates, failures are logged here (the UI only ever gets a typed reason). */
+    private inline fun <T> call(name: String, block: () -> T): Result<T> =
+        runCatchingCancellable(block).onFailure { Log.w(TAG, "$name failed: ${it.message}", it) }
 
     override fun trackPresence(roomId: String, uid: String) {
         val presenceRef = database.getReference("presence/$roomId/$uid")
         val offlineValue = mapOf("state" to "offline", "lastChanged" to ServerValue.TIMESTAMP)
         val onlineValue = mapOf("state" to "online", "lastChanged" to ServerValue.TIMESTAMP)
         presenceRef.onDisconnect().setValue(offlineValue)
-            .addOnFailureListener { Log.w("MultiplayerRepo", "Failed to register presence onDisconnect for room $roomId: ${it.message}") }
+            .addOnFailureListener { Log.w(TAG, "Failed to register presence onDisconnect for room $roomId: ${it.message}") }
         presenceRef.setValue(onlineValue)
-            .addOnFailureListener { Log.w("MultiplayerRepo", "Failed to write online presence for room $roomId: ${it.message}") }
+            .addOnFailureListener { Log.w(TAG, "Failed to write online presence for room $roomId: ${it.message}") }
     }
 
     private fun mapRoom(roomId: String, data: Map<String, Any?>): MultiplayerRoom {
@@ -126,7 +147,7 @@ class FirebaseMultiplayerRepository(
         val rawOptions = it["options"] as? List<String> ?: emptyList()
         val options = rawOptions.mapNotNull { raw ->
             StroopColor.entries.find { color -> color.name == raw }.also { parsed ->
-                if (parsed == null) Log.w("MultiplayerRepo", "Unrecognized stimulus option color: $raw")
+                if (parsed == null) Log.w(TAG, "Unrecognized stimulus option color: $raw")
             }
         }
         MultiplayerStimulus(
@@ -138,6 +159,10 @@ class FirebaseMultiplayerRepository(
 
     private fun parseStroopColor(raw: String?, fallback: StroopColor): StroopColor =
         StroopColor.entries.find { it.name == raw } ?: fallback.also {
-            Log.w("MultiplayerRepo", "Unrecognized stimulus color value: $raw, falling back to $fallback")
+            Log.w(TAG, "Unrecognized stimulus color value: $raw, falling back to $fallback")
         }
+
+    private companion object {
+        const val TAG = "MultiplayerRepo"
+    }
 }

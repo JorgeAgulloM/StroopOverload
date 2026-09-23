@@ -4,19 +4,15 @@ import { getDatabase } from "firebase-admin/database";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { onTaskDispatched } from "firebase-functions/v2/tasks";
 import { onValueWritten } from "firebase-functions/v2/database";
+import { onSchedule } from "firebase-functions/v2/scheduler";
 import { generateUniqueRoomCode, findJoinableRoomByCode, roomsCol } from "./roomRepo";
 import { GameModeId, ResolutionReason, RoomDoc, RoomPlayerDoc } from "./types";
-import { generateStimulus } from "./stimulus";
-import { timeLimitMsForRound } from "./turnLogic";
 import { resolveRound } from "./resolveRound";
-import { armBomb, explodeBomb as explodeBombFn, resolveHotPotatoTurn } from "./resolveHotPotato";
-import {
-  beginSoloSurvivalMatch,
-  finishSoloSurvivalSession,
-  resolveSoloAnswer,
-  SOLO_SESSION_DURATION_MS,
-} from "./soloSurvival";
-import { scheduleTimeoutCheck, scheduleGameStart, scheduleSoloPlayerTimeoutCheck } from "./taskQueue";
+import { explodeBomb as explodeBombFn, resolveHotPotatoTurn } from "./resolveHotPotato";
+import { finishSoloSurvivalSession, resolveSoloAnswer } from "./soloSurvival";
+import { beginMatch } from "./matchStart";
+import { purgeExpiredRooms as purgeExpiredRoomsFn, sweepStuckRooms as sweepStuckRoomsFn } from "./roomWatchdog";
+import { scheduleGameStart } from "./taskQueue";
 
 initializeApp();
 
@@ -162,46 +158,7 @@ export const beginRound = onTaskDispatched<{ roomId: string }>(
   async (req) => {
     const { roomId } = req.data;
     try {
-      const roomRef = roomsCol().doc(roomId);
-      const modeDoc = await roomRef.get();
-      if (!modeDoc.exists) return;
-      const mode = (modeDoc.data() as RoomDoc).mode;
-
-      if (mode === "solo_survival") {
-        const playerDeadlines = await beginSoloSurvivalMatch(roomId);
-        if (playerDeadlines.length === 0) return; // stale/already handled
-        await Promise.all(
-          playerDeadlines.map((d) => scheduleSoloPlayerTimeoutCheck(roomId, d.uid, d.round, d.deadlineAtMs - Date.now()))
-        );
-        await scheduleTimeoutCheck(roomId, 0, SOLO_SESSION_DURATION_MS);
-        return;
-      }
-
-      let scheduled: { round: number; deadlineAtMs: number } | null = null;
-
-      await getFirestore().runTransaction(async (tx) => {
-        const doc = await tx.get(roomRef);
-        if (!doc.exists) return;
-        const room = doc.data() as RoomDoc;
-        if (room.status !== "starting") return; // stale/already handled
-
-        const stimulus = generateStimulus();
-        const deadlineAtMs = Date.now() + timeLimitMsForRound(1);
-        tx.update(roomRef, { status: "playing", round: 1, turnIndex: 0, stimulus, deadlineAtMs });
-        scheduled = { round: 1, deadlineAtMs };
-      });
-
-      if (scheduled) {
-        const { round, deadlineAtMs } = scheduled as { round: number; deadlineAtMs: number };
-        if (mode === "hot_potato") {
-          // No timeout task for this mode -- the current holder can take as
-          // long as they want between stimuli; only the hidden bomb (armed
-          // below) applies real pressure. See resolveHotPotato.ts.
-          await armBomb(roomId);
-        } else {
-          await scheduleTimeoutCheck(roomId, round, deadlineAtMs - Date.now());
-        }
-      }
+      await beginMatch(roomId);
     } catch (err) {
       console.error(`beginRound failed for room ${roomId}`, err);
       throw err;
@@ -210,12 +167,12 @@ export const beginRound = onTaskDispatched<{ roomId: string }>(
 );
 
 // Fired by the Cloud Task armBomb schedules. See resolveHotPotato.ts for the logic.
-export const explodeBomb = onTaskDispatched<{ roomId: string }>(
+export const explodeBomb = onTaskDispatched<{ roomId: string; bombAtMs?: number }>(
   { retryConfig: { maxAttempts: 5, minBackoffSeconds: 1 } },
   async (req) => {
-    const { roomId } = req.data;
+    const { roomId, bombAtMs } = req.data;
     try {
-      await explodeBombFn(roomId);
+      await explodeBombFn(roomId, bombAtMs);
     } catch (err) {
       console.error(`explodeBomb failed for room ${roomId}`, err);
       throw err;
@@ -409,4 +366,16 @@ export const onPresenceChanged = onValueWritten("presence/{roomId}/{uid}", async
   } catch (err) {
     console.error(`onPresenceChanged failed for room ${roomId}, uid ${uid}`, err);
   }
+});
+
+// Safety net for rooms whose next Cloud Task was never enqueued (see
+// roomWatchdog.ts). A stuck room is recovered within about a minute.
+export const sweepStuckRooms = onSchedule("every 1 minutes", async () => {
+  const repaired = await sweepStuckRoomsFn();
+  if (repaired > 0) console.warn(`sweepStuckRooms: repaired ${repaired} stuck room(s)`);
+});
+
+export const purgeExpiredRooms = onSchedule("every 60 minutes", async () => {
+  const deleted = await purgeExpiredRoomsFn();
+  if (deleted > 0) console.log(`purgeExpiredRooms: deleted ${deleted} expired room(s)`);
 });

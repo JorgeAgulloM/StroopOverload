@@ -18,7 +18,7 @@ export async function armBomb(roomId: string): Promise<void> {
   const delayMs = randomBombDelayMs();
   const bombAtMs = Date.now() + delayMs;
   await privateBombDoc(roomId).set({ bombAtMs });
-  await scheduleBombExplosion(roomId, delayMs);
+  await scheduleBombExplosion(roomId, delayMs, bombAtMs);
 }
 
 /**
@@ -75,16 +75,28 @@ export async function resolveHotPotatoTurn(
  * Fired by the Cloud Task scheduled in armBomb. Eliminates whoever holds the
  * turn at this exact instant. If that leaves a sole survivor, the match ends;
  * otherwise a fresh bomb is armed for the remaining players and play continues.
+ *
+ * Idempotent per bomb: the task carries the bombAtMs it was armed for, and it
+ * only detonates while rooms/{id}/private/bomb still holds that exact value.
+ * The bomb doc is deleted in the same transaction, so a duplicate delivery (Cloud
+ * Tasks is at-least-once) or a task for a bomb that was since replaced no-ops
+ * instead of eliminating a second player. `expectedBombAtMs` is optional only
+ * for tasks enqueued before this field existed; those only detonate a bomb that
+ * is already due, never a freshly re-armed one (always 15-30s in the future).
  */
-export async function explodeBomb(roomId: string): Promise<void> {
+export async function explodeBomb(roomId: string, expectedBombAtMs?: number): Promise<void> {
   const roomRef = roomsCol().doc(roomId);
+  const bombRef = privateBombDoc(roomId);
 
   const outcome = await getFirestore().runTransaction<"finished" | "continued" | "stale">(async (tx) => {
-    const doc = await tx.get(roomRef);
-    if (!doc.exists) return "stale";
+    const [doc, bombDoc] = await Promise.all([tx.get(roomRef), tx.get(bombRef)]);
+    if (!doc.exists || !bombDoc.exists) return "stale";
+    const { bombAtMs } = bombDoc.data()!;
+    if (expectedBombAtMs !== undefined ? bombAtMs !== expectedBombAtMs : bombAtMs > Date.now()) return "stale";
     const room = doc.data() as RoomDoc;
     if (room.status !== "playing" || room.mode !== "hot_potato") return "stale";
 
+    tx.delete(bombRef);
     const holderUid = room.turnOrder[room.turnIndex];
     const players = { ...room.players, [holderUid]: { ...room.players[holderUid], alive: false, eliminatedAtMs: Date.now() } };
 
@@ -107,10 +119,14 @@ export async function explodeBomb(roomId: string): Promise<void> {
   });
 
   if (outcome === "continued") {
+    // Deliberately not rethrown: the elimination above is already committed, and
+    // a Cloud Tasks retry of this handler can't re-arm anything (the bomb doc is
+    // gone, so it would no-op). A room left without a bomb is picked up and
+    // re-armed by the roomWatchdog sweep instead.
     try {
       await armBomb(roomId);
     } catch (err) {
-      console.error(`explodeBomb: failed to arm the next bomb for room ${roomId}`, err);
+      console.error(`explodeBomb: failed to arm the next bomb for room ${roomId}; watchdog will re-arm`, err);
     }
   }
 }

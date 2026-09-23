@@ -1176,3 +1176,18 @@ this round.
 - No music for Lobby/GameModeSelect/GameOver/Leaderboard/Profile -- explicit scope decision (see
   above), revisit if the user wants full-app music coverage later.
 - Nothing committed this round.
+
+---
+
+## Sub-task: Refresh brain/graph + full audit (2026-09-22)
+
+- [x] `mobiai brain scan` + `mobiai graph init` (68 files / 346 symbols)
+- [x] Brain memories populated from git history (11 decisions, 5 bugfixes, 3 testing, integrations, releases)
+- [x] Audit: app core, Compose UI, Firebase functions/rules — findings recorded in brain entry "Auditoría 2026-09-22"
+- [x] Prioritized bug list delivered to user (15 items)
+- [x] #1 Stuck online rooms (backend+client) — implemented, functions 127/127, Kotlin 72/72, release+demo compile. NOT deployed, NOT committed.
+  - Backend: bomb token idempotency (explodeBomb), roomWatchdog.ts (sweepStuckRooms every 1 min, purgeExpiredRooms every 60 min, TTL 6h), matchStart.beginMatch extracted from beginRound.
+  - Client: observeRoom close() on error/doc gone, runCatchingCancellable, typed JoinRoomFailure, no raw server text in UI, 4 strings x 6 locales.
+  - Review: APPROVE (legacy-task MEDIUM fixed, functions 129/129). Deploy needs Cloud Scheduler API enabled.
+- [ ] #2 Leaderboard anti-cheat — BLOCKED on user decision (offline games count toward leaderboard?)
+- [ ] #3.. see list in conversation / brain audit entry

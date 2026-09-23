@@ -107,7 +107,9 @@ describe("armBomb", () => {
     expect(delay).toBeGreaterThanOrEqual(BOMB_MIN_DELAY_MS);
     expect(delay).toBeLessThanOrEqual(BOMB_MAX_DELAY_MS + 50); // small slack for test execution time
 
-    expect(scheduleBombExplosion).toHaveBeenCalledWith("room-1", expect.any(Number));
+    // The task carries the exact bombAtMs it was armed for, so explodeBomb can
+    // tell a live bomb apart from a duplicate/stale delivery.
+    expect(scheduleBombExplosion).toHaveBeenCalledWith("room-1", expect.any(Number), bombDoc!.bombAtMs);
   });
 });
 
@@ -169,19 +171,29 @@ describe("resolveHotPotatoTurn", () => {
   });
 });
 
+async function seedBomb(bombAtMs: number): Promise<void> {
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    await context.firestore().collection("rooms").doc("room-1").collection("private").doc("bomb").set({ bombAtMs });
+  });
+}
+
+const ARMED_BOMB_AT_MS = 1_000;
+
 describe("explodeBomb", () => {
   test("eliminates the current turn-holder and arms a fresh bomb when players remain", async () => {
     await seedRoom(); // "a" holds the turn
-    await explodeBomb("room-1");
+    await seedBomb(ARMED_BOMB_AT_MS);
+    await explodeBomb("room-1", ARMED_BOMB_AT_MS);
 
     const after = await getRoom();
     expect(after.players.a.alive).toBe(false);
     expect(after.status).toBe("playing"); // b and c remain -- match continues
     expect(after.turnIndex).toBe(1); // advanced past the eliminated holder
 
-    expect(scheduleBombExplosion).toHaveBeenCalledWith("room-1", expect.any(Number));
+    expect(scheduleBombExplosion).toHaveBeenCalledWith("room-1", expect.any(Number), expect.any(Number));
     const bombDoc = await getPrivateBombDoc();
     expect(bombDoc).toBeDefined(); // a new bomb was armed for the remaining players
+    expect(bombDoc!.bombAtMs).not.toBe(ARMED_BOMB_AT_MS);
   });
 
   test("finishes the match with the sole survivor once only one player remains", async () => {
@@ -193,7 +205,8 @@ describe("explodeBomb", () => {
       },
       turnIndex: 0, // "a" holds the turn, "b" already eliminated
     });
-    await explodeBomb("room-1");
+    await seedBomb(ARMED_BOMB_AT_MS);
+    await explodeBomb("room-1", ARMED_BOMB_AT_MS);
 
     const after = await getRoom();
     expect(after.status).toBe("finished");
@@ -201,11 +214,70 @@ describe("explodeBomb", () => {
     expect(after.stimulus).toBeNull();
     expect(after.deadlineAtMs).toBeNull();
     expect(scheduleBombExplosion).not.toHaveBeenCalled(); // no next bomb once the match is over
+    expect(await getPrivateBombDoc()).toBeUndefined(); // spent bomb is cleared
+  });
+
+  test("a duplicate delivery of the same bomb task eliminates only one player", async () => {
+    await seedRoom(); // "a" holds the turn, b and c alive
+    await seedBomb(ARMED_BOMB_AT_MS);
+    (scheduleBombExplosion as jest.Mock).mockRejectedValueOnce(new Error("queue down")); // next bomb fails to schedule
+
+    await explodeBomb("room-1", ARMED_BOMB_AT_MS);
+    await explodeBomb("room-1", ARMED_BOMB_AT_MS); // Cloud Tasks at-least-once redelivery
+
+    const after = await getRoom();
+    expect(after.players.a.alive).toBe(false);
+    expect(after.players.b.alive).toBe(true); // NOT eliminated by the duplicate
+    expect(after.status).toBe("playing");
+  });
+
+  test("a stale task for a bomb that was already replaced is ignored", async () => {
+    await seedRoom();
+    await seedBomb(ARMED_BOMB_AT_MS + 5_000); // a newer bomb is armed
+    await explodeBomb("room-1", ARMED_BOMB_AT_MS);
+
+    const after = await getRoom();
+    expect(after.players.a.alive).toBe(true); // untouched
+    expect((await getPrivateBombDoc())!.bombAtMs).toBe(ARMED_BOMB_AT_MS + 5_000);
+  });
+
+  test("a legacy task without bombAtMs never detonates a freshly re-armed bomb", async () => {
+    await seedRoom();
+    await seedBomb(Date.now() + 20_000);
+    await explodeBomb("room-1");
+
+    expect((await getRoom()).players.a.alive).toBe(true);
+  });
+
+  test("a legacy task without bombAtMs still detonates a bomb that is due", async () => {
+    await seedRoom();
+    await seedBomb(Date.now() - 1_000);
+    await explodeBomb("room-1");
+
+    expect((await getRoom()).players.a.alive).toBe(false);
+  });
+
+  test("no-ops when no bomb is armed at all", async () => {
+    await seedRoom();
+    await explodeBomb("room-1", ARMED_BOMB_AT_MS);
+
+    const after = await getRoom();
+    expect(after.players.a.alive).toBe(true);
+  });
+
+  test("does not throw when arming the next bomb fails (the watchdog re-arms it)", async () => {
+    await seedRoom();
+    await seedBomb(ARMED_BOMB_AT_MS);
+    (scheduleBombExplosion as jest.Mock).mockRejectedValueOnce(new Error("queue down"));
+
+    await expect(explodeBomb("room-1", ARMED_BOMB_AT_MS)).resolves.toBeUndefined();
+    expect((await getRoom()).players.a.alive).toBe(false);
   });
 
   test("no-ops on a room that already finished (stale/duplicate task run)", async () => {
     await seedRoom({ status: "finished", winnerUid: "c" });
-    await explodeBomb("room-1");
+    await seedBomb(ARMED_BOMB_AT_MS);
+    await explodeBomb("room-1", ARMED_BOMB_AT_MS);
 
     const after = await getRoom();
     expect(after.status).toBe("finished");
@@ -215,7 +287,8 @@ describe("explodeBomb", () => {
 
   test("no-ops on a room that isn't hot_potato mode (defense in depth)", async () => {
     await seedRoom({ mode: "mistake" });
-    await explodeBomb("room-1");
+    await seedBomb(ARMED_BOMB_AT_MS);
+    await explodeBomb("room-1", ARMED_BOMB_AT_MS);
 
     const after = await getRoom();
     expect(after.players.a.alive).toBe(true); // untouched

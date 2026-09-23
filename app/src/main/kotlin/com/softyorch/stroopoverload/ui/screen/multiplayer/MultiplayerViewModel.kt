@@ -5,6 +5,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.softyorch.stroopoverload.core.StroopColor
 import com.softyorch.stroopoverload.data.FirebaseMultiplayerRepository
+import com.softyorch.stroopoverload.data.JoinRoomException
+import com.softyorch.stroopoverload.data.JoinRoomFailure
 import com.softyorch.stroopoverload.data.MultiplayerRepository
 import com.softyorch.stroopoverload.domain.multiplayer.RoomMode
 import kotlinx.coroutines.CancellationException
@@ -31,7 +33,7 @@ class MultiplayerViewModel(
         viewModelScope.launch {
             repository.createRoom(displayName, mode)
                 .onSuccess { (roomId, _) -> observeRoom(roomId) }
-                .onFailure { _state.value = MultiplayerUiState.Error(MultiplayerErrorReason.CreateRoomFailed(it.message)) }
+                .onFailure { _state.value = MultiplayerUiState.Error(MultiplayerErrorReason.CreateRoomFailed) }
         }
     }
 
@@ -42,7 +44,10 @@ class MultiplayerViewModel(
         viewModelScope.launch {
             repository.joinRoom(code, displayName)
                 .onSuccess { roomId -> observeRoom(roomId) }
-                .onFailure { _state.value = MultiplayerUiState.Error(MultiplayerErrorReason.JoinRoomFailed(it.message)) }
+                .onFailure { err ->
+                    val failure = (err as? JoinRoomException)?.failure ?: JoinRoomFailure.UNKNOWN
+                    _state.value = MultiplayerUiState.Error(MultiplayerErrorReason.JoinRoomFailed(failure))
+                }
         }
     }
 
@@ -51,14 +56,14 @@ class MultiplayerViewModel(
         if (current.isStartingGame) return
         _state.value = current.copy(isStartingGame = true, startGameError = null)
         viewModelScope.launch {
-            repository.startGame(current.room.roomId).onFailure { err ->
+            repository.startGame(current.room.roomId).onFailure {
                 // Re-read the latest InRoom state rather than reusing `current`: the
                 // Firestore listener may have pushed a newer room in the meantime,
                 // and clobbering it back to `current` would lose that update.
                 val latest = _state.value as? MultiplayerUiState.InRoom ?: return@onFailure
                 _state.value = latest.copy(
                     isStartingGame = false,
-                    startGameError = MultiplayerErrorReason.StartGameFailed(err.message),
+                    startGameError = MultiplayerErrorReason.StartGameFailed,
                 )
             }
         }
@@ -99,7 +104,8 @@ class MultiplayerViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                _state.value = MultiplayerUiState.Error(MultiplayerErrorReason.ConnectionLost(e.message))
+                // Listener failure or the room doc vanished -- see FirebaseMultiplayerRepository.observeRoom.
+                _state.value = MultiplayerUiState.Error(MultiplayerErrorReason.ConnectionLost)
             }
         }
     }

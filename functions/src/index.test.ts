@@ -424,7 +424,7 @@ describe("beginRound", () => {
 
     await beginRound.run(buildTaskRequest<{ roomId: string }>({ roomId: "room-1" }));
 
-    expect(scheduleBombExplosion).toHaveBeenCalledWith("room-1", expect.any(Number));
+    expect(scheduleBombExplosion).toHaveBeenCalledWith("room-1", expect.any(Number), expect.any(Number));
   });
 
   test("does not arm a bomb for the default 'mistake' mode", async () => {

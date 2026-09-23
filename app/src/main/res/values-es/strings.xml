@@ -311,6 +311,10 @@
     <string name="mp_error_join_room">No se pudo unir a la sala.</string>
     <string name="mp_error_start_game">No se pudo iniciar la partida.</string>
     <string name="mp_error_connection_lost">Se perdió la conexión con la sala.</string>
+    <string name="mp_error_room_not_found">No hay ninguna sala abierta con ese código.</string>
+    <string name="mp_error_room_full">La sala está llena (máximo 4 jugadores).</string>
+    <string name="mp_error_room_already_started">Esa partida ya ha empezado.</string>
+    <string name="mp_error_invalid_code">Código no válido: 5 letras/números.</string>
 
     <!-- Achievements -->
     <string name="achievement_first_blood_title">INICIACIÓN NEURAL</string>

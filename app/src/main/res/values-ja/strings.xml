@@ -311,6 +311,10 @@
     <string name="mp_error_join_room">ルームに参加できませんでした。</string>
     <string name="mp_error_start_game">対戦を開始できませんでした。</string>
     <string name="mp_error_connection_lost">ルームとの接続が失われました。</string>
+    <string name="mp_error_room_not_found">そのコードで参加できるルームはありません。</string>
+    <string name="mp_error_room_full">ルームは満員です（最大4人）。</string>
+    <string name="mp_error_room_already_started">その試合はすでに始まっています。</string>
+    <string name="mp_error_invalid_code">無効なコード：英数字5文字で入力してください。</string>
 
     <!-- Achievements -->
     <string name="achievement_first_blood_title">ニューラル・イニシエーション</string>

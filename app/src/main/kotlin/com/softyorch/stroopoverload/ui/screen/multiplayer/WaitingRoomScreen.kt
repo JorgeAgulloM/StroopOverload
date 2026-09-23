@@ -166,7 +166,7 @@ fun WaitingRoomScreen(
                 if (startGameError != null) {
                     Spacer(Modifier.height(8.dp))
                     Text(
-                        text = startGameError.detail ?: stringResource(R.string.mp_error_start_game),
+                        text = stringResource(R.string.mp_error_start_game),
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.error,
                         textAlign = TextAlign.Center,
