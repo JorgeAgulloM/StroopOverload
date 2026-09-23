@@ -42,6 +42,8 @@ import com.softyorch.stroopoverload.ui.screen.profile.ProfileViewModel
 import com.softyorch.stroopoverload.ui.components.AnonymousGateDialog
 import kotlinx.coroutines.launch
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 private const val ROUTE_AUTH = "auth"
 private const val ROUTE_HOME = "home"
@@ -119,14 +121,21 @@ fun StroopNavGraph() {
     var showAnonymousGateDialog by remember { mutableStateOf(false) }
 
     val startRoute = remember {
-        AsoDemoSeeder.seedIfNeeded(context)
         val isDemoShowcaseBuild = BuildConfig.FLAVOR == "demo"
         if (authService.currentUid == null && !isDemoShowcaseBuild) ROUTE_AUTH else ROUTE_HOME
     }
 
+    // Seeding and profile loading both touch SharedPreferences and SQLite. They used
+    // to run inside remember {}, i.e. during composition, which Compose may enter,
+    // discard and re-run -- and which blocks the first frame on disk I/O. An effect
+    // on the IO dispatcher is where this belongs.
     LaunchedEffect(navController) {
-        currentProfile = repository.getProfile()
-        previousHighScore = currentProfile.highScore
+        val profile = withContext(Dispatchers.IO) {
+            AsoDemoSeeder.seedIfNeeded(context)
+            repository.getProfile()
+        }
+        currentProfile = profile
+        previousHighScore = profile.highScore
     }
 
     NavHost(navController = navController, startDestination = startRoute) {
@@ -194,6 +203,7 @@ fun StroopNavGraph() {
             GameScreen(
                 viewModel = gameVm,
                 isAdFree = currentProfile.isAdFree || currentProfile.isPremium,
+                onLeaveMatch = { navController.popBackStack() },
                 onGameOver = { result ->
                     val playingState = gameState as? GameState.Playing
                     val streak = playingState?.currentStreak ?: 0
@@ -238,6 +248,7 @@ fun StroopNavGraph() {
         composable(ROUTE_MULTIPLAYER) {
             MultiplayerScreen(
                 myUid = authService.currentUid ?: "guest_local_0001",
+                onLeaveMatch = { navController.popBackStack() },
                 myNickname = currentProfile.displayName,
                 repository = repository,
                 interstitialAdManager = interstitialAdManager,

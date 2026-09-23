@@ -78,6 +78,13 @@
     <string name="countdown_get_ready">BEREIT MACHEN</string>
     <string name="countdown_go">LOS!</string>
 
+    <!-- Leaving a match in progress -->
+    <string name="exit_match_title">Match verlassen?</string>
+    <string name="exit_match_local_message">Der Lauf endet hier. Dein Punktestand wird nicht gewertet.</string>
+    <string name="exit_match_online_message">Du gibst das Match auf. Die anderen Piloten spielen ohne dich weiter.</string>
+    <string name="exit_match_confirm">VERLASSEN</string>
+    <string name="exit_match_stay">WEITERSPIELEN</string>
+
     <!-- Game over screen -->
     <string name="game_over_victory_title">[ SYNAPSEN-SIEG ]</string>
     <string name="game_over_defeat_title">[ NEURALE ÜBERLASTUNG ]</string>

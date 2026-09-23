@@ -42,11 +42,14 @@ import com.softyorch.stroopoverload.ui.components.CountdownOverlay
 import com.softyorch.stroopoverload.ui.theme.*
 import com.softyorch.stroopoverload.ui.components.TimerBarHost
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.activity.compose.BackHandler
+import com.softyorch.stroopoverload.ui.components.ExitMatchDialog
 
 @Composable
 fun GameScreen(
     viewModel: GameViewModel,
     onGameOver: (GameResult) -> Unit,
+    onLeaveMatch: () -> Unit,
     isAdFree: Boolean = false,
 ) {
     val context = LocalContext.current
@@ -61,6 +64,22 @@ fun GameScreen(
     }
 
     val playingState = state as? GameState.Playing
+
+    // Back during a live run used to abandon it silently: no score recorded, no
+    // warning. Only guarded while actually playing -- menus and the game-over
+    // screen keep the normal back behaviour.
+    var showLeaveConfirmation by remember { mutableStateOf(false) }
+    BackHandler(enabled = playingState != null) { showLeaveConfirmation = true }
+    if (showLeaveConfirmation) {
+        ExitMatchDialog(
+            messageRes = R.string.exit_match_local_message,
+            onConfirm = {
+                showLeaveConfirmation = false
+                onLeaveMatch()
+            },
+            onDismiss = { showLeaveConfirmation = false },
+        )
+    }
 
     // correctHits/missFlashColor only ever change on their respective event
     // (monotonic increment / flash-then-clear), so keying LaunchedEffect on

@@ -78,6 +78,13 @@
     <string name="countdown_get_ready">PRÉPAREZ-VOUS</string>
     <string name="countdown_go">GO !</string>
 
+    <!-- Leaving a match in progress -->
+    <string name="exit_match_title">Quitter la partie ?</string>
+    <string name="exit_match_local_message">La partie se termine ici. Ton score ne sera pas enregistré.</string>
+    <string name="exit_match_online_message">Tu abandonnes la partie. Les autres pilotes continuent sans toi.</string>
+    <string name="exit_match_confirm">QUITTER</string>
+    <string name="exit_match_stay">CONTINUER</string>
+
     <!-- Game over screen -->
     <string name="game_over_victory_title">[ VICTOIRE SYNAPTIQUE ]</string>
     <string name="game_over_defeat_title">[ SURCHARGE NEURALE ]</string>

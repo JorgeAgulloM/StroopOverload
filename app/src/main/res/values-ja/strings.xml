@@ -78,6 +78,13 @@
     <string name="countdown_get_ready">準備しろ</string>
     <string name="countdown_go">スタート!</string>
 
+    <!-- Leaving a match in progress -->
+    <string name="exit_match_title">ゲームを終了しますか？</string>
+    <string name="exit_match_local_message">ここで終了します。スコアは記録されません。</string>
+    <string name="exit_match_online_message">このマッチを放棄します。他のパイロットはそのまま続行します。</string>
+    <string name="exit_match_confirm">終了</string>
+    <string name="exit_match_stay">続ける</string>
+
     <!-- Game over screen -->
     <string name="game_over_victory_title">[ シナプス勝利 ]</string>
     <string name="game_over_defeat_title">[ ニューラル・オーバーロード ]</string>

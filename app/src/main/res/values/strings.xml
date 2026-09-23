@@ -78,6 +78,13 @@
     <string name="countdown_get_ready">GET READY</string>
     <string name="countdown_go">GO!</string>
 
+    <!-- Leaving a match in progress -->
+    <string name="exit_match_title">Leave the match?</string>
+    <string name="exit_match_local_message">This run ends here. Your score will not be recorded.</string>
+    <string name="exit_match_online_message">You forfeit the match. The other pilots keep playing without you.</string>
+    <string name="exit_match_confirm">LEAVE</string>
+    <string name="exit_match_stay">KEEP PLAYING</string>
+
     <!-- Game over screen -->
     <string name="game_over_victory_title">[ SYNAPSE VICTORY ]</string>
     <string name="game_over_defeat_title">[ NEURAL OVERLOAD ]</string>

@@ -29,10 +29,13 @@ import com.softyorch.stroopoverload.ui.GAMEPLAY_MUSIC_TRACKS
 import com.softyorch.stroopoverload.ui.components.CountdownOverlay
 import kotlinx.coroutines.delay
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.activity.compose.BackHandler
+import com.softyorch.stroopoverload.ui.components.ExitMatchDialog
 
 @Composable
 fun MultiplayerScreen(
     myUid: String,
+    onLeaveMatch: () -> Unit,
     myNickname: String,
     repository: FirebaseGameRepository,
     interstitialAdManager: InterstitialAdManager,
@@ -52,6 +55,24 @@ fun MultiplayerScreen(
     // PLAYING/FINISHED share the same shuffled gameplay playlist as local
     // single-player. Lobby/idle/connecting/error stay silent.
     val roomStatus = (state as? MultiplayerUiState.InRoom)?.room?.status
+
+    // Leaving a live match forfeits it: presence drops, and in "mistake" mode the
+    // backend eliminates the disconnected player. Worth a confirmation, unlike
+    // backing out of the lobby or the result screen.
+    val isMatchLive = roomStatus == RoomStatus.STARTING || roomStatus == RoomStatus.PLAYING
+    var showLeaveConfirmation by remember { mutableStateOf(false) }
+    BackHandler(enabled = isMatchLive) { showLeaveConfirmation = true }
+    if (showLeaveConfirmation) {
+        ExitMatchDialog(
+            messageRes = R.string.exit_match_online_message,
+            onConfirm = {
+                showLeaveConfirmation = false
+                viewModel.exitRoom()
+                onLeaveMatch()
+            },
+            onDismiss = { showLeaveConfirmation = false },
+        )
+    }
     val musicTrack = when (roomStatus) {
         RoomStatus.WAITING, RoomStatus.STARTING -> MusicTrack.Loop(R.raw.music_waiting_room)
         RoomStatus.PLAYING, RoomStatus.FINISHED -> MusicTrack.Playlist(GAMEPLAY_MUSIC_TRACKS)
