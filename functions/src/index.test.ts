@@ -1,7 +1,7 @@
 import { assertFails, assertSucceeds, initializeTestEnvironment, RulesTestEnvironment } from "@firebase/rules-unit-testing";
 import { readFileSync } from "fs";
 import * as path from "path";
-import { getApps, initializeApp, getApp } from "firebase-admin/app";
+import { getApps, getApp } from "firebase-admin/app";
 import { DocumentData } from "firebase-admin/firestore";
 import { CallableRequest } from "firebase-functions/v2/https";
 import { Request as TaskRequest } from "firebase-functions/v2/tasks";
@@ -134,11 +134,6 @@ async function getRoom(roomId: string): Promise<DocumentData> {
     data = snap.data();
   });
   return data!;
-}
-
-interface ResolveTimeoutTaskData {
-  roomId: string;
-  round: number;
 }
 
 // Builds a minimal Request<T>-shaped object (TaskContext & { data: T }) for
