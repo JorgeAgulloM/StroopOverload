@@ -1,16 +1,16 @@
 package com.softyorch.stroopoverload.ui.screen.profile
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.softyorch.stroopoverload.R
+import com.softyorch.stroopoverload.core.StringResolver
+import com.softyorch.stroopoverload.data.AuthRepository
 import com.softyorch.stroopoverload.data.AuthService
 import com.softyorch.stroopoverload.data.ChangePasswordError
 import com.softyorch.stroopoverload.data.ChangePasswordException
 import com.softyorch.stroopoverload.data.DeleteAccountError
 import com.softyorch.stroopoverload.data.DeleteAccountException
-import com.softyorch.stroopoverload.data.FirebaseGameRepository
-import com.softyorch.stroopoverload.data.FirebaseMultiplayerRepository
+import com.softyorch.stroopoverload.data.GameRepository
 import com.softyorch.stroopoverload.data.MultiplayerRepository
 import com.softyorch.stroopoverload.domain.Achievement
 import com.softyorch.stroopoverload.domain.CareerStats
@@ -37,10 +37,12 @@ data class ProfileUiState(
     val hasUnsavedChanges: Boolean get() = isEditing && editSnapshot != null && profile != editSnapshot
 }
 
-class ProfileViewModel(application: Application) : AndroidViewModel(application) {
-    private val repository = FirebaseGameRepository.getInstance(application)
-    private val authService = AuthService()
-    private val multiplayerRepository: MultiplayerRepository = FirebaseMultiplayerRepository()
+class ProfileViewModel(
+    private val repository: GameRepository,
+    private val authService: AuthRepository,
+    private val multiplayerRepository: MultiplayerRepository,
+    private val strings: StringResolver,
+) : ViewModel() {
 
     private val _state = MutableStateFlow(ProfileUiState())
     val state: StateFlow<ProfileUiState> = _state.asStateFlow()
@@ -99,7 +101,7 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         onSignedOut()
     }
 
-    private fun string(resId: Int): String = getApplication<Application>().getString(resId)
+    private fun string(resId: Int): String = strings.get(resId)
 
     fun changePassword(currentPassword: String, newPassword: String, confirmNewPassword: String) {
         if (newPassword != confirmNewPassword) {

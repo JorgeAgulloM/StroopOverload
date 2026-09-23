@@ -61,5 +61,12 @@ class FakeMultiplayerRepository : MultiplayerRepository {
         presenceTracked = true
     }
 
-    override suspend fun deleteMyMultiplayerData(): Result<Unit> = Result.success(Unit)
+    var deleteMyMultiplayerDataResult: Result<Unit> = Result.success(Unit)
+    var deleteMyMultiplayerDataCallCount = 0
+        private set
+
+    override suspend fun deleteMyMultiplayerData(): Result<Unit> {
+        deleteMyMultiplayerDataCallCount++
+        return deleteMyMultiplayerDataResult
+    }
 }

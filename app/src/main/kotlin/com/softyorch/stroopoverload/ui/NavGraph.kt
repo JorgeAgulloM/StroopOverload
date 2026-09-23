@@ -19,7 +19,9 @@ import com.softyorch.stroopoverload.ads.InterstitialAdManager
 import com.softyorch.stroopoverload.audio.MusicManager
 import com.softyorch.stroopoverload.audio.MusicTrack
 import com.softyorch.stroopoverload.data.AsoDemoSeeder
+import com.softyorch.stroopoverload.core.AndroidStringResolver
 import com.softyorch.stroopoverload.data.AuthService
+import com.softyorch.stroopoverload.data.FirebaseMultiplayerRepository
 import com.softyorch.stroopoverload.data.FirebaseGameRepository
 import com.softyorch.stroopoverload.domain.Achievement
 import com.softyorch.stroopoverload.domain.GameMode
@@ -177,7 +179,7 @@ fun StroopNavGraph() {
                     // FirebaseGameRepository.updateProfile), so a guest could join a
                     // room but could never actually be scored -- block the whole
                     // flow up front instead of letting them play for nothing.
-                    if (authService.currentUser?.isAnonymous == true) {
+                    if (authService.isAnonymousSession == true) {
                         showAnonymousGateDialog = true
                     } else {
                         navController.navigate(ROUTE_MULTIPLAYER)
@@ -282,13 +284,22 @@ fun StroopNavGraph() {
 private class AuthViewModelFactory(private val application: Application) : androidx.lifecycle.ViewModelProvider.Factory {
     override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
         @Suppress("UNCHECKED_CAST")
-        return AuthViewModel(application) as T
+        return AuthViewModel(
+            authService = AuthService(),
+            repository = FirebaseGameRepository.getInstance(application),
+            strings = AndroidStringResolver(application),
+        ) as T
     }
 }
 
 private class ProfileViewModelFactory(private val application: Application) : androidx.lifecycle.ViewModelProvider.Factory {
     override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
         @Suppress("UNCHECKED_CAST")
-        return ProfileViewModel(application) as T
+        return ProfileViewModel(
+            repository = FirebaseGameRepository.getInstance(application),
+            authService = AuthService(),
+            multiplayerRepository = FirebaseMultiplayerRepository(),
+            strings = AndroidStringResolver(application),
+        ) as T
     }
 }

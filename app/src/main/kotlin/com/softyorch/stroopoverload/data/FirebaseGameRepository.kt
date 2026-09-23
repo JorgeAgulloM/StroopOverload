@@ -20,7 +20,9 @@ import com.softyorch.stroopoverload.domain.GameResult
 import com.softyorch.stroopoverload.domain.applyServerScoring
 import com.softyorch.stroopoverload.domain.serverScoringFrom
 import com.softyorch.stroopoverload.domain.UserProfile
-import com.softyorch.stroopoverload.domain.XpSystem
+import com.softyorch.stroopoverload.domain.isRecordable
+import com.softyorch.stroopoverload.domain.withAchievementXp
+import com.softyorch.stroopoverload.domain.withRunApplied
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.tasks.await
@@ -34,17 +36,17 @@ class FirebaseGameRepository private constructor(
     private val multiplayerAwardStore: MultiplayerAwardStore = MultiplayerAwardStore(context),
     private val db: FirebaseFirestore? = try { FirebaseFirestore.getInstance() } catch (e: Exception) { null },
     private val functions: FirebaseFunctions = FirebaseFunctions.getInstance(),
-) {
+) : GameRepository {
     private val users get() = db?.collection("users")
 
     private var cachedLeaderboard: List<UserProfile> = emptyList()
     private var lastLeaderboardFetchEpochMs: Long = 0L
 
-    fun getProfile(): UserProfile {
+    override fun getProfile(): UserProfile {
         return profileStore.getProfile() ?: UserProfile()
     }
 
-    suspend fun updateProfile(profile: UserProfile) = withContext(Dispatchers.IO) {
+    override suspend fun updateProfile(profile: UserProfile): Unit = withContext(Dispatchers.IO) {
         profileStore.saveProfile(profile)
         if (profile.userId.isNotBlank() && !profile.isAnonymous) {
             pushProfileToCloud(profile)
@@ -77,7 +79,7 @@ class FirebaseGameRepository private constructor(
         }
     }
 
-    suspend fun syncUserProfile(uid: String, nickname: String? = null) = withContext(Dispatchers.IO) {
+    override suspend fun syncUserProfile(uid: String, nickname: String?): Unit = withContext(Dispatchers.IO) {
         val local = getProfile()
 
         // Case 1: local profile already belongs to this exact account — nothing to do.
@@ -182,7 +184,7 @@ class FirebaseGameRepository private constructor(
         }
     }
 
-    suspend fun clearLocalProgress() = withContext(Dispatchers.IO) {
+    override suspend fun clearLocalProgress(): Unit = withContext(Dispatchers.IO) {
         achievementsStore.clearProgress()
         profileStore.deleteProfile()
     }
@@ -192,45 +194,17 @@ class FirebaseGameRepository private constructor(
      * account. Deliberately does NOT swallow Firestore failures — the caller (account deletion)
      * must know if the cloud doc survived instead of reporting a false "deleted everything".
      */
-    suspend fun deleteAllUserData(uid: String) = withContext(Dispatchers.IO) {
+    override suspend fun deleteAllUserData(uid: String): Unit = withContext(Dispatchers.IO) {
         users?.document(uid)?.delete()?.await()
         clearLocalProgress()
     }
 
-    suspend fun recordGameResult(result: GameResult, xpEarned: Int, winStreak: Int = 0): List<Achievement> = withContext(Dispatchers.IO) {
-        if (result.correctHits == 0 || result.finalScore <= 0) {
+    override suspend fun recordGameResult(result: GameResult, xpEarned: Int, winStreak: Int): List<Achievement> = withContext(Dispatchers.IO) {
+        if (!result.isRecordable()) {
             return@withContext emptyList()
         }
-        val current = getProfile()
-        val deltaPoints = if (result.won) +100 else -25
-        val newPoints = (current.points + deltaPoints).coerceAtLeast(0)
-        val newHigh = maxOf(current.highScore, result.finalScore)
-        val newPlayed = current.matchesPlayed + 1
-        val newWon = if (result.won) current.matchesWon + 1 else current.matchesWon
-        val newLost = if (!result.won) current.matchesLost + 1 else current.matchesLost
-        val newXp = current.experience + xpEarned
-        val newLevel = XpSystem.levelFromTotalXp(newXp)
         val now = System.currentTimeMillis()
-
-        val lastDay = current.lastPlayedAtEpochMs / (1000 * 60 * 60 * 24)
-        val today = now / (1000 * 60 * 60 * 24)
-        val newStreak = when {
-            today == lastDay -> current.dailyStreak
-            today == lastDay + 1 -> current.dailyStreak + 1
-            else -> 1
-        }
-
-        val updated = current.copy(
-            points = newPoints,
-            highScore = newHigh,
-            matchesPlayed = newPlayed,
-            matchesWon = newWon,
-            matchesLost = newLost,
-            experience = newXp,
-            level = newLevel,
-            dailyStreak = newStreak,
-            lastPlayedAtEpochMs = now
-        )
+        val updated = getProfile().withRunApplied(result, xpEarned, now)
         updateProfile(updated)
 
         val career = achievementsStore.getCareerStats()
@@ -244,15 +218,8 @@ class FirebaseGameRepository private constructor(
         val newlyUnlockedAchievements = AchievementDefinitions.all.filter { it.id in newIds }
         val achievementXpBonus = newlyUnlockedAchievements.sumOf { it.xpReward }
 
-        val finalUpdated = if (achievementXpBonus > 0) {
-            val totalXpWithAchievements = updated.experience + achievementXpBonus
-            val finalLevel = XpSystem.levelFromTotalXp(totalXpWithAchievements)
-            updated.copy(experience = totalXpWithAchievements, level = finalLevel).also {
-                updateProfile(it)
-            }
-        } else {
-            updated
-        }
+        val finalUpdated = updated.withAchievementXp(achievementXpBonus)
+        if (finalUpdated != updated) updateProfile(finalUpdated)
 
         if (finalUpdated.userId.isNotBlank() && !finalUpdated.isAnonymous) {
             val allUnlockedMap = achievementsStore.getAllAchievements()
@@ -311,7 +278,7 @@ class FirebaseGameRepository private constructor(
      * after a multiplayer match is settled server-side (onRoomFinished), since the
      * client no longer computes those points itself.
      */
-    suspend fun refreshScoringFromCloud(uid: String) = withContext(Dispatchers.IO) {
+    override suspend fun refreshScoringFromCloud(uid: String): Unit = withContext(Dispatchers.IO) {
         val collection = users ?: return@withContext
         try {
             val remote = collection.document(uid).get().await()
@@ -337,7 +304,7 @@ class FirebaseGameRepository private constructor(
      *
      * @return true if this call pulled in the match's result.
      */
-    suspend fun syncMatchResult(roomId: String): Boolean = withContext(Dispatchers.IO) {
+    override suspend fun syncMatchResult(roomId: String): Boolean = withContext(Dispatchers.IO) {
         if (multiplayerAwardStore.hasAwarded(roomId)) return@withContext false
         val current = getProfile()
         if (current.isAnonymous || current.userId.isBlank()) {
@@ -370,7 +337,7 @@ class FirebaseGameRepository private constructor(
         }
     }
 
-    suspend fun getLeaderboard(forceRefresh: Boolean = false): List<UserProfile> = withContext(Dispatchers.IO) {
+    override suspend fun getLeaderboard(forceRefresh: Boolean): List<UserProfile> = withContext(Dispatchers.IO) {
         val now = System.currentTimeMillis()
         if (!forceRefresh && cachedLeaderboard.isNotEmpty() && (now - lastLeaderboardFetchEpochMs < 300_000L)) {
             return@withContext cachedLeaderboard
@@ -422,7 +389,7 @@ class FirebaseGameRepository private constructor(
         return@withContext list
     }
 
-    suspend fun getUserRank(myPoints: Int): Int = withContext(Dispatchers.IO) {
+    override suspend fun getUserRank(myPoints: Int): Int = withContext(Dispatchers.IO) {
         val collection = users
         if (collection != null) {
             try {
@@ -441,8 +408,8 @@ class FirebaseGameRepository private constructor(
         if (idx != -1) idx + 1 else cachedLeaderboard.size + 1
     }
 
-    fun getCareerStats(): CareerStats = achievementsStore.getCareerStats()
-    fun getAllAchievements(): List<Achievement> = achievementsStore.getAllAchievements()
+    override fun getCareerStats(): CareerStats = achievementsStore.getCareerStats()
+    override fun getAllAchievements(): List<Achievement> = achievementsStore.getAllAchievements()
 
     companion object {
         @Volatile

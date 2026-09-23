@@ -20,8 +20,34 @@ class AuthServiceTest {
         assertNull(AuthService.validatePasswordStrength("Str0ng!Pass"))
     }
 
-    // validateRegistration itself isn't covered here: its email-format check goes through
-    // android.util.Patterns.EMAIL_ADDRESS, which is null under plain JUnit (no Robolectric/
-    // instrumentation in this module) — a pre-existing gap, not something introduced by
-    // extracting validatePasswordStrength above.
+    @Test
+    fun `validateRegistration accepts a well-formed form`() {
+        assertNull(AuthService.validateRegistration("neo@example.com", " neo@example.com ", "Str0ng!Pass", "Str0ng!Pass", "Neo"))
+    }
+
+    @Test
+    fun `validateRegistration reports the first broken rule`() {
+        assertEquals(
+            RegistrationError.NicknameTooShort,
+            AuthService.validateRegistration("neo@example.com", "neo@example.com", "Str0ng!Pass", "Str0ng!Pass", " N "),
+        )
+        assertEquals(
+            RegistrationError.EmailMismatch,
+            AuthService.validateRegistration("neo@example.com", "neo@example.org", "Str0ng!Pass", "Str0ng!Pass", "Neo"),
+        )
+        assertEquals(
+            RegistrationError.PasswordMismatch,
+            AuthService.validateRegistration("neo@example.com", "neo@example.com", "Str0ng!Pass", "Str0ng!Pasz", "Neo"),
+        )
+    }
+
+    @Test
+    fun `validateRegistration email check matches android Patterns EMAIL_ADDRESS`() {
+        listOf("a@b.co", "first.last+tag@sub.example.com", "x_y%z-w@a-b.io").forEach {
+            assertNull(it, AuthService.validateRegistration(it, it, "Str0ng!Pass", "Str0ng!Pass", "Neo"))
+        }
+        listOf("plain", "no@tld", "@example.com", "a@.com", "a b@example.com", "a@example.").forEach {
+            assertEquals(it, RegistrationError.InvalidEmailFormat, AuthService.validateRegistration(it, it, "Str0ng!Pass", "Str0ng!Pass", "Neo"))
+        }
+    }
 }
