@@ -17,9 +17,18 @@ val adMobProperties = Properties().apply {
 }
 fun adMobProperty(key: String): String = (adMobProperties[key] as? String)?.trim().orEmpty()
 
+// Release signing credentials. The file is gitignored, so it is absent on a fresh
+// clone and on CI: loading it unconditionally (which this used to do) failed the
+// Gradle *configuration* phase, meaning not even `assembleDebug` or the unit tests
+// could run without it. Missing now means "no release signing config", and only a
+// release build says so.
 val keystorePropertiesFile: File = file("../signing/signing.properties")
-val keystoreProperties = Properties()
-keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+val keystoreProperties = Properties().apply {
+    if (keystorePropertiesFile.exists()) {
+        FileInputStream(keystorePropertiesFile).use { load(it) }
+    }
+}
+val hasReleaseSigning = keystoreProperties.getProperty("RELEASE_KEY_ALIAS") != null
 
 android {
     namespace = "com.softyorch.stroopoverload"
@@ -36,17 +45,18 @@ android {
     }
 
     signingConfigs {
-        create("release") {
-            keyAlias = keystoreProperties["RELEASE_KEY_ALIAS"] as String
-            keyPassword = keystoreProperties["RELEASE_KEY_PASSWORD"] as String
-            storeFile = file(keystoreProperties["RELEASE_KEYSTORE_PATH"] as String)
-            storePassword = keystoreProperties["RELEASE_KEYSTORE_PASSWORD"] as String
+        if (hasReleaseSigning) {
+            create("release") {
+                keyAlias = keystoreProperties.getProperty("RELEASE_KEY_ALIAS")
+                keyPassword = keystoreProperties.getProperty("RELEASE_KEY_PASSWORD")
+                storeFile = file(keystoreProperties.getProperty("RELEASE_KEYSTORE_PATH"))
+                storePassword = keystoreProperties.getProperty("RELEASE_KEYSTORE_PASSWORD")
+            }
         }
     }
 
     buildTypes {
         release {
-            manifestPlaceholders += mapOf()
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(
@@ -60,7 +70,10 @@ android {
             buildConfigField("String", "AD_UNIT_NATIVE_DASHBOARD", "\"${adMobProperty("PROD_KEY_ID_NATIVE_DASHBOARD")}\"")
             buildConfigField("String", "AD_UNIT_NATIVE_GAME", "\"${adMobProperty("PROD_KEY_ID_NATIVE_GAME")}\"")
             buildConfigField("String", "AD_UNIT_INTERSTITIAL_ONLINE", "\"${adMobProperty("PROD_KEY_ID_INTERSTITIAL_ONLINE")}\"")
-            signingConfig = signingConfigs.getByName("release")
+            // Unsigned when signing/signing.properties is absent: the build still
+            // produces an artifact, it just can't be uploaded to Play until the
+            // real keystore is configured.
+            signingConfig = if (hasReleaseSigning) signingConfigs.getByName("release") else null
 
             buildConfigField("String", "FLAVOR", "\"release\"")
 
@@ -69,7 +82,6 @@ android {
             }
         }
         create("demo") {
-            manifestPlaceholders += mapOf()
             versionNameSuffix = "-demo"
             // Demo builds are the App Store review/showcase flavor -- never show ads there.
             manifestPlaceholders["admobAppId"] = "ca-app-pub-3940256099942544~3347511713"
