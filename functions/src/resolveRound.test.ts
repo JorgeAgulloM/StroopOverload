@@ -1,7 +1,8 @@
 import { initializeTestEnvironment, RulesTestEnvironment } from "@firebase/rules-unit-testing";
 import { readFileSync } from "fs";
 import * as path from "path";
-import * as admin from "firebase-admin";
+import { getApps, initializeApp } from "firebase-admin/app";
+import { DocumentData } from "firebase-admin/firestore";
 import { resolveRound } from "./resolveRound";
 import { scheduleTimeoutCheck } from "./taskQueue";
 
@@ -32,8 +33,8 @@ beforeAll(async () => {
   // separate client from the rules-unit-testing environment above. Point it
   // at the same emulator (FIRESTORE_EMULATOR_HOST is set by
   // `firebase emulators:exec`) so both sides observe the same data.
-  if (admin.apps.length === 0) {
-    admin.initializeApp({ projectId: PROJECT_ID });
+  if (getApps().length === 0) {
+    initializeApp({ projectId: PROJECT_ID });
   }
 });
 
@@ -75,8 +76,8 @@ async function seedRoom(overrides: Record<string, unknown> = {}): Promise<void> 
   });
 }
 
-async function getRoom(): Promise<admin.firestore.DocumentData> {
-  let data: admin.firestore.DocumentData | undefined;
+async function getRoom(): Promise<DocumentData> {
+  let data: DocumentData | undefined;
   await testEnv.withSecurityRulesDisabled(async (context) => {
     const snap = await context.firestore().collection("rooms").doc("room-1").get();
     data = snap.data();

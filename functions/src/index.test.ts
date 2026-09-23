@@ -1,7 +1,8 @@
 import { assertFails, assertSucceeds, initializeTestEnvironment, RulesTestEnvironment } from "@firebase/rules-unit-testing";
 import { readFileSync } from "fs";
 import * as path from "path";
-import * as admin from "firebase-admin";
+import { getApps, initializeApp, getApp } from "firebase-admin/app";
+import { DocumentData } from "firebase-admin/firestore";
 import { CallableRequest } from "firebase-functions/v2/https";
 import { Request as TaskRequest } from "firebase-functions/v2/tasks";
 import { DatabaseEvent, DataSnapshot } from "firebase-functions/v2/database";
@@ -58,17 +59,17 @@ beforeAll(async () => {
   // already creates the default admin app -- resolved against whatever
   // project the emulator environment provides (functions/.firebaserc's
   // default project), not a project ID this file picks. Calling
-  // admin.initializeApp({ projectId: ... }) again here would throw (duplicate
+  // initializeApp({ projectId: ... }) again here would throw (duplicate
   // default app) and, worse, using a *different* projectId for
   // initializeTestEnvironment than the one index.ts's admin app resolved to
   // would silently point the two Firestore clients at two different
   // emulator-side projects, making every write invisible to the test's
   // read-back. So: read back the project ID the already-initialized default
   // app actually resolved to, and reuse it for the rules-unit-testing env.
-  if (admin.apps.length === 0) {
+  if (getApps().length === 0) {
     throw new Error("Expected index.ts's module-load initializeApp() to have already run.");
   }
-  const projectId = admin.app().options.projectId;
+  const projectId = getApp().options.projectId;
   if (!projectId) {
     throw new Error("Default admin app has no resolved projectId; cannot align the Firestore emulator project.");
   }
@@ -125,8 +126,8 @@ async function seedRoom(overrides: Record<string, unknown> = {}): Promise<void> 
   });
 }
 
-async function getRoom(roomId: string): Promise<admin.firestore.DocumentData> {
-  let data: admin.firestore.DocumentData | undefined;
+async function getRoom(roomId: string): Promise<DocumentData> {
+  let data: DocumentData | undefined;
   await testEnv.withSecurityRulesDisabled(async (context) => {
     const snap = await context.firestore().collection("rooms").doc(roomId).get();
     data = snap.data();
@@ -177,6 +178,8 @@ function buildPresenceEvent(
     data: new Change(new DataSnapshot(null), new DataSnapshot(afterState)),
     firebaseDatabaseHost: "https://test-instance.firebaseio.com",
     instance: "test-instance",
+    // Required since firebase-functions v7; onPresenceChanged ignores it.
+    authType: "unauthenticated",
     ref: `presence/${roomId}/${uid}`,
     location: "us-central1",
     params: { roomId, uid },

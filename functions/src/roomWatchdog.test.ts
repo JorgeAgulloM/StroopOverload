@@ -1,7 +1,8 @@
 import { initializeTestEnvironment, RulesTestEnvironment } from "@firebase/rules-unit-testing";
 import { readFileSync } from "fs";
 import * as path from "path";
-import * as admin from "firebase-admin";
+import { getApps, initializeApp } from "firebase-admin/app";
+import { DocumentData } from "firebase-admin/firestore";
 import { purgeExpiredRooms, ROOM_TTL_MS, sweepStuckRooms, WATCHDOG_GRACE_MS } from "./roomWatchdog";
 import { scheduleBombExplosion, scheduleTimeoutCheck } from "./taskQueue";
 
@@ -33,8 +34,8 @@ beforeAll(async () => {
     },
   });
 
-  if (admin.apps.length === 0) {
-    admin.initializeApp({ projectId: PROJECT_ID });
+  if (getApps().length === 0) {
+    initializeApp({ projectId: PROJECT_ID });
   }
 });
 
@@ -85,8 +86,8 @@ async function seedBomb(roomId: string, bombAtMs: number): Promise<void> {
   });
 }
 
-async function getRoom(roomId: string): Promise<admin.firestore.DocumentData | undefined> {
-  let data: admin.firestore.DocumentData | undefined;
+async function getRoom(roomId: string): Promise<DocumentData | undefined> {
+  let data: DocumentData | undefined;
   await testEnv.withSecurityRulesDisabled(async (context) => {
     const snap = await context.firestore().collection("rooms").doc(roomId).get();
     data = snap.data();
@@ -94,8 +95,8 @@ async function getRoom(roomId: string): Promise<admin.firestore.DocumentData | u
   return data;
 }
 
-async function getBomb(roomId: string): Promise<admin.firestore.DocumentData | undefined> {
-  let data: admin.firestore.DocumentData | undefined;
+async function getBomb(roomId: string): Promise<DocumentData | undefined> {
+  let data: DocumentData | undefined;
   await testEnv.withSecurityRulesDisabled(async (context) => {
     const snap = await context.firestore().collection("rooms").doc(roomId).collection("private").doc("bomb").get();
     data = snap.data();
