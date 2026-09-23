@@ -99,11 +99,12 @@ class FirebaseMultiplayerRepository(
     }
 
     override fun leavePresence(roomId: String, uid: String) {
-        val presenceRef = database.getReference("presence/$roomId/$uid")
-        // The hook is for losing the connection; this is an explicit leave, and a hook
-        // left registered would rewrite "offline" for a room long gone.
-        presenceRef.onDisconnect().cancel()
-        presenceRef.setValue(mapOf("state" to "offline", "lastChanged" to ServerValue.TIMESTAMP))
+        // The onDisconnect hook from trackPresence is left armed on purpose. Neither write
+        // here is awaited and the database has no disk persistence, so if the process
+        // dies before this one is flushed, that hook is the only thing that will still
+        // mark the player offline. Firing later for a room already left is harmless: the
+        // backend ignores "offline" for a player who is no longer alive in a live match.
+        database.getReference("presence/$roomId/$uid").setValue(mapOf("state" to "offline", "lastChanged" to ServerValue.TIMESTAMP))
             .addOnFailureListener { Log.w(TAG, "Failed to write offline presence for room $roomId: ${it.message}") }
     }
 

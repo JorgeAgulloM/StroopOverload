@@ -563,6 +563,22 @@ class MultiplayerViewModelTest {
         assertEquals(4, fake.lastSubmittedRound)
     }
 
+    @Test
+    fun `a rejected answer can be retried on the same stimulus`() = runTest {
+        val fake = FakeMultiplayerRepository()
+        val viewModel = MultiplayerViewModel(fake)
+        enterPlayingRoom(fake, viewModel, round = 3)
+
+        fake.submitAnswerResult = Result.failure(RuntimeException("unavailable"))
+        viewModel.submitAnswer(StroopColor.RED)
+        dispatcher.scheduler.advanceUntilIdle()
+        fake.submitAnswerResult = Result.success(Unit)
+        viewModel.submitAnswer(StroopColor.RED)
+        dispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(2, fake.submitAnswerCallCount)
+    }
+
     /** player-1 holds the turn. */
     private suspend fun emitHotPotatoRound(fake: FakeMultiplayerRepository, round: Int) {
         fake.emitRoom(

@@ -1,6 +1,5 @@
 package com.softyorch.stroopoverload.ui.screen.multiplayer
 
-import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.softyorch.stroopoverload.core.StroopColor
@@ -108,14 +107,11 @@ class MultiplayerViewModel(
         viewModelScope.launch {
             // Best-effort: a rejected answer (e.g. lost a race against the deadline
             // or the turn already moved on) self-corrects on the next Firestore
-            // snapshot, which is why this doesn't surface a UI error state -- but
-            // it must not fail silently with no trace when debugging reports like
-            // "my tap didn't register".
+            // snapshot, which is why this doesn't surface a UI error state. The
+            // repository logs every failed call, so "my tap didn't register" still
+            // leaves a trace.
             repository.submitAnswer(current.room.roomId, color, round)
-                .onFailure {
-                    if (answeredTarget == target) answeredTarget = null
-                    Log.w("MultiplayerViewModel", "submitAnswer rejected: ${it.message}")
-                }
+                .onFailure { if (answeredTarget == target) answeredTarget = null }
         }
     }
 
