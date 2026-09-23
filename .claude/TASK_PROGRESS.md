@@ -1213,6 +1213,7 @@ Graph reindexed 2026-09-22 (`mobiai graph init`, 68 files / 346 symbols).
 | `cc56650` | #12 | `AuthRepository`/`GameRepository` interfaces + injected `StringResolver`; `AuthViewModel`/`ProfileViewModel` are plain ViewModels with 29 new tests; `recordGameResult` arithmetic extracted to `LocalRunScoring.kt`. Kotlin 88 -> 128. Reviewer HIGH fixed before commit (resolver must not `String.format` argument-less strings). |
 | `b65e2cd` | #13 | `submitAnswer` is one transaction (judge in `answerJudge.ts` + engine halves `apply*`). **Real bug found and fixed**: no `round` in the request, so a double tap was scored against the next stimulus (solo_survival bust 3/4). Optional `round` → `STALE_ROUND`; safe in either deploy order. functions 191 -> 203. |
 | `0d61b3c` | #14 | One `ui/components/QuadrantBox` for local + online; `finishedMatchUpdate` in `scoring.ts` replaces the verbatim sole-survivor block. No behaviour change. functions 205. |
+| `6c144e3` + `3c67cda` | #15 | ESLint 9 (+ type-aware no-floating-promises) in functions predeploy; removed unused `firebase-functions-test` (blocked installs); gitignore junk; dialogs/subcomponents out of ProfileScreen/AuthScreen; first `@Preview`s; `allowBackup` kept on and documented. |
 
 ### Before deploying — manual steps, in this order
 
@@ -1228,6 +1229,12 @@ Graph reindexed 2026-09-22 (`mobiai graph init`, 68 files / 346 symbols).
 5. Only after the installed base is on the new client: set `ENFORCE_APP_CHECK = true` in `functions/src/index.ts`
    and redeploy. Flipping it early rejects every older client mid-match.
 
+### Branch
+
+All of this work lives on **`refactor/audit-hardening`** (never pushed). `develop` was reset to `origin/develop`
+(`70fc64f`) on 2026-09-23 at the user's request: nothing should have been committed on `develop` directly.
+Resume with `git switch refactor/audit-hardening`.
+
 ### Remaining plan
 
 - **#12 — done in `cc56650`.** Still untested: `syncMatchResult`'s client-side guard (needs
@@ -1237,9 +1244,10 @@ Graph reindexed 2026-09-22 (`mobiai graph init`, 68 files / 346 symbols).
   callable that the server now rejects). A per-round in-flight guard in `MultiplayerViewModel.submitAnswer`
   would stop it; not done, the server is authoritative. The double-tap fix only reaches players on the new client.
 - **#14 — done in `0d61b3c`.**
-- **#15 (low, next)** `android:allowBackup="true"` with no `dataExtractionRules`; no `@Preview` anywhere;
-  `ProfileScreen.kt` 622 lines / `AuthScreen.kt` 535; no ESLint config in `functions/`; junk in the repo root
-  (`hs_err_pid*.log`, `replay_pid*.log`, `*.stackdump`).
+- **#15 — done in `6c144e3` + `3c67cda`.** Not done on purpose: the two main screen composables are still
+  350+ lines each; splitting them needs visual checking on a device. `allowBackup` guest-restore claim untested.
+- **All planned items #1–#15 are done.** Next step is the deploy checklist above, from branch
+  `refactor/audit-hardening` (see below).
 
 ### Known leftovers, deliberately not fixed
 
