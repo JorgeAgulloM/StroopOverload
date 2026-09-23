@@ -1,4 +1,4 @@
-import { getFirestore } from "firebase-admin/firestore";
+import { DocumentReference, getFirestore, Transaction } from "firebase-admin/firestore";
 import { generateStimulus } from "./stimulus";
 import { nextAliveIndex, soleSurvivor, timeLimitMsForRound } from "./turnLogic";
 import { ResolutionReason, RoomDoc } from "./types";
@@ -44,31 +44,45 @@ export async function resolveHotPotatoTurn(
   return getFirestore().runTransaction<boolean>(async (tx) => {
     const doc = await tx.get(roomRef);
     if (!doc.exists) return false;
-    const room = doc.data() as RoomDoc;
-
-    if (room.status !== "playing" || room.round !== roundExpected) return false;
-    if (room.turnOrder[room.turnIndex] !== actingUid) return false;
-
-    const nextRound = room.round + 1;
-    const stimulus = generateStimulus();
-    const deadlineAtMs = Date.now() + timeLimitMsForRound(nextRound);
-    const me = room.players[actingUid];
-
-    if (reason === "correct") {
-      const { score, streak } = applyCorrectAnswer(me.matchScore ?? 0, me.matchStreak ?? 0);
-      const players = { ...room.players, [actingUid]: { ...me, matchScore: score, matchStreak: streak } };
-      const nextIndex = nextAliveIndex(room.turnOrder, room.players, room.turnIndex);
-      tx.update(roomRef, { players, turnIndex: nextIndex, round: nextRound, stimulus, deadlineAtMs });
-    } else {
-      // Wrong (or a stale timeout/disconnect call): no elimination, no turn
-      // change -- the current holder just gets re-prompted. The bomb clock is
-      // unaffected either way. Still breaks their scoring streak, same as a
-      // local-mode miss does.
-      const players = { ...room.players, [actingUid]: { ...me, matchStreak: 0 } };
-      tx.update(roomRef, { players, round: nextRound, stimulus, deadlineAtMs });
-    }
-    return true;
+    return applyHotPotatoTurn(tx, roomRef, doc.data() as RoomDoc, actingUid, reason, roundExpected);
   });
+}
+
+/**
+ * The transactional body of [resolveHotPotatoTurn], for a caller that already
+ * read the room in its own transaction. Nothing to do after commit: this mode
+ * schedules no per-stimulus timeout.
+ */
+export function applyHotPotatoTurn(
+  tx: Transaction,
+  roomRef: DocumentReference<RoomDoc>,
+  room: RoomDoc,
+  actingUid: string,
+  reason: ResolutionReason,
+  roundExpected: number
+): boolean {
+  if (room.status !== "playing" || room.round !== roundExpected) return false;
+  if (room.turnOrder[room.turnIndex] !== actingUid) return false;
+
+  const nextRound = room.round + 1;
+  const stimulus = generateStimulus();
+  const deadlineAtMs = Date.now() + timeLimitMsForRound(nextRound);
+  const me = room.players[actingUid];
+
+  if (reason === "correct") {
+    const { score, streak } = applyCorrectAnswer(me.matchScore ?? 0, me.matchStreak ?? 0);
+    const players = { ...room.players, [actingUid]: { ...me, matchScore: score, matchStreak: streak } };
+    const nextIndex = nextAliveIndex(room.turnOrder, room.players, room.turnIndex);
+    tx.update(roomRef, { players, turnIndex: nextIndex, round: nextRound, stimulus, deadlineAtMs });
+  } else {
+    // Wrong (or a stale timeout/disconnect call): no elimination, no turn
+    // change -- the current holder just gets re-prompted. The bomb clock is
+    // unaffected either way. Still breaks their scoring streak, same as a
+    // local-mode miss does.
+    const players = { ...room.players, [actingUid]: { ...me, matchStreak: 0 } };
+    tx.update(roomRef, { players, round: nextRound, stimulus, deadlineAtMs });
+  }
+  return true;
 }
 
 /**

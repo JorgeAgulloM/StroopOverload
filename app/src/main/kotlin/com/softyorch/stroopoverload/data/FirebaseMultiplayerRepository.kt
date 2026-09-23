@@ -42,8 +42,8 @@ class FirebaseMultiplayerRepository(
         Unit
     }
 
-    override suspend fun submitAnswer(roomId: String, selectedColor: StroopColor): Result<Unit> = call("submitAnswer") {
-        val data = mapOf("roomId" to roomId, "selectedColor" to selectedColor.name)
+    override suspend fun submitAnswer(roomId: String, selectedColor: StroopColor, round: Int): Result<Unit> = call("submitAnswer") {
+        val data = mapOf("roomId" to roomId, "selectedColor" to selectedColor.name, "round" to round)
         functions.getHttpsCallable("submitAnswer").call(data).await()
         Unit
     }

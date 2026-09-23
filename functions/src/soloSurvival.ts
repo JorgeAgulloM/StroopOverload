@@ -1,4 +1,4 @@
-import { getFirestore } from "firebase-admin/firestore";
+import { DocumentReference, getFirestore, Transaction } from "firebase-admin/firestore";
 import { generateStimulus } from "./stimulus";
 import { timeLimitMsForRound } from "./turnLogic";
 import { ResolutionReason, RoomDoc, RoomPlayerDoc } from "./types";
@@ -111,6 +111,13 @@ function highestScoreWinner(players: Readonly<Record<string, RoomPlayerDoc>>): s
  * else has fallen (startGame already guarantees >= 2 players, so "one left"
  * always means a real win, not a degenerate single-player room).
  */
+export type SoloScheduled = { round: number; deadlineAtMs: number } | null;
+
+export interface SoloAnswerTxResult {
+  applied: boolean;
+  scheduled: SoloScheduled;
+}
+
 export async function resolveSoloAnswer(
   roomId: string,
   actingUid: string,
@@ -118,72 +125,88 @@ export async function resolveSoloAnswer(
   roundExpected: number
 ): Promise<boolean> {
   const roomRef = roomsCol().doc(roomId);
+  const { applied, scheduled } = await getFirestore().runTransaction<SoloAnswerTxResult>(async (tx) => {
+    const doc = await tx.get(roomRef);
+    if (!doc.exists) return { applied: false, scheduled: null };
+    return applySoloAnswer(tx, roomRef, doc.data() as RoomDoc, actingUid, reason, roundExpected);
+  });
+  await scheduleNextSoloTimeout(roomId, actingUid, scheduled);
+  return applied;
+}
 
-  type Scheduled = { round: number; deadlineAtMs: number } | null;
-  const { applied, scheduled } = await getFirestore().runTransaction<{ applied: boolean; scheduled: Scheduled }>(
-    async (tx) => {
-      const doc = await tx.get(roomRef);
-      if (!doc.exists) return { applied: false, scheduled: null };
-      const room = doc.data() as RoomDoc;
-      if (room.status !== "playing") return { applied: false, scheduled: null };
+/**
+ * The transactional half of [resolveSoloAnswer], for a caller that already read
+ * the room in its own transaction.
+ */
+export function applySoloAnswer(
+  tx: Transaction,
+  roomRef: DocumentReference<RoomDoc>,
+  room: RoomDoc,
+  actingUid: string,
+  reason: ResolutionReason,
+  roundExpected: number
+): SoloAnswerTxResult {
+  if (room.status !== "playing") return { applied: false, scheduled: null };
 
-      const me = room.players[actingUid];
-      if (!me || !me.alive || (me.soloRound ?? 0) !== roundExpected) {
-        return { applied: false, scheduled: null }; // stale or already busted
-      }
-
-      if (reason !== "correct") {
-        const players = { ...room.players, [actingUid]: { ...me, alive: false, soloStimulus: null, soloDeadlineAtMs: null } };
-        const survivors = Object.values(players).filter((p) => p.alive);
-        if (survivors.length <= 1) {
-          // Sole survivor wins outright for actually surviving -- unlike the
-          // all-busted or session-timeout finishes below (where nobody's left
-          // standing, or several still are, so score is the only fair
-          // tiebreak), there's no ambiguity here about who "won": whoever's
-          // still alive did, regardless of their score.
-          const winnerUid = survivors.length === 1 ? survivors[0].uid : highestScoreWinner(players);
-          tx.update(roomRef, {
-            players: withFinalScores(players),
-            status: "finished",
-            winnerUid,
-            deadlineAtMs: null,
-          });
-        } else {
-          tx.update(roomRef, { players });
-        }
-        return { applied: true, scheduled: null };
-      }
-
-      const nextRound = (me.soloRound ?? 0) + 1;
-      const nextStreak = (me.soloStreak ?? 0) + 1;
-      const streakBonus = Math.min(nextStreak * 10, 100);
-      const nextScore = (me.soloScore ?? 0) + SOLO_POINTS_PER_CORRECT + streakBonus;
-      const deadlineAtMs = Date.now() + soloTimeLimitMs(nextRound);
-      const players = {
-        ...room.players,
-        [actingUid]: {
-          ...me,
-          soloRound: nextRound,
-          soloStreak: nextStreak,
-          soloScore: nextScore,
-          soloStimulus: generateStimulus(),
-          soloDeadlineAtMs: deadlineAtMs,
-        },
-      };
-      tx.update(roomRef, { players });
-      return { applied: true, scheduled: { round: nextRound, deadlineAtMs } };
-    }
-  );
-
-  if (scheduled) {
-    try {
-      await scheduleSoloPlayerTimeoutCheck(roomId, actingUid, scheduled.round, scheduled.deadlineAtMs - Date.now());
-    } catch (err) {
-      console.error(`resolveSoloAnswer: failed to schedule timeout for room ${roomId}, uid ${actingUid}`, err);
-    }
+  const me = room.players[actingUid];
+  if (!me || !me.alive || (me.soloRound ?? 0) !== roundExpected) {
+    return { applied: false, scheduled: null }; // stale or already busted
   }
 
-  return applied;
+  if (reason !== "correct") {
+    const players = { ...room.players, [actingUid]: { ...me, alive: false, soloStimulus: null, soloDeadlineAtMs: null } };
+    const survivors = Object.values(players).filter((p) => p.alive);
+    if (survivors.length <= 1) {
+      // Sole survivor wins outright for actually surviving -- unlike the
+      // all-busted or session-timeout finishes below (where nobody's left
+      // standing, or several still are, so score is the only fair
+      // tiebreak), there's no ambiguity here about who "won": whoever's
+      // still alive did, regardless of their score.
+      const winnerUid = survivors.length === 1 ? survivors[0].uid : highestScoreWinner(players);
+      tx.update(roomRef, {
+        players: withFinalScores(players),
+        status: "finished",
+        winnerUid,
+        deadlineAtMs: null,
+      });
+    } else {
+      tx.update(roomRef, { players });
+    }
+    return { applied: true, scheduled: null };
+  }
+
+  const nextRound = (me.soloRound ?? 0) + 1;
+  const nextStreak = (me.soloStreak ?? 0) + 1;
+  const streakBonus = Math.min(nextStreak * 10, 100);
+  const nextScore = (me.soloScore ?? 0) + SOLO_POINTS_PER_CORRECT + streakBonus;
+  const deadlineAtMs = Date.now() + soloTimeLimitMs(nextRound);
+  const players = {
+    ...room.players,
+    [actingUid]: {
+      ...me,
+      soloRound: nextRound,
+      soloStreak: nextStreak,
+      soloScore: nextScore,
+      soloStimulus: generateStimulus(),
+      soloDeadlineAtMs: deadlineAtMs,
+    },
+  };
+  tx.update(roomRef, { players });
+  return { applied: true, scheduled: { round: nextRound, deadlineAtMs } };
+}
+
+/** The post-commit half of [resolveSoloAnswer]: arms this player's next timeout, if any. */
+export async function scheduleNextSoloTimeout(
+  roomId: string,
+  actingUid: string,
+  scheduled: SoloScheduled
+): Promise<void> {
+  if (!scheduled) return;
+  try {
+    await scheduleSoloPlayerTimeoutCheck(roomId, actingUid, scheduled.round, scheduled.deadlineAtMs - Date.now());
+  } catch (err) {
+    console.error(`resolveSoloAnswer: failed to schedule timeout for room ${roomId}, uid ${actingUid}`, err);
+  }
 }
 
 /**

@@ -573,21 +573,53 @@ describe("submitAnswer", () => {
     expect(room.turnIndex).toBe(1); // moved to "b"
   });
 
-  test("returns deadline-exceeded when resolveRound reports the round was already resolved by a racing timeout", async () => {
-    await seedPlayingRoom();
-    // Simulates "someone else's timeout already resolved this round between
-    // submitAnswer's own read and resolveRound's transactional read" without
-    // needing a real concurrent writer: resolveRound is spied on (not
-    // replaced wholesale via jest.mock, since other tests here need its real
-    // transactional behavior) and forced to report applied:false for exactly
-    // this one call.
-    const spy = jest.spyOn(resolveRoundModule, "resolveRound").mockResolvedValueOnce(false);
-
+  test("an answer that lands after the match finished is rejected and changes nothing", async () => {
+    // Stimulus, turn and deadline all still look answerable; only the status says
+    // the match is over -- the engine's own guard, now on the same snapshot.
+    await seedPlayingRoom({ status: "finished" });
     await expect(
       submitAnswer.run(buildRequest({ roomId: "room-1", selectedColor: "BLUE" }, "a"))
     ).rejects.toMatchObject({ code: "deadline-exceeded" });
+    const room = await getRoom("room-1");
+    expect(room.round).toBe(1);
+  });
 
-    spy.mockRestore();
+  test("rejects a malformed round", async () => {
+    await seedPlayingRoom();
+    await expect(
+      submitAnswer.run(buildRequest({ roomId: "room-1", selectedColor: "BLUE", round: "1" }, "a"))
+    ).rejects.toMatchObject({ code: "invalid-argument" });
+  });
+
+  test("accepts an answer that names the current round", async () => {
+    await seedPlayingRoom(); // round 1
+    const result = await submitAnswer.run(buildRequest({ roomId: "room-1", selectedColor: "BLUE", round: 1 }, "a"));
+    expect(result).toEqual({ accepted: true, reason: "correct" });
+  });
+
+  test("an answer aimed at a round that already moved on is rejected as stale, not scored", async () => {
+    await seedPlayingRoom({ mode: "hot_potato", round: 2 });
+    await expect(
+      submitAnswer.run(buildRequest({ roomId: "room-1", selectedColor: "RED", round: 1 }, "a"))
+    ).rejects.toMatchObject({ code: "deadline-exceeded", details: { reason: "STALE_ROUND" } });
+    const room = await getRoom("room-1");
+    expect(room.round).toBe(2); // no re-prompt, streak untouched
+  });
+
+  test("solo_survival: a double tap does not bust the player on a stimulus they never saw", async () => {
+    await seedSoloPlayingRoom(); // "a" on soloRound 0, inkColor BLUE
+    const first = await submitAnswer.run(buildRequest({ roomId: "room-1", selectedColor: "BLUE", round: 0 }, "a"));
+    expect(first).toEqual({ accepted: true, reason: "correct" });
+
+    // Second tap was aimed at the same round-0 stimulus but lands after round 1's
+    // stimulus replaced it. Before `round` existed it was judged against round 1.
+    await expect(
+      submitAnswer.run(buildRequest({ roomId: "room-1", selectedColor: "BLUE", round: 0 }, "a"))
+    ).rejects.toMatchObject({ code: "deadline-exceeded", details: { reason: "STALE_ROUND" } });
+
+    const room = await getRoom("room-1");
+    expect(room.players.a.alive).toBe(true);
+    expect(room.players.a.soloRound).toBe(1);
   });
 
   test("dispatches to the solo_survival resolver: a correct answer only advances the acting player's own round", async () => {

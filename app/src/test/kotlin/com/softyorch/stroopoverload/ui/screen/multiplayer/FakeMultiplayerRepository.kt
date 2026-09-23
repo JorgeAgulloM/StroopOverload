@@ -23,6 +23,8 @@ class FakeMultiplayerRepository : MultiplayerRepository {
         private set
     var lastCreateRoomMode: RoomMode? = null
         private set
+    var lastSubmittedRound: Int? = null
+        private set
 
     var createRoomResult: Result<Pair<String, String>> = Result.success("room-1" to "ABCDE")
     var joinRoomResult: Result<String> = Result.success("room-1")
@@ -50,8 +52,9 @@ class FakeMultiplayerRepository : MultiplayerRepository {
         return startGameResult
     }
 
-    override suspend fun submitAnswer(roomId: String, selectedColor: StroopColor): Result<Unit> {
+    override suspend fun submitAnswer(roomId: String, selectedColor: StroopColor, round: Int): Result<Unit> {
         submitAnswerCallCount++
+        lastSubmittedRound = round
         return Result.success(Unit)
     }
 

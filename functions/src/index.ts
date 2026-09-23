@@ -8,9 +8,10 @@ import { onSchedule } from "firebase-functions/v2/scheduler";
 import { onDocumentUpdated } from "firebase-functions/v2/firestore";
 import { generateUniqueRoomCode, findJoinableRoomByCode, roomsCol } from "./roomRepo";
 import { GameModeId, ResolutionReason, RoomDoc, RoomPlayerDoc } from "./types";
-import { resolveRound } from "./resolveRound";
-import { explodeBomb as explodeBombFn, resolveHotPotatoTurn } from "./resolveHotPotato";
-import { finishSoloSurvivalSession, resolveSoloAnswer } from "./soloSurvival";
+import { applyRoundResolution, resolveRound, scheduleNextRoundTimeout } from "./resolveRound";
+import { applyHotPotatoTurn, explodeBomb as explodeBombFn } from "./resolveHotPotato";
+import { applySoloAnswer, finishSoloSurvivalSession, resolveSoloAnswer, scheduleNextSoloTimeout } from "./soloSurvival";
+import { judgeAnswer, parseAnsweredRound } from "./answerJudge";
 import { beginMatch } from "./matchStart";
 import { purgeExpiredRooms as purgeExpiredRoomsFn, sweepStuckRooms as sweepStuckRoomsFn } from "./roomWatchdog";
 import { scheduleGameStart } from "./taskQueue";
@@ -207,53 +208,65 @@ export const explodeBomb = onTaskDispatched<{ roomId: string; bombAtMs?: number 
   }
 );
 
+interface AnswerOutcome {
+  reason: ResolutionReason;
+  applied: boolean;
+  afterCommit: () => Promise<void>;
+}
+
+/**
+ * One transaction: read the room, judge the answer against that snapshot
+ * (answerJudge.ts), and apply it with the engine for the room's mode. It used to
+ * read the room outside the transaction first -- only to pick the engine and
+ * validate -- and then the engine read it again, an extra round trip on every
+ * tap of a reaction-time game.
+ *
+ * `round` in the request is optional so clients that predate it keep working.
+ */
 export const submitAnswer = onCall(CALLABLE_OPTIONS, async (request) => {
   const uid = request.auth?.uid;
   if (!uid) throw new HttpsError("unauthenticated", "Debes iniciar sesión.");
   const roomId = String(request.data?.roomId ?? "").trim();
   if (!roomId) throw new HttpsError("invalid-argument", "roomId inválido.");
   const selectedColor = String(request.data?.selectedColor ?? "");
+  const answeredRound = parseAnsweredRound(request.data?.round);
+  if (answeredRound === "invalid") throw new HttpsError("invalid-argument", "round inválido.");
 
   try {
     const roomRef = roomsCol().doc(roomId);
-    const doc = await roomRef.get();
-    if (!doc.exists) throw new HttpsError("not-found", "Sala no existe.");
-    const room = doc.data() as RoomDoc;
+    const outcome = await getFirestore().runTransaction<AnswerOutcome>(async (tx) => {
+      const doc = await tx.get(roomRef);
+      if (!doc.exists) throw new HttpsError("not-found", "Sala no existe.");
+      const room = doc.data() as RoomDoc;
+      const verdict = judgeAnswer(room, uid, selectedColor, answeredRound, Date.now());
+      if (!verdict.ok) throw verdict.error;
+      const { reason, round } = verdict;
 
-    if (room.mode === "solo_survival") {
-      const me = room.players[uid];
-      if (!me || !me.alive) throw new HttpsError("failed-precondition", "Ya estás eliminado.");
-      if (!me.soloStimulus || me.soloDeadlineAtMs == null) throw new HttpsError("failed-precondition", "No hay ronda activa.");
-      if (Date.now() > me.soloDeadlineAtMs) throw new HttpsError("deadline-exceeded", "Se acabó el tiempo.");
+      if (room.mode === "solo_survival") {
+        const result = applySoloAnswer(tx, roomRef, room, uid, reason, round);
+        return {
+          reason,
+          applied: result.applied,
+          afterCommit: () => scheduleNextSoloTimeout(roomId, uid, result.scheduled),
+        };
+      }
+      if (room.mode === "hot_potato") {
+        const applied = applyHotPotatoTurn(tx, roomRef, room, uid, reason, round);
+        return { reason, applied, afterCommit: async () => undefined };
+      }
+      const result = applyRoundResolution(tx, roomRef, room, uid, reason, round);
+      return {
+        reason,
+        applied: result.applied,
+        afterCommit: () => scheduleNextRoundTimeout(roomId, result.scheduled),
+      };
+    });
 
-      const reason: ResolutionReason = selectedColor === me.soloStimulus.inkColor ? "correct" : "wrong";
-      const applied = await resolveSoloAnswer(roomId, uid, reason, me.soloRound ?? 0);
-      if (!applied) throw new HttpsError("deadline-exceeded", "La ronda ya se resolvió (probablemente por timeout).");
-      return { accepted: true, reason };
-    }
-
-    const currentTurnUid = room.turnOrder[room.turnIndex];
-    if (currentTurnUid !== uid) throw new HttpsError("permission-denied", "No es tu turno.");
-    if (!room.stimulus || !room.deadlineAtMs) throw new HttpsError("failed-precondition", "No hay ronda activa.");
-    // hot_potato has no enforced per-stimulus deadline (see resolveHotPotato.ts) --
-    // the holder can answer whenever, so a late answer here is never stale.
-    if (room.mode !== "hot_potato" && Date.now() > room.deadlineAtMs) {
-      throw new HttpsError("deadline-exceeded", "Se acabó el tiempo.");
-    }
-
-    // `selectedColor` is compared against the stimulus's ink color as a plain
-    // string equality check. Any value that isn't an exact match --
-    // including empty, missing, or otherwise malformed input -- naturally
-    // falls through to "wrong", which is already the correct, safe
-    // semantics for an invalid answer. No separate allow-list validation
-    // against StroopColorId is needed here.
-    const reason: ResolutionReason = selectedColor === room.stimulus.inkColor ? "correct" : "wrong";
-    const applied =
-      room.mode === "hot_potato"
-        ? await resolveHotPotatoTurn(roomId, uid, reason, room.round)
-        : await resolveRound(roomId, uid, reason, room.round);
-    if (!applied) throw new HttpsError("deadline-exceeded", "La ronda ya se resolvió (probablemente por timeout).");
-    return { accepted: true, reason };
+    // With the judge and the engine on one snapshot this only trips when the room
+    // is not "playing" (e.g. the answer landed after the match finished).
+    if (!outcome.applied) throw new HttpsError("deadline-exceeded", "La ronda ya se resolvió.");
+    await outcome.afterCommit();
+    return { accepted: true, reason: outcome.reason };
   } catch (err) {
     if (err instanceof HttpsError) throw err;
     console.error(`submitAnswer failed for uid ${uid}, room ${roomId}`, err);

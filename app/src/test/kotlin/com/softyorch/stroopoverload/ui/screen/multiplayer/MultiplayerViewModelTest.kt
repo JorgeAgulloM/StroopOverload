@@ -156,6 +156,7 @@ class MultiplayerViewModelTest {
                 ),
                 turnOrder = listOf("player-1", "player-2"),
                 turnIndex = 0,
+                round = 7,
             )
         )
         dispatcher.scheduler.advanceUntilIdle()
@@ -164,6 +165,7 @@ class MultiplayerViewModelTest {
         dispatcher.scheduler.advanceUntilIdle()
 
         assertEquals(1, fake.submitAnswerCallCount)
+        assertEquals(7, fake.lastSubmittedRound) // the shared round the tap was aimed at
     }
 
     @Test
@@ -181,11 +183,12 @@ class MultiplayerViewModelTest {
                 status = RoomStatus.PLAYING,
                 mode = RoomMode.SOLO_SURVIVAL,
                 players = listOf(
-                    RoomPlayer(uid = "player-1", displayName = "Neo", alive = true),
-                    RoomPlayer(uid = "player-2", displayName = "Trinity", alive = true),
+                    RoomPlayer(uid = "player-1", displayName = "Neo", alive = true, soloRound = 2),
+                    RoomPlayer(uid = "player-2", displayName = "Trinity", alive = true, soloRound = 5),
                 ),
                 turnOrder = listOf("player-1", "player-2"),
                 turnIndex = 0,
+                round = 0, // solo_survival never advances the shared round
             )
         )
         dispatcher.scheduler.advanceUntilIdle()
@@ -194,6 +197,7 @@ class MultiplayerViewModelTest {
         dispatcher.scheduler.advanceUntilIdle()
 
         assertEquals(1, fake.submitAnswerCallCount)
+        assertEquals(5, fake.lastSubmittedRound) // this player's own soloRound
     }
 
     @Test

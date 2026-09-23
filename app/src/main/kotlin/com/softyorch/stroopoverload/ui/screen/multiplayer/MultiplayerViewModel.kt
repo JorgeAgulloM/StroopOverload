@@ -86,7 +86,7 @@ class MultiplayerViewModel(
             // snapshot, which is why this doesn't surface a UI error state -- but
             // it must not fail silently with no trace when debugging reports like
             // "my tap didn't register".
-            repository.submitAnswer(current.room.roomId, color)
+            repository.submitAnswer(current.room.roomId, color, current.room.answerRound(current.myUid))
                 .onFailure { Log.w("MultiplayerViewModel", "submitAnswer rejected: ${it.message}") }
         }
     }

@@ -107,4 +107,15 @@ data class MultiplayerRoom(
         RoomMode.SOLO_SURVIVAL -> player(uid)?.alive == true
         RoomMode.MISTAKE, RoomMode.HOT_POTATO -> isMyTurn(uid)
     }
+
+    /**
+     * The round an answer from [uid] is aimed at: the shared [round], or the
+     * player's own soloRound in solo_survival. Sent with the answer so the backend
+     * can reject a tap that lands after its stimulus was already replaced (a quick
+     * double tap) instead of scoring it against a stimulus the player never saw.
+     */
+    fun answerRound(uid: String): Int = when (mode) {
+        RoomMode.SOLO_SURVIVAL -> player(uid)?.soloRound ?: 0
+        RoomMode.MISTAKE, RoomMode.HOT_POTATO -> round
+    }
 }
