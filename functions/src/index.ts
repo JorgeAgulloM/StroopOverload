@@ -5,6 +5,7 @@ import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { onTaskDispatched } from "firebase-functions/v2/tasks";
 import { onValueWritten } from "firebase-functions/v2/database";
 import { onSchedule } from "firebase-functions/v2/scheduler";
+import { onDocumentUpdated } from "firebase-functions/v2/firestore";
 import { generateUniqueRoomCode, findJoinableRoomByCode, roomsCol } from "./roomRepo";
 import { GameModeId, ResolutionReason, RoomDoc, RoomPlayerDoc } from "./types";
 import { resolveRound } from "./resolveRound";
@@ -18,7 +19,10 @@ import {
   CREATE_ROOM_LIMIT,
   JOIN_ROOM_LIMIT,
   RATE_LIMIT_WINDOW_MS,
+  SUBMIT_SOLO_RUN_LIMIT,
 } from "./rateLimit";
+import { SoloMode, validateSoloRun } from "./profileScoring";
+import { applyMatchAwards, applySoloRun } from "./userProfile";
 
 initializeApp();
 
@@ -257,6 +261,55 @@ export const submitAnswer = onCall(CALLABLE_OPTIONS, async (request) => {
   }
 });
 
+const MAX_CLAIMED_ACHIEVEMENTS_PER_RUN = 30;
+
+/**
+ * Records a finished single-player run and returns the profile scoring fields the
+ * server computed from it. This is the only way those fields change: clients can
+ * no longer write points/experience/level/highScore themselves (firestore.rules),
+ * because the leaderboard used to be whatever a client claimed it was.
+ *
+ * Honest about its limits: the stimuli of a solo run are generated on the device,
+ * so the server cannot verify that a run happened -- it recomputes the score and XP
+ * from the reported counts and rejects what is impossible (profileScoring.ts).
+ * A run submitted while offline simply never reaches here, which is the intended
+ * behavior: offline play counts locally, not on the leaderboard.
+ */
+export const submitSoloRun = onCall(CALLABLE_OPTIONS, async (request) => {
+  const uid = request.auth?.uid;
+  if (!uid) throw new HttpsError("unauthenticated", "Debes iniciar sesión.");
+  // Anonymous accounts never appear on the leaderboard, so nothing should be written for them.
+  if (request.auth?.token?.firebase?.sign_in_provider === "anonymous") {
+    throw new HttpsError("permission-denied", "Las cuentas de invitado no puntúan.", { reason: "ANONYMOUS" });
+  }
+
+  const run = {
+    mode: String(request.data?.mode ?? "") as SoloMode,
+    correctHits: Number(request.data?.correctHits),
+    totalRounds: Number(request.data?.totalRounds),
+    survivalMs: Number(request.data?.survivalMs),
+    finalScore: Number(request.data?.finalScore),
+  };
+  const rejection = validateSoloRun(run);
+  if (rejection) {
+    console.warn(`submitSoloRun rejected for uid ${uid}: ${rejection}`, run);
+    throw new HttpsError("invalid-argument", "Partida no válida.", { reason: "INVALID_RUN" });
+  }
+
+  const claimedAchievementIds = Array.isArray(request.data?.achievementIds)
+    ? (request.data.achievementIds as unknown[]).slice(0, MAX_CLAIMED_ACHIEVEMENTS_PER_RUN).map(String)
+    : [];
+
+  try {
+    await assertWithinRateLimit(uid, "submitSoloRun", SUBMIT_SOLO_RUN_LIMIT, RATE_LIMIT_WINDOW_MS);
+    return await applySoloRun(uid, run, claimedAchievementIds);
+  } catch (err) {
+    if (err instanceof HttpsError) throw err;
+    console.error(`submitSoloRun failed for uid ${uid}`, err);
+    throw new HttpsError("internal", "No se pudo registrar la partida.");
+  }
+});
+
 // Deletes every room this account ever played in (host or guest --
 // createRoom always seeds the host into `players` too, so one field-path
 // query against the map catches both) plus that room's presence node, as
@@ -404,3 +457,25 @@ export const purgeExpiredRooms = onSchedule("every 60 minutes", async () => {
   const deleted = await purgeExpiredRoomsFn();
   if (deleted > 0) console.log(`purgeExpiredRooms: deleted ${deleted} expired room(s)`);
 });
+
+// Pays out a finished match to every player's profile. Unlike a solo run this is
+// fully verified -- the backend generated the stimuli, checked every answer against
+// its deadline and ranked the players itself. Idempotent per room, so a retried
+// delivery cannot pay twice (see userProfile.applyMatchAwards).
+export const onRoomFinished = onDocumentUpdated(
+  { document: "rooms/{roomId}", maxInstances: MAX_INSTANCES },
+  async (event) => {
+    const before = event.data?.before.data();
+    const after = event.data?.after.data();
+    if (!after || before?.status === "finished" || after.status !== "finished") return;
+
+    const roomId = event.params.roomId;
+    try {
+      const awarded = await applyMatchAwards(roomId);
+      if (awarded > 0) console.log(`onRoomFinished: awarded ${awarded} player(s) in room ${roomId}`);
+    } catch (err) {
+      console.error(`onRoomFinished failed for room ${roomId}`, err);
+      throw err; // let the trigger retry; applyMatchAwards is idempotent
+    }
+  }
+);
