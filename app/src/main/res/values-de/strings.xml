@@ -97,7 +97,7 @@
     <string name="game_over_rounds_survived">ÜBERLEBTE RUNDEN</string>
     <string name="game_over_time_elapsed">VERSTRICHENE ZEIT</string>
     <string name="game_over_perfect_bonus">PERFEKT-BONUS</string>
-    <string name="game_over_flawless_100">FEHLERFREI 100%%</string>
+    <string name="game_over_flawless_100">FEHLERFREI 100%</string>
     <string name="game_over_xp_header">[ XP-SYNTHESE ]</string>
     <string name="game_over_xp_total">+%1$d XP</string>
     <string name="game_over_xp_base">BASIS (%1$s)</string>

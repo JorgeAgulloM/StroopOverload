@@ -97,7 +97,7 @@
     <string name="game_over_rounds_survived">RODADAS SOBREVIVIDAS</string>
     <string name="game_over_time_elapsed">TEMPO DECORRIDO</string>
     <string name="game_over_perfect_bonus">BÔNUS PERFEITO</string>
-    <string name="game_over_flawless_100">IMPECÁVEL 100%%</string>
+    <string name="game_over_flawless_100">IMPECÁVEL 100%</string>
     <string name="game_over_xp_header">[ SÍNTESE DE XP ]</string>
     <string name="game_over_xp_total">+%1$d XP</string>
     <string name="game_over_xp_base">BASE (%1$s)</string>

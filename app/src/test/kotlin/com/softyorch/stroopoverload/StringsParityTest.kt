@@ -54,4 +54,21 @@ class StringsParityTest {
             unused,
         )
     }
+
+    @Test
+    fun `an escaped percent only appears in strings that are formatted`() {
+        // `%%` becomes `%` only when the string goes through String.format. A string read
+        // with plain stringResource(id) shows it literally -- the game-over screen said
+        // "FLAWLESS 100%%" in every language.
+        val formatSpecifier = Regex("""%(\d+\$)?[-#+ 0,(]*\d*(\.\d+)?[sdfxXeEgGcboh]""")
+        val offenders = (listOf("values") + locales).flatMap { dir ->
+            Regex("""<string name="([^"]+)"[^>]*>(.*?)</string>""", RegexOption.DOT_MATCHES_ALL)
+                .findAll(File(res, "$dir/strings.xml").readText())
+                .filter { m -> "%%" in m.groupValues[2] && !formatSpecifier.containsMatchIn(m.groupValues[2].replace("%%", "")) }
+                .map { m -> "$dir/${m.groupValues[1]}" }
+                .toList()
+        }
+
+        assertEquals("Unformatted strings showing a literal %%", emptyList<String>(), offenders)
+    }
 }

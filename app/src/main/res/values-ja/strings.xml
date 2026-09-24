@@ -97,7 +97,7 @@
     <string name="game_over_rounds_survived">生存ラウンド数</string>
     <string name="game_over_time_elapsed">経過時間</string>
     <string name="game_over_perfect_bonus">パーフェクトボーナス</string>
-    <string name="game_over_flawless_100">パーフェクト 100%%</string>
+    <string name="game_over_flawless_100">パーフェクト 100%</string>
     <string name="game_over_xp_header">[ XP合成 ]</string>
     <string name="game_over_xp_total">+%1$d XP</string>
     <string name="game_over_xp_base">ベース（%1$s）</string>
