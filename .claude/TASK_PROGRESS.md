@@ -1384,3 +1384,124 @@ placement mismatch (MEDIUM) · #1, #2, #3, #7 confirmed live.
 - APK size: debug 38.7 MB, release 22.5 MB (was 10.7 MB) — the longer tracks add ~16 MB.
 - MusicManager now tags music USAGE_GAME + CONTENT_TYPE_MUSIC (was USAGE_UNKNOWN); verified on the Samsung via dumpsys audio.
 - Committed on refactor/audit-hardening: `e1cd522` (ogg swap) + audio-attributes fix.
+
+## Sub-task: fix findings #2, #3, #12 (2026-09-24, DONE — committed de60236, a2e74b3 + #12 commit)
+- #2: `syncUserProfile(uid, nickname, isAnonymous)` — flag from auth session; profile building in pure
+  `data/SessionProfiles.kt` (`newSessionProfile`, `profileFromRemote`, `repairedForSession`); stale guest profiles
+  repaired in case 1 AND at app start in NavGraph (signed-in sessions skip AuthViewModel). Verified on emulator:
+  new guest `is_anon=true`; forced stale `false` → `true` on launch; registered phone unchanged.
+- #3: ProfileViewModel `isGuest` from auth session; guest sign-out → `GuestSignOutDialog` (4 strings × 6 locales);
+  guest no longer sees change password / delete. Verified: dialog, STAY keeps session, SIGN OUT → auth screen.
+  Known limit: registering from a guest still loses guest progress (no linkWithCredential; guest runs never reach
+  the server anyway) — the dialog says so.
+- #12: ROUTE_GAME_OVER with null lastResult → navigate Home, popUpTo(graph) inclusive. Verified with am kill repro;
+  back from Home exits the app.
+- Tests 133 → 145 (SessionProfilesTest 7, ProfileViewModelTest +5, AuthViewModelTest asserts isAnonymous).
+- Reviewer (kotlin-reviewer): no blocking issues; startup repair write is one-shot (verified), double read of auth at startup judged theoretical.
+
+## Sub-task: fix findings #1 (offline game-over freeze) + #5 (run lost on network blip) (2026-09-24, IN PROGRESS)
+- Server: `applySoloRun(..., runId)` dedupes via `users/{uid}.recentRunIds` (last 50); `submitSoloRun` accepts optional
+  `runId` (/^[A-Za-z0-9-]{8,64}$/, else INVALID_RUN); rules: `recentRunIds` server-owned. functions 205 → 212, lint OK.
+  **NOT DEPLOYED yet** (old deployed function ignores runId → client still works, just no dedupe).
+- Client: `PendingSoloRun` (+codec) / `PendingRunSync` (flush: accepted/rejected removed, RetryLater stops, only the
+  signed-in uid, mutex) / `PendingRunStore` (SharedPreferences, commit(), cap 20). recordGameResult enqueues + flushes in a
+  repository-lifetime background scope; flush also on every ON_RESUME. pushProfileToCloud / syncProgressToCloud no longer
+  await the server ack (Firestore persistent cache queues them) — fixes the freeze and the same hang on nickname save.
+- Rule change vs `5b0d926` ("offline play doesn't count"): runs played with no connection now reach the server later.
+- Kotlin 145 → 155. Pending: on-device verification (needs a registered account on the emulator), deploy, review, commits.
+- DEPLOYED (2026-09-24, user OK): firestore rules + submitSoloRun. Prod smoke rules+solo 14/14 incl. runId dedupe,
+  malformed runId, client can't clear recentRunIds (smoke script extended, still uncommitted).
+- Verified on emulator with imported verified account e2eTesterEmu0002 (deleted afterwards via in-app DELETE MY DATA;
+  users doc confirmed NOT_FOUND, not recreated by queued writes):
+  - #1: airplane mode, Time Attack → game over shown immediately; run queued in stroop_pending_runs.
+  - #5: airplane off + resume → queue emptied, server matchesPlayed=1, highScore=12150, recentRunIds=[runId].
+  - Offline nickname save returns at once; queued write reached Firestore after reconnect.
+- Side observation (pre-existing, not fixed): queued run's winStreak is 0 — NavGraph reads it from GameState.Playing
+  after the state is already GameOver.
+- Review (kotlin-reviewer): HIGH fixed — account deletion now `pendingRunSync.discard(uid)` (waits for an in-flight submit
+  via the sync mutex, drops that account's queued runs) before deleting users/{uid}; otherwise a queued run could write the
+  deleted profile back. MEDIUM fixed — server scoring applied only once no runs of the account remain queued (an answer for
+  run A no longer erases run B's provisional local count). Accepted, not fixed: game-over shows provisional local numbers
+  (by design now); dedupe window 50 could miss a retry after 50+ runs from another device.
+- Kotlin 155 → 158, debug + release build OK. Uncommitted; nothing more to deploy (discard is client-only).
+
+## Sub-task: remaining findings, batch 2 (2026-09-24, IN PROGRESS)
+- Committed batch 1: aecd17a (server runId dedupe), 7b9ae61 (#5 queue), fd2f65b (#1 no-ack writes).
+- #11 fixed (uncommitted): `100%%` → `100%` in 6 locales + StringsParityTest guard (`%%` only in formatted strings). Kotlin 159.
+- #7 #9 #13 fixed (uncommitted), functions 212 → 217, DEPLOYED all functions; prod smoke 35/35 (now checks 0-score
+  loser counted and survival survivor placed first).
+- Next: #6 (+ #8 solo part + winStreak always 0 at game over), then #4, then #8 online part.
+- #6 fixed (uncommitted): GameViewModel.startGame ignored unless state == Menu; `claimGameOver()` true once per run
+  (GameScreen records/plays sound only if claimed); GameOver carries `endStreak` (was always 0: NavGraph read Playing
+  after GameOver). #8 solo part: selectedGameMode/previousHighScore → rememberSaveable. Kotlin 165.
+  Verified on emulator: font_scale change mid-run recreates the Activity (window id changes) and the run continues
+  (score 980/streak 7 kept); recreation at game over counts the run once (matches_played=1) and falls back to Home
+  (lastResult is plain remember — acceptable, #12 fallback).
+- Committed batch 2: e7772ab (server #7 #9 #13), 33ad35e (#11), aed18a1 (#6 + endStreak), b069633 (#8 solo part).
+- #4 (uncommitted, under review): new callable `leaveRoom` (functions/src/roomLeave.ts: waiting-only, removes player,
+  compacts order, migrates host, deletes empty room) — DEPLOYED. Client: MultiplayerRepository.leaveRoom
+  (fire-and-forget), MultiplayerViewModel calls it from exitRoom/onCleared when status == WAITING.
+  functions 224, Kotlin 168. Verified live: phone host backs out of waiting room → REST guest becomes host; last leave
+  deletes the room (ROUTE_NOT_FOUND on rejoin). Smoke script: new `leave` group 2/2.
+- #4 review fixes: HIGH — VM tracks `seatedRoomId` + `lastKnownStatus` from createRoom/joinRoom success (not the UI
+  state), so leaving while still Connecting or after a listener failure still calls leaveRoom (once). MEDIUM — empty-room
+  delete also removes presence/{roomId}; leaveRoom rate-limited (LEAVE_ROOM_LIMIT 20/min). Redeployed leaveRoom;
+  smoke leave 2/2. functions 225, Kotlin 171. Still uncommitted.
+- NOTE: `app/src/main/kotlin/.../ui/components/QuadrantBox.kt` has +152 lines of uncommitted changes NOT made by
+  Claude (user's parallel work) — never stage it with Claude's commits.
+- #4 committed: ee09543 (server leaveRoom), 15faf88 (client).
+
+---
+
+## >>> RESUME HERE (session closed 2026-09-24) <<<
+
+**Branch** `refactor/audit-hardening`, NOT pushed (no PR yet). Everything below is committed except the items in
+"Uncommitted". **Prod (`stroopoverload-softyorch`) runs exactly the committed backend**: rules + all functions incl.
+`submitSoloRun` runId dedupe and `leaveRoom` were deployed 2026-09-24. App Check enforcement still OFF.
+
+### Done this session (commits after c1b52a9)
+| Commit | What |
+|---|---|
+| e1cd522 + c0466dc | music mp3 → 3-min ogg; music tagged USAGE_GAME/CONTENT_TYPE_MUSIC |
+| de60236 / a2e74b3 / f8c1912 | #2 guests saved as anonymous (+ startup repair) / #3 guest sign-out confirmation / #12 blank game-over after process death → Home |
+| aecd17a / 7b9ae61 / fd2f65b | server runId dedupe / #5 pending-run queue (PendingRunSync, retry on ON_RESUME, discard on account delete) / #1 no-ack Firestore writes (offline game-over freeze) |
+| e7772ab / 33ad35e / aed18a1 / b069633 | #7 #9 #13 server scoring fixes / #11 "100%%" / #6 run survives Activity recreation + endStreak / #8 solo mode rememberSaveable |
+| ee09543 / 15faf88 | #4 leaveRoom (server + client) |
+
+Tests at the end: functions 225/225 (emulator), Kotlin 171/171, debug + release build OK. Prod smoke all groups green.
+
+### Uncommitted (on purpose)
+- `app/src/main/kotlin/.../ui/components/QuadrantBox.kt` — **user's own parallel work** (+152 lines, pointerInput
+  instead of clickable). Not Claude's; never stage it. Reviewer note: `pointerInput` drops button semantics for
+  TalkBack/UI tests — suggest keeping `clickable(indication = null, interactionSource = …)` for the press effect.
+- `functions/e2e/prod-smoke.mjs` — REST smoke against PROD (groups: rules solo mistake hotpotato survival leave).
+  Creates + deletes throwaway accounts. User hasn't decided whether it goes in the repo.
+
+### Still open (parked findings)
+- **#8 online part**: process death mid online match → silently back to Home, no "your match ended" message.
+- **#10 lows**: DeadlineTimerBar uses device clock (no server offset); room code uniqueness is query-then-write;
+  unbounded queries in sweepStuckRooms / deleteMyMultiplayerData; `WaitingRoomScreen` LazyColumn items without `key`;
+  `!!` after null checks in AuthScreen.
+- Product questions for the user: reward the run's BEST streak instead of the end streak (end streak is ~always 0)?
+  Keep "offline runs rank later" (new behaviour since 7b9ae61) or add an age limit for queued runs?
+- Accepted limits: game-over screen shows provisional local numbers; recreation exactly at game over goes Home;
+  dedupe window 50 runIds; leaving a waiting room via process death relies on the 6 h purge.
+
+### Next steps, in order
+1. Decide on QuadrantBox (user) and on committing `functions/e2e/`.
+2. #8 online part, then the #10 lows.
+3. Human checklist on a device (release build, sound/timer feel, real registration emails, ads, other locales).
+4. Push branch + PR; before Play: bump versionCode, register App Check debug token + Play Integrity, then
+   `ENFORCE_APP_CHECK = true` once the installed base runs the new client.
+
+### How to run things
+```bash
+export JAVA_HOME="/c/Program Files/Java/jdk-21.0.10"
+cd functions && npm test                # 225, needs JDK 21 (Firestore emulator)
+cd .. && ./gradlew.bat :app:testDebugUnitTest
+cd functions && node e2e/prod-smoke.mjs [group…]   # hits PROD, creates/deletes test accounts
+```
+Device helpers (session temp, may be gone): `$TEMP/ui.sh <serial>` (UI text+coords), `$TEMP/play2.py` / `play3.py`
+(auto-players by ink-colour sampling; play3 handles shuffled online quadrants). Phone: Samsung SM-A165F over adb wifi
+(`adb-R58Y8113L3N-…`), logged in as the user's YorchDebug account. AVD `Pixel_9_Pro_API_36` (closes under memory pressure).
+Verified test accounts are created with `firebase auth:import` (HMAC_SHA256) — ask the user first each time.
