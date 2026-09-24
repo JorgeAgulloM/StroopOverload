@@ -8,6 +8,7 @@ import com.softyorch.stroopoverload.data.MultiplayerCallException
 import com.softyorch.stroopoverload.data.MultiplayerCallFailure
 import com.softyorch.stroopoverload.data.MultiplayerRepository
 import com.softyorch.stroopoverload.domain.multiplayer.RoomMode
+import com.softyorch.stroopoverload.domain.multiplayer.RoomStatus
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,6 +26,12 @@ class MultiplayerViewModel(
     private var myUid: String = ""
     private var observeRoomJob: Job? = null
     private var presenceRoomId: String? = null
+
+    // The room this player is seated in server-side, from the moment createRoom/joinRoom
+    // answered -- tracked apart from the UI state, which is still Connecting before the first
+    // snapshot and loses the room on a listener failure. See leaveRoomIfNotStarted.
+    private var seatedRoomId: String? = null
+    private var lastKnownStatus: RoomStatus = RoomStatus.WAITING
 
     /** (roomId, round) of the last answer sent and not rejected; see [submitAnswer]. */
     private var answeredTarget: Pair<String, Int>? = null
@@ -74,17 +81,30 @@ class MultiplayerViewModel(
     }
 
     /**
-     * Leaves the room back to the lobby: from a finished match's result screen, or
-     * mid-match after the player confirmed forfeiting. Going offline is what makes
+     * Leaves the room back to the lobby: from the waiting room (giving up the slot), from a
+     * finished match's result screen, or mid-match after the player confirmed forfeiting.
+     * Going offline is what makes
      * the forfeit real -- the backend eliminates a player who drops out of a
      * "mistake" or solo_survival match straight away instead of waiting for their
      * turn to time out.
      */
     fun exitRoom() {
+        leaveRoomIfNotStarted()
         leavePresence()
         observeRoomJob?.cancel()
         observeRoomJob = null
         _state.value = MultiplayerUiState.Idle
+    }
+
+    /**
+     * Before a match starts, going offline changes nothing on the server: the player kept
+     * their slot, and a host who left stranded the others (only the host can start).
+     * Leaving a started match is a forfeit instead, which presence handles.
+     */
+    private fun leaveRoomIfNotStarted() {
+        val roomId = seatedRoomId ?: return
+        seatedRoomId = null
+        if (lastKnownStatus == RoomStatus.WAITING) repository.leaveRoom(roomId)
     }
 
     private fun leavePresence() {
@@ -122,9 +142,12 @@ class MultiplayerViewModel(
         observeRoomJob?.cancel()
         repository.trackPresence(roomId, myUid)
         presenceRoomId = roomId
+        seatedRoomId = roomId
+        lastKnownStatus = RoomStatus.WAITING
         observeRoomJob = viewModelScope.launch {
             try {
                 repository.observeRoom(roomId).collect { room ->
+                    lastKnownStatus = room.status
                     _state.value = MultiplayerUiState.InRoom(room, myUid)
                 }
             } catch (e: CancellationException) {
@@ -140,6 +163,7 @@ class MultiplayerViewModel(
         (this as? MultiplayerCallException)?.failure ?: MultiplayerCallFailure.UNKNOWN
 
     override fun onCleared() {
+        leaveRoomIfNotStarted()
         leavePresence()
         observeRoomJob?.cancel()
         super.onCleared()

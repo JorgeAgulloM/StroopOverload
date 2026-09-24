@@ -20,5 +20,11 @@ interface MultiplayerRepository {
      * as present.
      */
     fun leavePresence(roomId: String, uid: String)
+
+    /**
+     * Gives up the caller's slot in a room whose match hasn't started (the host role passes
+     * on; an empty room is deleted). Fire-and-forget: it runs on the way out of the screen.
+     */
+    fun leaveRoom(roomId: String)
     suspend fun deleteMyMultiplayerData(): Result<Unit>
 }

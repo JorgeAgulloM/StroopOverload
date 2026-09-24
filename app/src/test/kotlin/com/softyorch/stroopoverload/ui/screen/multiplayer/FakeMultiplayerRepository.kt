@@ -67,6 +67,11 @@ class FakeMultiplayerRepository : MultiplayerRepository {
     }
 
     val leftPresence = mutableListOf<Pair<String, String>>()
+    val leftRooms = mutableListOf<String>()
+
+    override fun leaveRoom(roomId: String) {
+        leftRooms += roomId
+    }
 
     override fun leavePresence(roomId: String, uid: String) {
         leftPresence += roomId to uid

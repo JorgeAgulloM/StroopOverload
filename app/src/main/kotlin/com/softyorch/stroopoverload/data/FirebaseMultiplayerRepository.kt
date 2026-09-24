@@ -108,6 +108,13 @@ class FirebaseMultiplayerRepository(
             .addOnFailureListener { Log.w(TAG, "Failed to write offline presence for room $roomId: ${it.message}") }
     }
 
+    override fun leaveRoom(roomId: String) {
+        // Not awaited: called from onCleared, when no scope is left to wait in. If it never
+        // arrives the room is still swept by purgeExpiredRooms.
+        functions.getHttpsCallable("leaveRoom").call(mapOf("roomId" to roomId))
+            .addOnFailureListener { Log.w(TAG, "leaveRoom failed for room $roomId: ${it.message}") }
+    }
+
     private fun mapRoom(roomId: String, data: Map<String, Any?>): MultiplayerRoom {
         @Suppress("UNCHECKED_CAST")
         val playersMap = data["players"] as? Map<String, Map<String, Any?>> ?: emptyMap()
