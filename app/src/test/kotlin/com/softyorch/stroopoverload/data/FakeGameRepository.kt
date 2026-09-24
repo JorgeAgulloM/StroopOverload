@@ -50,6 +50,9 @@ class FakeGameRepository(
 
     override suspend fun refreshScoringFromCloud(uid: String) = Unit
 
+    var flushPendingRunsCount = 0
+    override fun flushPendingRuns() { flushPendingRunsCount++ }
+
     override suspend fun syncMatchResult(roomId: String): Boolean = false
 
     override suspend fun getLeaderboard(forceRefresh: Boolean): List<UserProfile> = listOf(storedProfile)

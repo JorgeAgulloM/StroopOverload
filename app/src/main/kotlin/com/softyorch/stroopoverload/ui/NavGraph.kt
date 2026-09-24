@@ -88,12 +88,17 @@ fun StroopNavGraph() {
     // Activity before Android actually stops it, so this is the earliest
     // reliable hook to cut music instead of leaving it playing behind a
     // locked screen.
+    // ON_RESUME (app start included) is also when solo runs still waiting for the server
+    // are retried -- the usual moment a connection that dropped has come back.
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner, musicManager) {
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
                 Lifecycle.Event.ON_PAUSE -> musicManager.pause()
-                Lifecycle.Event.ON_RESUME -> musicManager.resume()
+                Lifecycle.Event.ON_RESUME -> {
+                    musicManager.resume()
+                    repository.flushPendingRuns()
+                }
                 else -> Unit
             }
         }

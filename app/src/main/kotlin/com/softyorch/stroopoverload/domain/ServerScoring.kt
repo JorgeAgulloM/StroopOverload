@@ -6,9 +6,9 @@ package com.softyorch.stroopoverload.domain
  * (functions/src/userProfile.ts); firestore.rules denies the client any write to
  * them, because a client-written leaderboard is a leaderboard anyone can forge.
  *
- * The client keeps a local copy so play works offline -- but an offline run never
- * reaches the server, and by design never counts on the leaderboard, so whatever
- * the server says replaces the local numbers on the next refresh.
+ * The client keeps a local copy so play works offline. A finished run is queued on
+ * the device and reported when the server can be reached (PendingRunSync); whatever
+ * the server answers replaces the local numbers.
  */
 data class ServerScoring(
     val points: Int,

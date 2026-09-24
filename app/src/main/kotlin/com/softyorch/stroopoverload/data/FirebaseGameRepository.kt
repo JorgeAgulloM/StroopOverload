@@ -2,15 +2,18 @@ package com.softyorch.stroopoverload.data
 
 import android.content.Context
 import android.util.Log
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.AggregateSource
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.functions.FirebaseFunctions
+import com.google.firebase.functions.FirebaseFunctionsException
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.SetOptions
 import com.softyorch.stroopoverload.core.GameConfig
 import com.softyorch.stroopoverload.data.local.AchievementsLocalStore
 import com.softyorch.stroopoverload.data.local.MultiplayerAwardStore
+import com.softyorch.stroopoverload.data.local.PendingRunStore
 import com.softyorch.stroopoverload.data.local.ProfileLocalStore
 import com.softyorch.stroopoverload.domain.Achievement
 import com.softyorch.stroopoverload.domain.AchievementDefinitions
@@ -24,9 +27,13 @@ import com.softyorch.stroopoverload.domain.isRecordable
 import com.softyorch.stroopoverload.domain.withAchievementXp
 import com.softyorch.stroopoverload.domain.withRunApplied
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import java.util.UUID
 
 class FirebaseGameRepository private constructor(
     private val context: Context,
@@ -34,10 +41,22 @@ class FirebaseGameRepository private constructor(
     private val achievementsStore: AchievementsLocalStore = AchievementsLocalStore(context),
     private val achievementEngine: AchievementEngine = AchievementEngine(),
     private val multiplayerAwardStore: MultiplayerAwardStore = MultiplayerAwardStore(context),
+    private val pendingRuns: PendingRunStore = PendingRunStore(context),
     private val db: FirebaseFirestore? = try { FirebaseFirestore.getInstance() } catch (e: Exception) { null },
     private val functions: FirebaseFunctions = FirebaseFunctions.getInstance(),
 ) : GameRepository {
     private val users get() = db?.collection("users")
+
+    // Cloud work that must not hold up the UI and must outlive the screen that started it
+    // (the game-over navigation used to wait on it, and never came while offline).
+    // The repository is a process-wide singleton, so this scope lives as long as the app.
+    private val backgroundScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    private val pendingRunSync = PendingRunSync(
+        queue = pendingRuns,
+        submitter = ::submitPendingRun,
+        onScoring = { scoring -> profileStore.saveProfile(getProfile().applyServerScoring(scoring)) },
+    )
 
     private var cachedLeaderboard: List<UserProfile> = emptyList()
     private var lastLeaderboardFetchEpochMs: Long = 0L
@@ -162,6 +181,8 @@ class FirebaseGameRepository private constructor(
      * must know if the cloud doc survived instead of reporting a false "deleted everything".
      */
     override suspend fun deleteAllUserData(uid: String): Unit = withContext(Dispatchers.IO) {
+        // First: a queued run submitted after the delete would write the profile back.
+        pendingRunSync.discard(uid)
         users?.document(uid)?.delete()?.await()
         clearLocalProgress()
     }
@@ -193,50 +214,71 @@ class FirebaseGameRepository private constructor(
                 .filter { it.isUnlocked }
                 .associate { it.id to it.unlockedAt }
             syncProgressToCloud(finalUpdated.userId, updatedCareer, allUnlockedMap)
-            submitRunToServer(result, newIds, winStreak)
+            pendingRuns.add(
+                PendingSoloRun(
+                    runId = UUID.randomUUID().toString(),
+                    uid = finalUpdated.userId,
+                    mode = result.mode.name,
+                    correctHits = result.correctHits,
+                    totalRounds = result.totalRounds,
+                    survivalMs = result.survivalMs,
+                    finalScore = result.finalScore,
+                    // Feeds the same XP bonus the player already saw on the game-over screen;
+                    // the server clamps it to the run's correct answers.
+                    winStreak = winStreak,
+                    achievementIds = newIds.toList(),
+                    createdAtEpochMs = now,
+                )
+            )
+            flushPendingRuns()
         }
 
         return@withContext newlyUnlockedAchievements
     }
 
     /**
-     * Reports a finished run to the backend, which recomputes the score and XP and
-     * writes the profile itself -- the local numbers above are provisional until it
-     * answers, and are replaced by whatever it returns.
-     *
-     * A failure here (offline, rate-limited, rejected as implausible) is not an error
-     * for the player: the run still counted locally. It just never reaches the
-     * leaderboard, which is the point -- offline play does not rank.
+     * Reports the signed-in account's queued solo runs to the backend, which recomputes the
+     * score and XP and writes the profile itself -- the local numbers are provisional until
+     * it answers, and are replaced by whatever it returns. Runs the server can't be reached
+     * for stay queued; the next call (another run ending, or the next app start) retries them.
+     * Returns at once: the work happens in the background.
      */
-    private suspend fun submitRunToServer(
-        result: GameResult,
-        unlockedAchievementIds: Collection<String>,
-        winStreak: Int,
-    ) {
+    override fun flushPendingRuns() {
+        val user = FirebaseAuth.getInstance().currentUser ?: return
+        if (user.isAnonymous) return
+        backgroundScope.launch { pendingRunSync.flush(user.uid) }
+    }
+
+    private suspend fun submitPendingRun(run: PendingSoloRun): SubmitOutcome {
+        // The callable acts for whoever is signed in right now; never let it apply another
+        // account's run.
+        if (FirebaseAuth.getInstance().currentUser?.uid != run.uid) return SubmitOutcome.RetryLater
         val payload = mapOf(
-            "mode" to result.mode.name,
-            "correctHits" to result.correctHits,
-            "totalRounds" to result.totalRounds,
-            "survivalMs" to result.survivalMs,
-            "finalScore" to result.finalScore,
-            "achievementIds" to unlockedAchievementIds.toList(),
-            // Feeds the same XP bonus the player already saw on the game-over screen;
-            // the server clamps it to the run's correct answers.
-            "winStreak" to winStreak,
+            "runId" to run.runId,
+            "mode" to run.mode,
+            "correctHits" to run.correctHits,
+            "totalRounds" to run.totalRounds,
+            "survivalMs" to run.survivalMs,
+            "finalScore" to run.finalScore,
+            "achievementIds" to run.achievementIds,
+            "winStreak" to run.winStreak,
         )
-        try {
+        return try {
             val response = functions.getHttpsCallable("submitSoloRun").call(payload).await()
             @Suppress("UNCHECKED_CAST")
             val scoring = serverScoringFrom(response.data as? Map<String, Any?>)
-            if (scoring == null) {
-                Log.w("FirebaseRepo", "submitSoloRun returned no scoring fields")
-                return
-            }
-            profileStore.saveProfile(getProfile().applyServerScoring(scoring))
+            if (scoring == null) Log.w("FirebaseRepo", "submitSoloRun returned no scoring fields")
+            SubmitOutcome.Accepted(scoring)
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            Log.w("FirebaseRepo", "submitSoloRun failed; run stays local only: ${e.message}")
+            if (e is FirebaseFunctionsException && e.code in PERMANENT_SUBMIT_FAILURES) {
+                Log.w("FirebaseRepo", "submitSoloRun rejected run ${run.runId}: ${e.code}")
+                SubmitOutcome.Rejected
+            } else {
+                Log.w("FirebaseRepo", "submitSoloRun unreachable, run ${run.runId} stays queued: ${e.message}")
+                SubmitOutcome.RetryLater
+            }
         }
     }
 
@@ -381,6 +423,14 @@ class FirebaseGameRepository private constructor(
     companion object {
         @Volatile
         private var INSTANCE: FirebaseGameRepository? = null
+
+        // The server refused the run itself (implausible, or a guest account): sending it
+        // again gets the same answer. Anything else -- offline, timeout, rate limit -- retries.
+        private val PERMANENT_SUBMIT_FAILURES = setOf(
+            FirebaseFunctionsException.Code.INVALID_ARGUMENT,
+            FirebaseFunctionsException.Code.PERMISSION_DENIED,
+            FirebaseFunctionsException.Code.FAILED_PRECONDITION,
+        )
 
         fun getInstance(context: Context): FirebaseGameRepository {
             return INSTANCE ?: synchronized(this) {

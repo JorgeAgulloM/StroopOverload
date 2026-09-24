@@ -24,6 +24,9 @@ interface GameRepository {
     suspend fun recordGameResult(result: GameResult, xpEarned: Int, winStreak: Int = 0): List<Achievement>
     suspend fun refreshScoringFromCloud(uid: String)
 
+    /** Retries the solo runs still waiting for the server. Returns at once; works in the background. */
+    fun flushPendingRuns()
+
     /** @return true if this call pulled in the match's result. */
     suspend fun syncMatchResult(roomId: String): Boolean
 
