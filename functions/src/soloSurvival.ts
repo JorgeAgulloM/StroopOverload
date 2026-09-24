@@ -6,9 +6,12 @@ import { roomsCol } from "./roomRepo";
 import { scheduleSoloPlayerTimeoutCheck } from "./taskQueue";
 import { rankSoloSurvivalPlayers } from "./scoring";
 
-function withFinalScores(players: Readonly<Record<string, RoomPlayerDoc>>): Record<string, RoomPlayerDoc> {
+function withFinalScores(
+  players: Readonly<Record<string, RoomPlayerDoc>>,
+  winnerUid: string | null
+): Record<string, RoomPlayerDoc> {
   const ranked = { ...players };
-  for (const r of rankSoloSurvivalPlayers(players)) {
+  for (const r of rankSoloSurvivalPlayers(players, winnerUid)) {
     ranked[r.uid] = { ...ranked[r.uid], placement: r.placement, finalScore: r.finalScore };
   }
   return ranked;
@@ -164,7 +167,7 @@ export function applySoloAnswer(
       // still alive did, regardless of their score.
       const winnerUid = survivors.length === 1 ? survivors[0].uid : highestScoreWinner(players);
       tx.update(roomRef, {
-        players: withFinalScores(players),
+        players: withFinalScores(players, winnerUid),
         status: "finished",
         winnerUid,
         deadlineAtMs: null,
@@ -223,10 +226,11 @@ export async function finishSoloSurvivalSession(roomId: string): Promise<void> {
     const room = doc.data() as RoomDoc;
     if (room.status !== "playing") return; // already finished (all-busted early finish, or stale)
 
+    const winnerUid = highestScoreWinner(room.players);
     tx.update(roomRef, {
-      players: withFinalScores(room.players),
+      players: withFinalScores(room.players, winnerUid),
       status: "finished",
-      winnerUid: highestScoreWinner(room.players),
+      winnerUid,
       deadlineAtMs: null,
     });
   });

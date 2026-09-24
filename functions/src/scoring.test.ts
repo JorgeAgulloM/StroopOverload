@@ -146,6 +146,16 @@ describe("rankSoloSurvivalPlayers", () => {
     expect(ranked.find((r) => r.uid === "a")?.placement).toBe(3);
   });
 
+  test("a given winner is ranked first regardless of score, the rest by score", () => {
+    const players = {
+      a: player({ uid: "a", order: 0, soloScore: 900 }),
+      b: player({ uid: "b", order: 1, soloScore: 100 }),
+      c: player({ uid: "c", order: 2, soloScore: 500 }),
+    };
+    const ranked = rankSoloSurvivalPlayers(players, "b");
+    expect(ranked.map((r) => [r.uid, r.placement])).toEqual([["b", 1], ["a", 2], ["c", 3]]);
+  });
+
   test("ties break toward whoever joined first (lowest order)", () => {
     const players = {
       a: player({ uid: "a", order: 1, soloScore: 400 }),

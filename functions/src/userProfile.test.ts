@@ -267,6 +267,33 @@ describe("applyMatchAwards", () => {
     expect(await getUser("b")).toBeUndefined();
   });
 
+  test("a ranked player who scored 0 still gets the match counted", async () => {
+    // The loser eliminated before scoring used to be skipped: no matchesPlayed/matchesLost.
+    await seedFinishedRoom({
+      players: {
+        a: { uid: "a", displayName: "A", avatarIndex: 0, alive: true, order: 0, joinedAtMs: 0, placement: 1, finalScore: 600 },
+        b: { uid: "b", displayName: "B", avatarIndex: 0, alive: false, order: 1, joinedAtMs: 0, placement: 2, finalScore: 0 },
+      },
+    });
+
+    expect(await applyMatchAwards("room-1")).toBe(2);
+    expect(await getUser("b")).toMatchObject({ points: 0, matchesPlayed: 1, matchesLost: 1, matchesWon: 0 });
+  });
+
+  test("a winner who scored 0 still gets the win", async () => {
+    await seedFinishedRoom({
+      winnerUid: "a",
+      players: {
+        a: { uid: "a", displayName: "A", avatarIndex: 0, alive: true, order: 0, joinedAtMs: 0, placement: 1, finalScore: 0 },
+        b: { uid: "b", displayName: "B", avatarIndex: 0, alive: false, order: 1, joinedAtMs: 0, placement: 2, finalScore: 0 },
+      },
+    });
+
+    await applyMatchAwards("room-1");
+
+    expect(await getUser("a")).toMatchObject({ matchesPlayed: 1, matchesWon: 1 });
+  });
+
   test("no-ops on a room that no longer exists", async () => {
     expect(await applyMatchAwards("room-1")).toBe(0);
   });

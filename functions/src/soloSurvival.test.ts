@@ -231,6 +231,22 @@ describe("resolveSoloAnswer", () => {
     expect(after.deadlineAtMs).toBeNull();
   });
 
+  test("the sole survivor is ranked first even when a busted player scored more", async () => {
+    // The winner is whoever is still standing; ranking by score alone put them 2nd (x1.5)
+    // behind a busted player (x2.0) -- the loser was paid more than the winner.
+    await seedRoom();
+    await beginSoloSurvivalMatch("room-1");
+    await resolveSoloAnswer("room-1", "a", "correct", 0); // a leads on points...
+    await resolveSoloAnswer("room-1", "a", "wrong", 1); // ...then busts
+    await resolveSoloAnswer("room-1", "b", "wrong", 0); // b busts -> c survives with 0 points
+
+    const after = await getRoom();
+    expect(after.winnerUid).toBe("c");
+    expect(after.players.c.placement).toBe(1);
+    expect(after.players.a.placement).toBe(2);
+    expect(after.players.b.placement).toBe(3);
+  });
+
   test("stale round numbers are ignored", async () => {
     await seedRoom();
     await beginSoloSurvivalMatch("room-1");

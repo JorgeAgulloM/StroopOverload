@@ -181,6 +181,21 @@ test("a bystander's disconnect does NOT advance the active player's turn", async
   expect(scheduleTimeoutCheck).not.toHaveBeenCalled();
 });
 
+test("a second disconnect for an already-eliminated bystander changes nothing", async () => {
+  // Two presence events racing for the same player both pass the outer alive check; the
+  // bystander path doesn't bump the round, so only an alive check here stops the second
+  // one from re-stamping eliminatedAtMs (and so the final placements).
+  await seedRoom();
+  await resolveRound("room-1", "c", "disconnect", 1);
+  const firstElimination = (await getRoom()).players.c.eliminatedAtMs;
+
+  await new Promise((r) => setTimeout(r, 5));
+  const applied = await resolveRound("room-1", "c", "disconnect", 1);
+
+  expect(applied).toBe(false);
+  expect((await getRoom()).players.c.eliminatedAtMs).toBe(firstElimination);
+});
+
 test("the actual turn-holder's own disconnect DOES advance the turn", async () => {
   await seedRoom();
   await resolveRound("room-1", "a", "disconnect", 1); // a IS the turn-holder at turnIndex 0

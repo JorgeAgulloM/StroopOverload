@@ -35,6 +35,13 @@ export function applyRoundResolution(
   // Stale call: the round already moved on (a race between timeout/answer/disconnect).
   if (room.status !== "playing" || room.round !== roundExpected) return { applied: false, scheduled: null };
 
+  // An already-eliminated player can't be eliminated again: two racing disconnect events for
+  // the same bystander both get here with the same round (a bystander's elimination doesn't
+  // advance it), and the second would re-stamp eliminatedAtMs and shift the placements.
+  if (reason !== "correct" && actingUid && room.players[actingUid] && !room.players[actingUid].alive) {
+    return { applied: false, scheduled: null };
+  }
+
   const players = { ...room.players };
   if (reason === "correct" && actingUid && players[actingUid]) {
     const me = players[actingUid];

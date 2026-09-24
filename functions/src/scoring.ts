@@ -66,10 +66,19 @@ export function rankMistakeOrHotPotatoPlayers(
  * turn/elimination-order to rank by -- every player's own run is independent).
  * Tiebreak matches soloSurvival.ts's own winner tiebreak: lowest `order`
  * (earliest joiner) wins ties.
+ *
+ * `winnerUid`, when given, takes placement 1 whatever their score: a sole survivor
+ * wins for still standing, and must not be paid less than a player who busted.
  */
-export function rankSoloSurvivalPlayers(players: Readonly<Record<string, RoomPlayerDoc>>): RankedPlayer[] {
+export function rankSoloSurvivalPlayers(
+  players: Readonly<Record<string, RoomPlayerDoc>>,
+  winnerUid: string | null = null
+): RankedPlayer[] {
   const ordered = Object.values(players).sort(
-    (a, b) => (b.soloScore ?? 0) - (a.soloScore ?? 0) || a.order - b.order
+    (a, b) =>
+      Number(b.uid === winnerUid) - Number(a.uid === winnerUid) ||
+      (b.soloScore ?? 0) - (a.soloScore ?? 0) ||
+      a.order - b.order
   );
   return ordered.map((p, i) => {
     const placement = i + 1;

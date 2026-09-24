@@ -189,7 +189,10 @@ export async function applyMatchAwards(roomId: string, nowMs: number = Date.now(
     if (room.status !== "finished") return 0;
     if (room.awardsAppliedAtMs != null) return 0; // already settled
 
-    const players = Object.values(room.players).filter((p) => (p.finalScore ?? 0) > 0);
+    // Every ranked player played the match, including one who scored 0 (eliminated before
+    // a single correct answer, or a winner whose opponents dropped out): their match
+    // counters change even when their points don't.
+    const players = Object.values(room.players).filter((p) => p.placement != null);
     // Every read has to happen before the first write in a Firestore transaction.
     const profiles = await Promise.all(players.map((p) => tx.get(userRef(p.uid))));
 
