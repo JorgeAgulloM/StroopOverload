@@ -233,6 +233,16 @@ fun StroopNavGraph() {
             )
         }
         composable(ROUTE_GAME_OVER) {
+            // lastResult lives in plain `remember`: after the process is killed in the background
+            // the back stack restores this route but the result is gone, which used to leave a
+            // blank screen. The run was already recorded, so there is nothing to show -- go home.
+            if (lastResult == null) {
+                LaunchedEffect(Unit) {
+                    navController.navigate(ROUTE_HOME) {
+                        popUpTo(navController.graph.id) { inclusive = true }
+                    }
+                }
+            }
             lastResult?.let { result ->
                 GameOverScreen(
                     result = result,
