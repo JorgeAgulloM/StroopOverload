@@ -324,7 +324,7 @@ fun ProfileScreen(
                     }
                     Spacer(modifier = Modifier.height(12.dp))
                 }
-                if (!state.profile.isAnonymous) {
+                if (!state.isGuest) {
                     OutlinedButton(
                         onClick = { showChangePasswordDialog = true },
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.secondary),
@@ -336,7 +336,7 @@ fun ProfileScreen(
                     }
                     Spacer(modifier = Modifier.height(12.dp))
                 }
-                if (!state.profile.isAnonymous) {
+                if (!state.isGuest) {
                     Spacer(modifier = Modifier.height(12.dp))
                     OutlinedButton(
                         onClick = { showDeleteAccountDialog = true },
@@ -381,6 +381,13 @@ fun ProfileScreen(
                 viewModel.clearDeleteAccountError()
             },
             onConfirm = { password -> viewModel.deleteAccount(password, onDeleted = onSignedOut) },
+        )
+    }
+
+    if (state.showGuestSignOutConfirmation) {
+        GuestSignOutDialog(
+            onConfirm = { viewModel.confirmGuestSignOut(onSignedOut) },
+            onDismiss = viewModel::dismissGuestSignOut,
         )
     }
 }

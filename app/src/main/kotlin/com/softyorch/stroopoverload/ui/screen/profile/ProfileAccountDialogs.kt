@@ -14,7 +14,7 @@ import com.softyorch.stroopoverload.R
 import com.softyorch.stroopoverload.ui.screen.auth.PasswordVisibilityToggle
 import com.softyorch.stroopoverload.ui.theme.*
 
-// Account dialogs opened from ProfileScreen: change password and delete account.
+// Account dialogs opened from ProfileScreen: change password, delete account, guest sign-out.
 
 @Composable
 internal fun ChangePasswordDialog(
@@ -153,6 +153,27 @@ internal fun DeleteAccountDialog(
         },
         dismissButton = {
             TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_cancel)) }
+        },
+    )
+}
+
+/** Warns a guest that signing out throws away progress that exists only on this device. */
+@Composable
+internal fun GuestSignOutDialog(onConfirm: () -> Unit, onDismiss: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.profile_guest_sign_out_title), color = MaterialTheme.colorScheme.error) },
+        text = { Text(stringResource(R.string.profile_guest_sign_out_message), style = MaterialTheme.typography.bodyMedium) },
+        confirmButton = {
+            TextButton(
+                onClick = onConfirm,
+                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
+            ) {
+                Text(stringResource(R.string.profile_guest_sign_out_confirm))
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text(stringResource(R.string.profile_guest_sign_out_cancel)) }
         },
     )
 }

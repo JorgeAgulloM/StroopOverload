@@ -218,5 +218,66 @@ class ProfileViewModelTest {
 
         assertTrue(signedOut)
         assertEquals(1, auth.signOutCount)
+        assertFalse(vm.state.value.showGuestSignOutConfirmation)
+    }
+
+    private fun guestViewModel(): ProfileViewModel {
+        auth.currentUid = "anon-1"
+        auth.isAnonymousSession = true
+        repository.storedProfile = UserProfile(userId = "anon-1", nickname = "Guest_ANO1", isAnonymous = true, profileCreated = true)
+        return viewModel()
+    }
+
+    @Test
+    fun `a guest sign-out asks for confirmation instead of signing out`() = runTest {
+        val vm = guestViewModel()
+        var signedOut = false
+
+        vm.signOut { signedOut = true }
+
+        assertTrue(vm.state.value.showGuestSignOutConfirmation)
+        assertFalse(signedOut)
+        assertEquals(0, auth.signOutCount)
+    }
+
+    @Test
+    fun `confirming a guest sign-out signs out`() = runTest {
+        val vm = guestViewModel()
+        var signedOut = false
+        vm.signOut { signedOut = true }
+
+        vm.confirmGuestSignOut { signedOut = true }
+
+        assertTrue(signedOut)
+        assertEquals(1, auth.signOutCount)
+        assertFalse(vm.state.value.showGuestSignOutConfirmation)
+    }
+
+    @Test
+    fun `dismissing the guest confirmation keeps the session`() = runTest {
+        val vm = guestViewModel()
+        vm.signOut {}
+
+        vm.dismissGuestSignOut()
+
+        assertFalse(vm.state.value.showGuestSignOutConfirmation)
+        assertEquals(0, auth.signOutCount)
+    }
+
+    @Test
+    fun `the auth session decides who is a guest, not a stale stored profile`() = runTest {
+        // Older builds saved guest profiles as registered (isAnonymous=false).
+        auth.currentUid = "anon-1"
+        auth.isAnonymousSession = true
+        repository.storedProfile = UserProfile(userId = "anon-1", isAnonymous = false, profileCreated = true)
+
+        val vm = viewModel()
+
+        assertTrue(vm.state.value.isGuest)
+    }
+
+    @Test
+    fun `a registered session is not a guest`() = runTest {
+        assertFalse(viewModel().state.value.isGuest)
     }
 }

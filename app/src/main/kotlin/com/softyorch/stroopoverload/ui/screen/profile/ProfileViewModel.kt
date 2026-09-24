@@ -33,6 +33,9 @@ data class ProfileUiState(
     val changePasswordError: String? = null,
     val changePasswordSuccess: Boolean = false,
     val deleteAccountError: String? = null,
+    /** From the auth session, not [profile]: older builds saved guest profiles as registered. */
+    val isGuest: Boolean = false,
+    val showGuestSignOutConfirmation: Boolean = false,
 ) {
     val hasUnsavedChanges: Boolean get() = isEditing && editSnapshot != null && profile != editSnapshot
 }
@@ -59,6 +62,7 @@ class ProfileViewModel(
             val (currentXp, neededXp) = XpSystem.xpProgressInCurrentLevel(prof.experience)
             _state.value = _state.value.copy(
                 profile = prof,
+                isGuest = authService.isAnonymousSession ?: prof.isAnonymous,
                 careerStats = stats,
                 achievements = achs,
                 xpInCurrentLevel = currentXp,
@@ -96,9 +100,28 @@ class ProfileViewModel(
         }
     }
 
+    /**
+     * A guest can't sign back in to the same account and their progress lives only on this
+     * device, so signing out loses it for good -- ask first. Registered accounts sign out
+     * straight away; their progress is restored from the cloud on the next sign-in.
+     */
     fun signOut(onSignedOut: () -> Unit) {
+        if (_state.value.isGuest) {
+            _state.value = _state.value.copy(showGuestSignOutConfirmation = true)
+            return
+        }
         authService.signOut()
         onSignedOut()
+    }
+
+    fun confirmGuestSignOut(onSignedOut: () -> Unit) {
+        _state.value = _state.value.copy(showGuestSignOutConfirmation = false)
+        authService.signOut()
+        onSignedOut()
+    }
+
+    fun dismissGuestSignOut() {
+        _state.value = _state.value.copy(showGuestSignOutConfirmation = false)
     }
 
     private fun string(resId: Int): String = strings.get(resId)

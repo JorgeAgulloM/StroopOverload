@@ -175,6 +175,10 @@
     <string name="profile_delete_account_error_network">Network error. Try again.</string>
     <string name="profile_delete_account_error_generic">Couldn\'t delete the account. Try again.</string>
     <string name="profile_sign_out">[ TERMINATE NEURAL SESSION // SIGN OUT ]</string>
+    <string name="profile_guest_sign_out_title">Sign out of the guest session?</string>
+    <string name="profile_guest_sign_out_message">Guest progress is saved only on this device. If you sign out, your level, XP, stats and achievements are lost for good, even if you then create an account.</string>
+    <string name="profile_guest_sign_out_confirm">SIGN OUT</string>
+    <string name="profile_guest_sign_out_cancel">STAY</string>
     <string name="profile_achievement_hidden_title">\?\?\?</string>
     <string name="profile_achievement_hidden_desc">Confidential Synaptic Trophy</string>
 

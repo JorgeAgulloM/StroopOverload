@@ -175,6 +175,10 @@
     <string name="profile_delete_account_error_network">Erreur réseau. Réessaie.</string>
     <string name="profile_delete_account_error_generic">Impossible de supprimer le compte. Réessaie.</string>
     <string name="profile_sign_out">[ TERMINER LA SESSION NEURALE // DÉCONNEXION ]</string>
+    <string name="profile_guest_sign_out_title">Quitter la session invité ?</string>
+    <string name="profile_guest_sign_out_message">La progression invité n\'est enregistrée que sur cet appareil. Si vous vous déconnectez, votre niveau, votre XP, vos statistiques et vos succès seront perdus définitivement, même si vous créez ensuite un compte.</string>
+    <string name="profile_guest_sign_out_confirm">SE DÉCONNECTER</string>
+    <string name="profile_guest_sign_out_cancel">RESTER</string>
     <string name="profile_achievement_hidden_title">\?\?\?</string>
     <string name="profile_achievement_hidden_desc">Trophée synaptique confidentiel</string>
 

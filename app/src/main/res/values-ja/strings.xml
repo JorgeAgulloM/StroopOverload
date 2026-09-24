@@ -175,6 +175,10 @@
     <string name="profile_delete_account_error_network">ネットワークエラーです。もう一度お試しください。</string>
     <string name="profile_delete_account_error_generic">アカウントを削除できませんでした。もう一度お試しください。</string>
     <string name="profile_sign_out">[ ニューラルセッション終了 // サインアウト ]</string>
+    <string name="profile_guest_sign_out_title">ゲストセッションからサインアウトしますか？</string>
+    <string name="profile_guest_sign_out_message">ゲストの進行状況はこの端末にのみ保存されています。サインアウトすると、レベル、XP、統計、実績は完全に失われます。後でアカウントを作成しても復元されません。</string>
+    <string name="profile_guest_sign_out_confirm">サインアウト</string>
+    <string name="profile_guest_sign_out_cancel">とどまる</string>
     <string name="profile_achievement_hidden_title">\?\?\?</string>
     <string name="profile_achievement_hidden_desc">機密シナプストロフィー</string>
 
