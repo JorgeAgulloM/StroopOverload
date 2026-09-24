@@ -72,7 +72,13 @@ class FirebaseGameRepository private constructor(
         }
     }
 
-    private suspend fun pushProfileToCloud(profile: UserProfile) {
+    /**
+     * Queues the profile write in Firestore's local cache and returns without waiting for
+     * the server: offline, awaiting the acknowledgement never returned, and everything
+     * behind it (the game-over screen, saving a nickname) hung until the connection came
+     * back. The cache is persistent, so the write still reaches the server later.
+     */
+    private fun pushProfileToCloud(profile: UserProfile) {
         val collection = users ?: return
         try {
             val map = mapOf(
@@ -90,11 +96,12 @@ class FirebaseGameRepository private constructor(
                 "unlockedPalettes" to profile.unlockedPalettes,
                 "updatedAt" to FieldValue.serverTimestamp(),
             )
-            collection.document(profile.userId).set(map, SetOptions.merge()).await()
+            collection.document(profile.userId).set(map, SetOptions.merge())
+                .addOnFailureListener { e -> Log.w("FirebaseRepo", "Profile push rejected: ${e.message}") }
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            Log.w("FirebaseRepo", "Best-effort profile push failed (offline or unconfigured): ${e.message}")
+            Log.w("FirebaseRepo", "Best-effort profile push failed (unconfigured?): ${e.message}")
         }
     }
 
@@ -326,7 +333,8 @@ class FirebaseGameRepository private constructor(
         true
     }
 
-    private suspend fun syncProgressToCloud(
+    /** Like [pushProfileToCloud]: queued in Firestore's cache, never awaited. */
+    private fun syncProgressToCloud(
         uid: String,
         career: CareerStats,
         achievements: Map<String, Long>,
@@ -338,7 +346,8 @@ class FirebaseGameRepository private constructor(
                 "achievements" to achievements,
                 "updatedAt" to FieldValue.serverTimestamp()
             )
-            collection.document(uid).set(map, SetOptions.merge()).await()
+            collection.document(uid).set(map, SetOptions.merge())
+                .addOnFailureListener { e -> Log.w("FirebaseRepo", "Progress sync rejected: ${e.message}") }
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
