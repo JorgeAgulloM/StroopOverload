@@ -14,6 +14,13 @@ export const USERS_COLLECTION = "users";
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
+/**
+ * How many solo runIds a profile remembers to turn a retried submission into a no-op.
+ * The client retries a run until the server answers, so a duplicate only arrives while
+ * that run is still at the front of its queue -- far fewer than this.
+ */
+export const RECENT_RUN_IDS_KEPT = 50;
+
 /** The scoring half of users/{uid}: written only here, denied to clients by firestore.rules. */
 interface ScoringFields {
   points: number;
@@ -27,6 +34,8 @@ interface ScoringFields {
   lastPlayedAtEpochMs: number;
   /** Achievement id -> when its XP was granted. Each one pays out once, ever. */
   awardedAchievements: Record<string, number>;
+  /** The last RECENT_RUN_IDS_KEPT solo runIds applied, oldest first. */
+  recentRunIds: string[];
 }
 
 export interface AppliedScore {
@@ -57,6 +66,20 @@ function readScoring(data: Record<string, unknown> | undefined): ScoringFields {
     dailyStreak: (data?.dailyStreak as number) ?? 0,
     lastPlayedAtEpochMs: (data?.lastPlayedAtEpochMs as number) ?? 0,
     awardedAchievements: (data?.awardedAchievements as Record<string, number>) ?? {},
+    recentRunIds: (data?.recentRunIds as string[]) ?? [],
+  };
+}
+
+function scoringOf(current: ScoringFields): Omit<AppliedScore, "xpAwarded"> {
+  return {
+    points: current.points,
+    highScore: current.highScore,
+    experience: current.experience,
+    level: current.level,
+    matchesPlayed: current.matchesPlayed,
+    matchesWon: current.matchesWon,
+    matchesLost: current.matchesLost,
+    dailyStreak: current.dailyStreak,
   };
 }
 
@@ -77,19 +100,29 @@ export function nextDailyStreak(currentStreak: number, lastPlayedAtEpochMs: numb
  * unlock conditions are evaluated on the device, so the server can't confirm them;
  * what it does enforce is that each id is a real achievement and pays its XP at
  * most once per account, which bounds the damage a forged claim can do.
+ *
+ * `runId` is the client's id for this run. The client keeps a finished run queued until
+ * the server answers, so the same run can arrive twice when an answer is lost; a runId
+ * seen before is a no-op. Null (older clients) skips the check.
  */
 export async function applySoloRun(
   uid: string,
   run: SoloRunReport,
   claimedAchievementIds: readonly string[],
   winStreak: number = 0,
-  nowMs: number = Date.now()
+  nowMs: number = Date.now(),
+  runId: string | null = null
 ): Promise<AppliedScore> {
   const ref = userRef(uid);
 
   return getFirestore().runTransaction<AppliedScore>(async (tx) => {
     const doc = await tx.get(ref);
     const current = readScoring(doc.data());
+    if (runId !== null && current.recentRunIds.includes(runId)) {
+      // Already applied: a retry after the first answer was lost. Report the profile as it
+      // stands and pay nothing.
+      return { ...scoringOf(current), xpAwarded: 0 };
+    }
 
     const won = isWon(run);
     const isNewHighScore = run.finalScore > current.highScore;
@@ -127,6 +160,7 @@ export async function applySoloRun(
         dailyStreak: applied.dailyStreak,
         lastPlayedAtEpochMs: nowMs,
         awardedAchievements,
+        ...(runId === null ? {} : { recentRunIds: [...current.recentRunIds, runId].slice(-RECENT_RUN_IDS_KEPT) }),
       },
       { merge: true }
     );

@@ -72,6 +72,8 @@ describe("users/{uid} rules", () => {
     await assertFails(myProfile().update({ matchesWon: 500 }));
     await assertFails(myProfile().update({ dailyStreak: 365 }));
     await assertFails(myProfile().update({ awardedAchievements: { first_blood: 1 } }));
+    // Clearing it would let a replayed run pay out again.
+    await assertFails(myProfile().update({ recentRunIds: [] }));
   });
 
   test("a player cannot grant themselves entitlements", async () => {

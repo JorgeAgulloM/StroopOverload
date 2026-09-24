@@ -36,7 +36,7 @@ service cloud.firestore {
         return [
           'points', 'highScore', 'experience', 'level',
           'matchesPlayed', 'matchesWon', 'matchesLost', 'abandonedMatches',
-          'dailyStreak', 'lastPlayedAtEpochMs', 'awardedAchievements',
+          'dailyStreak', 'lastPlayedAtEpochMs', 'awardedAchievements', 'recentRunIds',
           'isAdFree', 'isPremium'
         ];
       }

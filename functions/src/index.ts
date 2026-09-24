@@ -275,6 +275,8 @@ export const submitAnswer = onCall(CALLABLE_OPTIONS, async (request) => {
 });
 
 const MAX_CLAIMED_ACHIEVEMENTS_PER_RUN = 30;
+// A client-generated UUID in practice; anything short and plain is accepted.
+const RUN_ID_PATTERN = /^[A-Za-z0-9-]{8,64}$/;
 
 /**
  * Records a finished single-player run and returns the profile scoring fields the
@@ -285,8 +287,9 @@ const MAX_CLAIMED_ACHIEVEMENTS_PER_RUN = 30;
  * Honest about its limits: the stimuli of a solo run are generated on the device,
  * so the server cannot verify that a run happened -- it recomputes the score and XP
  * from the reported counts and rejects what is impossible (profileScoring.ts).
- * A run submitted while offline simply never reaches here, which is the intended
- * behavior: offline play counts locally, not on the leaderboard.
+ *
+ * The client queues finished runs and retries them until this answers, so a run played
+ * with no connection is submitted later. `runId` makes that retry safe (applySoloRun).
  */
 export const submitSoloRun = onCall(CALLABLE_OPTIONS, async (request) => {
   const uid = request.auth?.uid;
@@ -315,9 +318,15 @@ export const submitSoloRun = onCall(CALLABLE_OPTIONS, async (request) => {
 
   const winStreak = clampWinStreak(Number(request.data?.winStreak), run.correctHits);
 
+  const rawRunId = request.data?.runId;
+  if (rawRunId !== undefined && rawRunId !== null && !(typeof rawRunId === "string" && RUN_ID_PATTERN.test(rawRunId))) {
+    throw new HttpsError("invalid-argument", "Partida no válida.", { reason: "INVALID_RUN" });
+  }
+  const runId = typeof rawRunId === "string" ? rawRunId : null;
+
   try {
     await assertWithinRateLimit(uid, "submitSoloRun", SUBMIT_SOLO_RUN_LIMIT, RATE_LIMIT_WINDOW_MS);
-    return await applySoloRun(uid, run, claimedAchievementIds, winStreak);
+    return await applySoloRun(uid, run, claimedAchievementIds, winStreak, Date.now(), runId);
   } catch (err) {
     if (err instanceof HttpsError) throw err;
     console.error(`submitSoloRun failed for uid ${uid}`, err);

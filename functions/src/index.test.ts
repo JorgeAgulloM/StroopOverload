@@ -17,6 +17,7 @@ import {
   resolveSoloPlayerTimeout,
   onPresenceChanged,
   deleteMyMultiplayerData,
+  submitSoloRun,
 } from "./index";
 import * as resolveRoundModule from "./resolveRound";
 import { scheduleBombExplosion, scheduleSoloPlayerTimeoutCheck, scheduleTimeoutCheck } from "./taskQueue";
@@ -379,6 +380,29 @@ describe("startGame", () => {
     expect(room.startsAtMs).toBe((result as { startsAtMs: number }).startsAtMs);
     expect(room.stimulus).toBeNull();
     expect(room.deadlineAtMs).toBeNull();
+  });
+});
+
+describe("submitSoloRun", () => {
+  const RUN = { mode: "ENDLESS", correctHits: 10, totalRounds: 11, survivalMs: 15_000, finalScore: 100, winStreak: 3 };
+
+  test("a retried run with the same runId pays once", async () => {
+    const first = await submitSoloRun.run(buildRequest({ ...RUN, runId: "3f2b9c1e-0000-4000-8000-000000000001" }, "solo-uid"));
+    const retry = await submitSoloRun.run(buildRequest({ ...RUN, runId: "3f2b9c1e-0000-4000-8000-000000000001" }, "solo-uid"));
+
+    expect(first).toMatchObject({ matchesPlayed: 1 });
+    expect(retry).toMatchObject({ matchesPlayed: 1, xpAwarded: 0 });
+  });
+
+  test("a malformed runId is rejected as an invalid run", async () => {
+    await expect(submitSoloRun.run(buildRequest({ ...RUN, runId: "no spaces allowed!" }, "solo-uid"))).rejects.toMatchObject({
+      code: "invalid-argument",
+      details: { reason: "INVALID_RUN" },
+    });
+  });
+
+  test("a run without a runId is still accepted", async () => {
+    await expect(submitSoloRun.run(buildRequest(RUN, "solo-uid"))).resolves.toMatchObject({ matchesPlayed: 1 });
   });
 });
 

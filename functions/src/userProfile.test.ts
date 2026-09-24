@@ -3,7 +3,7 @@ import { readFileSync } from "fs";
 import * as path from "path";
 import { getApps, initializeApp } from "firebase-admin/app";
 import { DocumentData } from "firebase-admin/firestore";
-import { applyMatchAwards, applySoloRun, nextDailyStreak } from "./userProfile";
+import { applyMatchAwards, applySoloRun, nextDailyStreak, RECENT_RUN_IDS_KEPT } from "./userProfile";
 import { SoloRunReport } from "./profileScoring";
 
 const PROJECT_ID = "stroopoverload-test";
@@ -170,6 +170,41 @@ describe("applySoloRun", () => {
     await applySoloRun("uid-1", WON_RUN, []);
 
     expect(await getUser("uid-1")).toMatchObject({ nickname: "Neo", uniqueName: "@neo-1234" });
+  });
+
+  test("a run submitted twice with the same runId is applied once", async () => {
+    // A retry after a lost response must not pay the same run again.
+    const first = await applySoloRun("uid-1", WON_RUN, [], 0, Date.now(), "run-0001-aaaa");
+    const retry = await applySoloRun("uid-1", WON_RUN, [], 0, Date.now(), "run-0001-aaaa");
+
+    expect(retry.xpAwarded).toBe(0);
+    expect(retry.matchesPlayed).toBe(1);
+    expect(retry.points).toBe(first.points);
+    expect(await getUser("uid-1")).toMatchObject({ matchesPlayed: 1, points: first.points, experience: first.experience });
+  });
+
+  test("different runIds are both applied", async () => {
+    await applySoloRun("uid-1", WON_RUN, [], 0, Date.now(), "run-0001-aaaa");
+    const second = await applySoloRun("uid-1", WON_RUN, [], 0, Date.now(), "run-0002-bbbb");
+
+    expect(second.matchesPlayed).toBe(2);
+  });
+
+  test("only the most recent runIds are remembered", async () => {
+    for (let i = 0; i < RECENT_RUN_IDS_KEPT + 5; i++) {
+      await applySoloRun("uid-1", WON_RUN, [], 0, Date.now(), `run-${String(i).padStart(4, "0")}-keep`);
+    }
+
+    const stored = (await getUser("uid-1"))!.recentRunIds as string[];
+    expect(stored).toHaveLength(RECENT_RUN_IDS_KEPT);
+    expect(stored[stored.length - 1]).toBe(`run-${String(RECENT_RUN_IDS_KEPT + 4).padStart(4, "0")}-keep`);
+  });
+
+  test("a run without a runId (older clients) is still applied every time", async () => {
+    await applySoloRun("uid-1", WON_RUN, []);
+    const second = await applySoloRun("uid-1", WON_RUN, []);
+
+    expect(second.matchesPlayed).toBe(2);
   });
 
   test("recomputes the level from total experience", async () => {
