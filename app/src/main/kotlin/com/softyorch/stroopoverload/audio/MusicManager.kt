@@ -1,6 +1,8 @@
 package com.softyorch.stroopoverload.audio
 
 import android.content.Context
+import android.media.AudioAttributes
+import android.media.AudioManager
 import android.media.MediaPlayer
 import androidx.annotation.RawRes
 import kotlinx.coroutines.CoroutineScope
@@ -19,6 +21,13 @@ sealed interface MusicTrack {
 
 private const val FADE_DURATION_MS = 2000L
 private const val FADE_STEP_MS = 50L
+
+// Tagged as game music so the system routes and ducks it like one. Without
+// attributes MediaPlayer reports USAGE_UNKNOWN.
+private val MUSIC_ATTRIBUTES: AudioAttributes = AudioAttributes.Builder()
+    .setUsage(AudioAttributes.USAGE_GAME)
+    .setContentType(AudioAttributes.CONTENT_TYPE_MUSIC)
+    .build()
 
 /**
  * Long-form background music. [MusicTrack.Loop] repeats a single track
@@ -99,7 +108,8 @@ class MusicManager(context: Context) {
 
     private suspend fun startTrack(track: MusicTrack) {
         val resId = pickResId(track)
-        val mp = MediaPlayer.create(appContext, resId) ?: return
+        val sessionId = appContext.getSystemService(AudioManager::class.java).generateAudioSessionId()
+        val mp = MediaPlayer.create(appContext, resId, MUSIC_ATTRIBUTES, sessionId) ?: return
         lastPlayedResId = resId
         mp.isLooping = track is MusicTrack.Loop
         mp.setVolume(0f, 0f)
