@@ -5,6 +5,9 @@ import com.softyorch.stroopoverload.domain.CareerStats
 import com.softyorch.stroopoverload.domain.GameResult
 import com.softyorch.stroopoverload.domain.UserProfile
 
+/** One recorded [GameRepository.syncUserProfile] call. */
+data class SyncCall(val uid: String, val nickname: String?, val isAnonymous: Boolean)
+
 /** In-memory [GameRepository] holding one profile, recording the calls the ViewModels make. */
 class FakeGameRepository(
     var storedProfile: UserProfile = UserProfile(),
@@ -12,7 +15,7 @@ class FakeGameRepository(
     var storedAchievements: List<Achievement> = emptyList(),
 ) : GameRepository {
 
-    val syncCalls = mutableListOf<Pair<String, String?>>()
+    val syncCalls = mutableListOf<SyncCall>()
     val deletedUids = mutableListOf<String>()
     var deleteAllUserDataFailure: Exception? = null
 
@@ -22,9 +25,14 @@ class FakeGameRepository(
         storedProfile = profile
     }
 
-    override suspend fun syncUserProfile(uid: String, nickname: String?) {
-        syncCalls += uid to nickname
-        storedProfile = storedProfile.copy(userId = uid, nickname = nickname ?: storedProfile.nickname, profileCreated = true)
+    override suspend fun syncUserProfile(uid: String, nickname: String?, isAnonymous: Boolean) {
+        syncCalls += SyncCall(uid, nickname, isAnonymous)
+        storedProfile = storedProfile.copy(
+            userId = uid,
+            nickname = nickname ?: storedProfile.nickname,
+            isAnonymous = isAnonymous,
+            profileCreated = true,
+        )
     }
 
     override suspend fun clearLocalProgress() {

@@ -79,15 +79,18 @@ class FirebaseGameRepository private constructor(
         }
     }
 
-    override suspend fun syncUserProfile(uid: String, nickname: String?): Unit = withContext(Dispatchers.IO) {
+    override suspend fun syncUserProfile(uid: String, nickname: String?, isAnonymous: Boolean): Unit = withContext(Dispatchers.IO) {
         val local = getProfile()
 
-        // Case 1: local profile already belongs to this exact account — nothing to do.
+        // Case 1: local profile already belongs to this exact account -- nothing to do, except
+        // repairing what older builds got wrong (a missing nickname, guests saved as registered).
         if (local.userId == uid && local.profileCreated) {
+            var repaired = local
             if (nickname != null && local.nickname.isBlank()) {
-                val updated = local.copy(nickname = nickname, uniqueName = local.copy(nickname = nickname, userId = uid).generateUniqueName())
-                updateProfile(updated)
+                repaired = repaired.copy(nickname = nickname, uniqueName = local.copy(nickname = nickname, userId = uid).generateUniqueName())
             }
+            repaired = repaired.repairedForSession(uid, isAnonymous) ?: repaired
+            if (repaired != local) updateProfile(repaired)
             return@withContext
         }
 
@@ -113,56 +116,20 @@ class FirebaseGameRepository private constructor(
 
         if (remoteDoc != null && remoteDoc.exists()) {
             val data = remoteDoc.data ?: emptyMap()
-            val remoteProfile = UserProfile(
-                userId = uid,
-                uniqueName = data["uniqueName"] as? String ?: "@pilot-${uid.takeLast(4)}",
-                nickname = data["nickname"] as? String ?: (nickname ?: "Pilot_${uid.takeLast(4)}"),
-                isAnonymous = data["isAnonymous"] as? Boolean ?: false,
-                avatarIndex = (data["avatarIndex"] as? Long)?.toInt() ?: 0,
-                points = (data["points"] as? Long)?.toInt() ?: 0,
-                highScore = (data["highScore"] as? Long)?.toInt() ?: 0,
-                matchesPlayed = (data["matchesPlayed"] as? Long)?.toInt() ?: 0,
-                matchesWon = (data["matchesWon"] as? Long)?.toInt() ?: 0,
-                matchesLost = (data["matchesLost"] as? Long)?.toInt() ?: 0,
-                experience = (data["experience"] as? Long) ?: 0L,
-                level = (data["level"] as? Long)?.toInt() ?: 1,
-                dailyStreak = (data["dailyStreak"] as? Long)?.toInt() ?: 0,
-                lastPlayedAtEpochMs = data["lastPlayedAtEpochMs"] as? Long ?: 0L,
-                profileCreated = true,
-                unlockedPalettes = @Suppress("UNCHECKED_CAST") (data["unlockedPalettes"] as? List<String>) ?: listOf("default")
-            )
-            profileStore.saveProfile(remoteProfile)
+            val fallbackNickname = nickname ?: "Pilot_${uid.takeLast(4)}"
+            profileStore.saveProfile(profileFromRemote(uid, data, fallbackNickname, isAnonymous))
             restoreProgressFromCloud(data)
         } else if (isFreshInstall) {
             // Case 2: no remote doc yet, and there was no prior account on this device to
             // contaminate from — safe to carry over whatever local progress accumulated
             // (e.g. a few offline rounds played before registering).
             val nick = nickname ?: if (local.nickname.isNotBlank()) local.nickname else "Pilot_${uid.takeLast(4)}"
-            val newProfile = UserProfile(
-                userId = uid,
-                uniqueName = "@${nick.lowercase().trim()}-${uid.takeLast(4).lowercase()}",
-                nickname = nick,
-                isAnonymous = false,
-                points = local.points,
-                highScore = local.highScore,
-                experience = local.experience,
-                level = local.level,
-                profileCreated = true
-            )
-            updateProfile(newProfile)
+            updateProfile(newSessionProfile(uid, nick, isAnonymous, carriedOver = local))
         } else {
             // Case 3: switching to a different account than whatever was last used on this
             // device, and it has no remote doc — start clean, never inherit the previous
             // account's device-scoped stats.
-            val nick = nickname ?: "Pilot_${uid.takeLast(4)}"
-            val newProfile = UserProfile(
-                userId = uid,
-                uniqueName = "@${nick.lowercase().trim()}-${uid.takeLast(4).lowercase()}",
-                nickname = nick,
-                isAnonymous = false,
-                profileCreated = true
-            )
-            updateProfile(newProfile)
+            updateProfile(newSessionProfile(uid, nickname ?: "Pilot_${uid.takeLast(4)}", isAnonymous))
         }
     }
 

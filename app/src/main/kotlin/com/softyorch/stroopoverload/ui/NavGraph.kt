@@ -23,6 +23,7 @@ import com.softyorch.stroopoverload.core.AndroidStringResolver
 import com.softyorch.stroopoverload.data.AuthService
 import com.softyorch.stroopoverload.data.FirebaseMultiplayerRepository
 import com.softyorch.stroopoverload.data.FirebaseGameRepository
+import com.softyorch.stroopoverload.data.repairedForSession
 import com.softyorch.stroopoverload.domain.Achievement
 import com.softyorch.stroopoverload.domain.GameMode
 import com.softyorch.stroopoverload.domain.GameResult
@@ -134,7 +135,13 @@ fun StroopNavGraph() {
     LaunchedEffect(navController) {
         val profile = withContext(Dispatchers.IO) {
             AsoDemoSeeder.seedIfNeeded(context)
-            repository.getProfile()
+            // A signed-in session starts straight at Home and never passes through
+            // AuthViewModel's sync, so a guest profile saved as registered by an older build
+            // is repaired here.
+            val stored = repository.getProfile()
+            stored.repairedForSession(authService.currentUid, authService.isAnonymousSession)
+                ?.also { repository.updateProfile(it) }
+                ?: stored
         }
         currentProfile = profile
         previousHighScore = profile.highScore

@@ -13,7 +13,8 @@ import com.softyorch.stroopoverload.domain.UserProfile
 interface GameRepository {
     fun getProfile(): UserProfile
     suspend fun updateProfile(profile: UserProfile)
-    suspend fun syncUserProfile(uid: String, nickname: String? = null)
+    /** [isAnonymous] must come from the auth session (a guest sign-in), never from a stored profile. */
+    suspend fun syncUserProfile(uid: String, nickname: String?, isAnonymous: Boolean)
     suspend fun clearLocalProgress()
 
     /** Does not swallow cloud failures: account deletion must know if the document survived. */

@@ -6,6 +6,7 @@ import com.softyorch.stroopoverload.data.AuthUser
 import com.softyorch.stroopoverload.data.CooldownException
 import com.softyorch.stroopoverload.data.FakeAuthRepository
 import com.softyorch.stroopoverload.data.FakeGameRepository
+import com.softyorch.stroopoverload.data.SyncCall
 import com.softyorch.stroopoverload.domain.UserProfile
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -63,7 +64,7 @@ class AuthViewModelTest {
         assertEquals("uid-7", state.userUid)
         assertFalse(state.isAnonymous)
         assertTrue(state.needsEmailVerification)
-        assertEquals(listOf("uid-7" to "Trinity"), repository.syncCalls)
+        assertEquals(listOf(SyncCall("uid-7", "Trinity", isAnonymous = false)), repository.syncCalls)
     }
 
     @Test
@@ -75,6 +76,7 @@ class AuthViewModelTest {
 
         assertTrue(state.isAnonymous)
         assertFalse(state.needsEmailVerification)
+        assertEquals(listOf(SyncCall("anon-1", null, isAnonymous = true)), repository.syncCalls)
     }
 
     @Test
@@ -98,7 +100,7 @@ class AuthViewModelTest {
 
         val state = vm.state.value
         assertEquals(listOf("neo@example.com" to "pw"), auth.signInCalls)
-        assertEquals("uid-9", repository.syncCalls.single().first)
+        assertEquals(SyncCall("uid-9", null, isAnonymous = false), repository.syncCalls.single())
         assertTrue(state.isLoggedIn)
         assertFalse(state.isLoading)
         assertFalse(state.needsEmailVerification)
@@ -160,7 +162,7 @@ class AuthViewModelTest {
 
         val state = vm.state.value
         assertEquals(listOf("neo@example.com"), auth.registerCalls)
-        assertEquals(listOf("uid-new" to "Neo"), repository.syncCalls)
+        assertEquals(listOf(SyncCall("uid-new", "Neo", isAnonymous = false)), repository.syncCalls)
         assertEquals(42_000L, repository.storedProfile.lastVerificationEmailSentAtEpochMs)
         assertTrue(state.isLoggedIn)
         assertTrue(state.needsEmailVerification)
@@ -190,7 +192,7 @@ class AuthViewModelTest {
 
         assertTrue(vm.state.value.isLoggedIn)
         assertTrue(vm.state.value.isAnonymous)
-        assertEquals(listOf("anon-uid-abcd" to "Guest_ABCD"), repository.syncCalls)
+        assertEquals(listOf(SyncCall("anon-uid-abcd", "Guest_ABCD", isAnonymous = true)), repository.syncCalls)
     }
 
     @Test

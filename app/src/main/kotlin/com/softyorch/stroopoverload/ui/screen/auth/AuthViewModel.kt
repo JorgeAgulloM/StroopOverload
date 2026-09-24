@@ -47,8 +47,8 @@ class AuthViewModel(
         val uid = authService.currentUid
         if (uid != null) {
             viewModelScope.launch {
-                repository.syncUserProfile(uid, authService.consumePendingNickname())
                 val isAnonymous = authService.isAnonymousSession ?: true
+                repository.syncUserProfile(uid, authService.consumePendingNickname(), isAnonymous)
                 val verified = authService.isEmailVerified || isAnonymous
                 _state.value = _state.value.copy(
                     isLoggedIn = true,
@@ -70,7 +70,7 @@ class AuthViewModel(
         viewModelScope.launch {
             val res = authService.signInWithEmail(trimmedEmail, pass)
             res.onSuccess { user ->
-                repository.syncUserProfile(user.uid, authService.consumePendingNickname())
+                repository.syncUserProfile(user.uid, authService.consumePendingNickname(), isAnonymous = false)
                 _state.value = _state.value.copy(
                     isLoading = false,
                     isLoggedIn = true,
@@ -103,7 +103,7 @@ class AuthViewModel(
         viewModelScope.launch {
             val res = authService.registerWithEmail(trimmedEmail, trimmedEmailConfirm, pass, passConfirm, nickname)
             res.onSuccess { user ->
-                repository.syncUserProfile(user.uid, nickname)
+                repository.syncUserProfile(user.uid, nickname, isAnonymous = false)
                 repository.updateProfile(repository.getProfile().copy(lastVerificationEmailSentAtEpochMs = clock()))
                 _state.value = _state.value.copy(
                     isLoading = false,
@@ -131,7 +131,7 @@ class AuthViewModel(
         viewModelScope.launch {
             val uid = authService.signInAnonymously()
             if (uid != null) {
-                repository.syncUserProfile(uid, "Guest_${uid.takeLast(4).uppercase()}")
+                repository.syncUserProfile(uid, "Guest_${uid.takeLast(4).uppercase()}", isAnonymous = true)
                 _state.value = _state.value.copy(
                     isLoading = false,
                     isLoggedIn = true,
