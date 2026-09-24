@@ -3,6 +3,7 @@ package com.softyorch.stroopoverload.ui
 import android.app.Application
 import androidx.activity.compose.LocalActivity
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
@@ -119,8 +120,10 @@ fun StroopNavGraph() {
     }
 
     var currentProfile by remember { mutableStateOf(UserProfile()) }
-    var previousHighScore by remember { mutableIntStateOf(0) }
-    var selectedGameMode by remember { mutableStateOf(GameMode.ENDLESS) }
+    // Saveable: after the process is killed mid-run the game route is restored, and plain
+    // remember used to restart it in ENDLESS with a high score of 0.
+    var previousHighScore by rememberSaveable { mutableIntStateOf(0) }
+    var selectedGameMode by rememberSaveable { mutableStateOf(GameMode.ENDLESS) }
     var lastResult by remember { mutableStateOf<GameResult?>(null) }
     var lastXpBreakdown by remember { mutableStateOf<XpBreakdown?>(null) }
     var lastNewAchievements by remember { mutableStateOf<List<Achievement>>(emptyList()) }
