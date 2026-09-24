@@ -13,12 +13,14 @@ import { applyHotPotatoTurn, explodeBomb as explodeBombFn } from "./resolveHotPo
 import { applySoloAnswer, finishSoloSurvivalSession, resolveSoloAnswer, scheduleNextSoloTimeout } from "./soloSurvival";
 import { judgeAnswer, parseAnsweredRound } from "./answerJudge";
 import { beginMatch } from "./matchStart";
+import { leaveWaitingRoom } from "./roomLeave";
 import { purgeExpiredRooms as purgeExpiredRoomsFn, sweepStuckRooms as sweepStuckRoomsFn } from "./roomWatchdog";
 import { scheduleGameStart } from "./taskQueue";
 import {
   assertWithinRateLimit,
   CREATE_ROOM_LIMIT,
   JOIN_ROOM_LIMIT,
+  LEAVE_ROOM_LIMIT,
   RATE_LIMIT_WINDOW_MS,
   SUBMIT_SOLO_RUN_LIMIT,
 } from "./rateLimit";
@@ -144,6 +146,24 @@ export const joinRoom = onCall(CALLABLE_OPTIONS, async (request) => {
     if (err instanceof HttpsError) throw err;
     console.error(`joinRoom failed for uid ${uid}, code ${code}`, err);
     throw new HttpsError("internal", "No se pudo unir a la sala.");
+  }
+});
+
+// Leaving a room before its match starts (see roomLeave.ts). The client calls it on its way
+// out of the waiting room; after the start, leaving is a forfeit handled by presence.
+export const leaveRoom = onCall(CALLABLE_OPTIONS, async (request) => {
+  const uid = request.auth?.uid;
+  if (!uid) throw new HttpsError("unauthenticated", "Debes iniciar sesión.");
+  const roomId = String(request.data?.roomId ?? "").trim();
+  if (!roomId) throw new HttpsError("invalid-argument", "roomId inválido.");
+
+  try {
+    await assertWithinRateLimit(uid, "leaveRoom", LEAVE_ROOM_LIMIT, RATE_LIMIT_WINDOW_MS);
+    return { left: await leaveWaitingRoom(roomId, uid) };
+  } catch (err) {
+    if (err instanceof HttpsError) throw err;
+    console.error(`leaveRoom failed for uid ${uid}, room ${roomId}`, err);
+    throw new HttpsError("internal", "No se pudo salir de la sala.");
   }
 });
 

@@ -18,10 +18,11 @@ import {
   onPresenceChanged,
   deleteMyMultiplayerData,
   submitSoloRun,
+  leaveRoom,
 } from "./index";
 import * as resolveRoundModule from "./resolveRound";
 import { scheduleBombExplosion, scheduleSoloPlayerTimeoutCheck, scheduleTimeoutCheck } from "./taskQueue";
-import { CREATE_ROOM_LIMIT, JOIN_ROOM_LIMIT } from "./rateLimit";
+import { CREATE_ROOM_LIMIT, JOIN_ROOM_LIMIT, LEAVE_ROOM_LIMIT } from "./rateLimit";
 
 // deleteMyMultiplayerData also removes each deleted room's Realtime Database
 // presence node. There's no RTDB emulator in this test run (only Firestore,
@@ -335,6 +336,100 @@ describe("joinRoom", () => {
     const room = await getRoom("room-1");
     expect(Object.keys(room.players).sort()).toEqual(["host-uid", "joiner-uid"]);
     expect(room.turnOrder).toEqual(["host-uid", "joiner-uid"]);
+  });
+});
+
+describe("leaveRoom", () => {
+  const P = (uid: string, order: number) => ({ uid, displayName: uid, avatarIndex: 0, alive: true, order, joinedAtMs: 0 });
+  const threePlayers = {
+    hostUid: "host-uid",
+    players: { "host-uid": P("host-uid", 0), "b-uid": P("b-uid", 1), "c-uid": P("c-uid", 2) },
+    turnOrder: ["host-uid", "b-uid", "c-uid"],
+  };
+
+  async function roomExists(): Promise<boolean> {
+    let exists = false;
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      exists = (await context.firestore().collection("rooms").doc("room-1").get()).exists;
+    });
+    return exists;
+  }
+
+  test("a guest leaving a waiting room frees their slot", async () => {
+    await seedRoom(threePlayers);
+
+    await expect(leaveRoom.run(buildRequest({ roomId: "room-1" }, "b-uid"))).resolves.toEqual({ left: true });
+
+    const room = await getRoom("room-1");
+    expect(Object.keys(room.players).sort()).toEqual(["c-uid", "host-uid"]);
+    expect(room.turnOrder).toEqual(["host-uid", "c-uid"]);
+    expect(room.hostUid).toBe("host-uid");
+    // Orders are compacted so the next joiner (order = player count) can't collide.
+    expect(room.players["c-uid"].order).toBe(1);
+  });
+
+  test("the host leaving hands the room to the next player instead of stranding it", async () => {
+    await seedRoom(threePlayers);
+
+    await leaveRoom.run(buildRequest({ roomId: "room-1" }, "host-uid"));
+
+    const room = await getRoom("room-1");
+    expect(room.hostUid).toBe("b-uid");
+    expect(room.turnOrder).toEqual(["b-uid", "c-uid"]);
+    expect(room.players["b-uid"].order).toBe(0);
+  });
+
+  test("the last player leaving deletes the room and its presence node", async () => {
+    await seedRoom();
+
+    await leaveRoom.run(buildRequest({ roomId: "room-1" }, "host-uid"));
+
+    expect(await roomExists()).toBe(false);
+    // Once the doc is gone nothing else would ever find this presence node again.
+    expect(mockDbRemove).toHaveBeenCalledTimes(1);
+  });
+
+  test("is rate limited per uid like the other room callables", async () => {
+    for (let i = 0; i < LEAVE_ROOM_LIMIT; i++) {
+      await leaveRoom.run(buildRequest({ roomId: "no-such-room" }, "spammer-uid"));
+    }
+
+    await expect(leaveRoom.run(buildRequest({ roomId: "no-such-room" }, "spammer-uid"))).rejects.toMatchObject({
+      code: "resource-exhausted",
+      details: { reason: "RATE_LIMITED" },
+    });
+  });
+
+  test("a new player can join after someone left", async () => {
+    await seedRoom(threePlayers);
+    await leaveRoom.run(buildRequest({ roomId: "room-1" }, "b-uid"));
+
+    await joinRoom.run(buildRequest({ code: "ABCDE", displayName: "D" }, "d-uid"));
+
+    const room = await getRoom("room-1");
+    expect(room.turnOrder).toEqual(["host-uid", "c-uid", "d-uid"]);
+    expect(room.players["d-uid"].order).toBe(2);
+  });
+
+  test("leaving a match that already started changes nothing (the disconnect path handles it)", async () => {
+    await seedRoom({ ...threePlayers, status: "playing" });
+
+    await expect(leaveRoom.run(buildRequest({ roomId: "room-1" }, "b-uid"))).resolves.toEqual({ left: false });
+
+    expect(Object.keys((await getRoom("room-1")).players)).toHaveLength(3);
+  });
+
+  test("leaving a room you're not in, or one that doesn't exist, is a no-op", async () => {
+    await seedRoom(threePlayers);
+
+    await expect(leaveRoom.run(buildRequest({ roomId: "room-1" }, "stranger-uid"))).resolves.toEqual({ left: false });
+    await expect(leaveRoom.run(buildRequest({ roomId: "no-such-room" }, "b-uid"))).resolves.toEqual({ left: false });
+    expect(Object.keys((await getRoom("room-1")).players)).toHaveLength(3);
+  });
+
+  test("requires a signed-in caller and a roomId", async () => {
+    await expect(leaveRoom.run(buildRequest({ roomId: "room-1" }, undefined))).rejects.toMatchObject({ code: "unauthenticated" });
+    await expect(leaveRoom.run(buildRequest({ roomId: "" }, "b-uid"))).rejects.toMatchObject({ code: "invalid-argument" });
   });
 });
 

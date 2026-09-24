@@ -8,6 +8,8 @@ export const RATE_LIMITS_COLLECTION = "rateLimits";
 // room code), not to get in a real player's way.
 export const CREATE_ROOM_LIMIT = 10;
 export const JOIN_ROOM_LIMIT = 20;
+// Every call runs a transaction read even for a room the caller isn't in.
+export const LEAVE_ROOM_LIMIT = 20;
 // A solo run takes at least a few seconds to play, so this only trips for
 // automated submission.
 export const SUBMIT_SOLO_RUN_LIMIT = 10;
