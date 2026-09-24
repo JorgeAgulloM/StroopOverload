@@ -20,5 +20,6 @@ sealed interface GameState {
         val missFlashColor: StroopColor? = null,
         val isFrozen: Boolean = false,
     ) : GameState
-    data class GameOver(val result: GameResult) : GameState
+    /** [endStreak] is the correct-answer streak the run ended on (the XP streak bonus). */
+    data class GameOver(val result: GameResult, val endStreak: Int = 0) : GameState
 }

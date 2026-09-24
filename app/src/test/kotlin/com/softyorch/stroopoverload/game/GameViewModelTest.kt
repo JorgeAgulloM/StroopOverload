@@ -150,4 +150,74 @@ class GameViewModelTest {
         assertEquals(0, afterMiss.correctHits)
         assertEquals(correct, afterMiss.missFlashColor)
     }
+
+    private fun endedEndlessRun(): GameViewModel {
+        val viewModel = GameViewModel()
+        viewModel.startGame(mode = GameMode.ENDLESS)
+        viewModel.beginRound()
+        val correct = viewModel.stimulus.value!!.correctAnswer
+        viewModel.onColorTapped(StroopColor.entries.first { it != correct })
+        return viewModel
+    }
+
+    @Test
+    fun `startGame is ignored while a run is in progress`() = runTest {
+        // The game screen calls startGame from an effect, which runs again when the
+        // Activity is recreated (theme change, split screen) while this ViewModel survives.
+        val viewModel = GameViewModel()
+        viewModel.startGame(mode = GameMode.TIME)
+        viewModel.beginRound()
+
+        viewModel.startGame(mode = GameMode.ENDLESS)
+
+        assertTrue(viewModel.state.value is GameState.Playing)
+        assertEquals(GameMode.TIME, (viewModel.state.value as GameState.Playing).mode)
+    }
+
+    @Test
+    fun `startGame is ignored once the run is over`() = runTest {
+        val viewModel = endedEndlessRun()
+
+        viewModel.startGame()
+
+        assertTrue(viewModel.state.value is GameState.GameOver)
+    }
+
+    @Test
+    fun `a run can start again after returning to the menu`() = runTest {
+        val viewModel = endedEndlessRun()
+
+        viewModel.returnToMenu()
+        viewModel.startGame()
+
+        assertEquals(GameState.Countdown, viewModel.state.value)
+    }
+
+    @Test
+    fun `a finished run is handed over for recording only once`() = runTest {
+        // Recreating the Activity re-runs the game-over effect for the same result; recording
+        // it again counted the run twice.
+        val viewModel = endedEndlessRun()
+
+        assertTrue(viewModel.claimGameOver())
+        assertFalse(viewModel.claimGameOver())
+    }
+
+    @Test
+    fun `there is nothing to claim before the run is over`() = runTest {
+        val viewModel = GameViewModel()
+        viewModel.startGame()
+        viewModel.beginRound()
+
+        assertFalse(viewModel.claimGameOver())
+    }
+
+    @Test
+    fun `game over keeps the streak the run ended on`() = runTest {
+        // It used to be read from the Playing state after the run was already over, so it
+        // was always 0. A miss resets the streak, so an ENDLESS run ends on 0.
+        val viewModel = endedEndlessRun()
+
+        assertEquals(0, (viewModel.state.value as GameState.GameOver).endStreak)
+    }
 }

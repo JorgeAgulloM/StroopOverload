@@ -43,7 +43,8 @@ import com.softyorch.stroopoverload.ui.components.ExitMatchDialog
 @Composable
 fun GameScreen(
     viewModel: GameViewModel,
-    onGameOver: (GameResult) -> Unit,
+    /** Called once per finished run with its result and the streak it ended on. */
+    onGameOver: (result: GameResult, endStreak: Int) -> Unit,
     onLeaveMatch: () -> Unit,
     isAdFree: Boolean = false,
 ) {
@@ -91,8 +92,9 @@ fun GameScreen(
     when (val s = state) {
         is GameState.GameOver -> {
             LaunchedEffect(s) {
+                if (!viewModel.claimGameOver()) return@LaunchedEffect
                 audioPlayer.play(if (s.result.won) GameSfx.MATCH_WIN else GameSfx.MATCH_LOSE)
-                onGameOver(s.result)
+                onGameOver(s.result, s.endStreak)
             }
         }
         else -> Unit
@@ -173,26 +175,87 @@ fun GameScreen(
                 modifier = Modifier
                     .weight(1.0f)
                     .fillMaxWidth()
-                    .border(2.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(12.dp))
-                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)),
+                    .border(
+                        width = 2.dp, 
+                        brush = androidx.compose.ui.graphics.Brush.linearGradient(
+                            colors = listOf(
+                                NeonYellow.copy(alpha = 0.4f), 
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.8f), 
+                                MaterialTheme.colorScheme.secondary.copy(alpha = 0.4f)
+                            )
+                        ), 
+                        shape = RoundedCornerShape(16.dp)
+                    )
+                    .background(
+                        brush = androidx.compose.ui.graphics.Brush.verticalGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
+                                MaterialTheme.colorScheme.surface.copy(alpha = 0.2f)
+                            )
+                        ),
+                        shape = RoundedCornerShape(16.dp)
+                    )
+                    .clip(RoundedCornerShape(16.dp)),
                 contentAlignment = Alignment.Center
             ) {
+                // Decoración de esquinas Ciberpunk (HUD Brackets)
+                Box(Modifier.fillMaxSize()) {
+                    val cornerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
+                    androidx.compose.foundation.Canvas(Modifier.fillMaxSize()) {
+                        val strokeWidth = 3.dp.toPx()
+                        val length = 24.dp.toPx()
+                        // Top-Left
+                        drawLine(cornerColor, androidx.compose.ui.geometry.Offset(0f, 0f), androidx.compose.ui.geometry.Offset(length, 0f), strokeWidth)
+                        drawLine(cornerColor, androidx.compose.ui.geometry.Offset(0f, 0f), androidx.compose.ui.geometry.Offset(0f, length), strokeWidth)
+                        // Top-Right
+                        drawLine(cornerColor, androidx.compose.ui.geometry.Offset(size.width, 0f), androidx.compose.ui.geometry.Offset(size.width - length, 0f), strokeWidth)
+                        drawLine(cornerColor, androidx.compose.ui.geometry.Offset(size.width, 0f), androidx.compose.ui.geometry.Offset(size.width, length), strokeWidth)
+                        // Bottom-Left
+                        drawLine(cornerColor, androidx.compose.ui.geometry.Offset(0f, size.height), androidx.compose.ui.geometry.Offset(length, size.height), strokeWidth)
+                        drawLine(cornerColor, androidx.compose.ui.geometry.Offset(0f, size.height), androidx.compose.ui.geometry.Offset(0f, size.height - length), strokeWidth)
+                        // Bottom-Right
+                        drawLine(cornerColor, androidx.compose.ui.geometry.Offset(size.width, size.height), androidx.compose.ui.geometry.Offset(size.width - length, size.height), strokeWidth)
+                        drawLine(cornerColor, androidx.compose.ui.geometry.Offset(size.width, size.height), androidx.compose.ui.geometry.Offset(size.width, size.height - length), strokeWidth)
+                    }
+                }
+
                 stimulus?.let { s ->
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = stringResource(R.string.game_stimulus_hint),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Muted,
-                            letterSpacing = 2.sp,
-                            fontSize = 11.sp
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
+                        // Cartel holográfico de pista (Hint)
+                        Box(
+                            modifier = Modifier
+                                .background(
+                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                                    RoundedCornerShape(4.dp)
+                                )
+                                .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f), RoundedCornerShape(4.dp))
+                                .padding(horizontal = 16.dp, vertical = 6.dp)
+                        ) {
+                            Text(
+                                text = stringResource(R.string.game_stimulus_hint),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.primary,
+                                letterSpacing = 3.sp,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        
+                        Spacer(modifier = Modifier.height(28.dp))
+                        
+                        // Palabra principal con EFECTO NEÓN (Sombra paralela brillante del mismo color de la tinta)
                         Text(
                             text = stringResource(s.wordLabel.displayNameRes),
                             color = s.inkColor.composeColor,
-                            fontSize = 46.sp,
+                            fontSize = 64.sp,
                             fontWeight = FontWeight.Black,
-                            letterSpacing = 4.sp,
+                            letterSpacing = 8.sp,
+                            style = androidx.compose.ui.text.TextStyle(
+                                shadow = androidx.compose.ui.graphics.Shadow(
+                                    color = s.inkColor.composeColor,
+                                    blurRadius = 24f // Crea el resplandor difuminado tipo neón
+                                )
+                            )
                         )
                     }
                 }

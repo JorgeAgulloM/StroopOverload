@@ -30,7 +30,6 @@ import com.softyorch.stroopoverload.domain.GameResult
 import com.softyorch.stroopoverload.domain.UserProfile
 import com.softyorch.stroopoverload.domain.XpBreakdown
 import com.softyorch.stroopoverload.domain.XpSystem
-import com.softyorch.stroopoverload.game.GameState
 import com.softyorch.stroopoverload.game.GameViewModel
 import com.softyorch.stroopoverload.ui.screen.GameModeSelectScreen
 import com.softyorch.stroopoverload.ui.screen.GameOverScreen
@@ -44,7 +43,6 @@ import com.softyorch.stroopoverload.ui.screen.profile.ProfileScreen
 import com.softyorch.stroopoverload.ui.screen.profile.ProfileViewModel
 import com.softyorch.stroopoverload.ui.components.AnonymousGateDialog
 import kotlinx.coroutines.launch
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -211,16 +209,13 @@ fun StroopNavGraph() {
         }
         composable(ROUTE_GAME) {
             val gameVm: GameViewModel = viewModel()
-            val gameState by gameVm.state.collectAsStateWithLifecycle()
             LaunchedEffect(Unit) { gameVm.startGame(selectedGameMode, previousHighScore) }
 
             GameScreen(
                 viewModel = gameVm,
                 isAdFree = currentProfile.isAdFree || currentProfile.isPremium,
                 onLeaveMatch = { navController.popBackStack() },
-                onGameOver = { result ->
-                    val playingState = gameState as? GameState.Playing
-                    val streak = playingState?.currentStreak ?: 0
+                onGameOver = { result, streak ->
                     lastResult = result
                     scope.launch {
                         val prof = repository.getProfile()
