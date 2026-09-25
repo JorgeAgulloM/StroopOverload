@@ -367,7 +367,7 @@
     <string name="achievement_score_god_title">QUANTEN-SINGULARITÄT</string>
     <string name="achievement_score_god_desc">Erziele über 14.000 Punkte in einem einzigen Lauf.</string>
     <string name="achievement_flawless_title">SYNAPTISCHE REINHEIT</string>
-    <string name="achievement_flawless_desc">Erziele 1 fehlerfreien Lauf (5+ Runden, 100 % Genauigkeit) in deiner Karriere.</string>
+    <string name="achievement_flawless_desc" formatted="false">Erziele 1 fehlerfreien Lauf (5+ Runden, 100 % Genauigkeit) in deiner Karriere.</string>
     <string name="achievement_flawless_tier2_title">FEHLERFREIE AUSFÜHRUNG</string>
     <string name="achievement_flawless_tier2_desc">Erziele 5 fehlerfreie Läufe in deiner Karriere.</string>
     <string name="achievement_flawless_tier3_title">PERFEKTER GEIST</string>

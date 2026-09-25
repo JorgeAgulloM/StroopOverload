@@ -367,7 +367,7 @@
     <string name="achievement_score_god_title">クオンタムシンギュラリティ</string>
     <string name="achievement_score_god_desc">1回のプレイで14,000点を超える。</string>
     <string name="achievement_flawless_title">シナプティックピュリティ</string>
-    <string name="achievement_flawless_desc">キャリアでパーフェクトラン（5ラウンド以上・正答率100%）を1回達成する。</string>
+    <string name="achievement_flawless_desc" formatted="false">キャリアでパーフェクトラン（5ラウンド以上・正答率100%）を1回達成する。</string>
     <string name="achievement_flawless_tier2_title">フローレスエクセキューション</string>
     <string name="achievement_flawless_tier2_desc">キャリアでパーフェクトランを5回達成する。</string>
     <string name="achievement_flawless_tier3_title">パーフェクトマインド</string>

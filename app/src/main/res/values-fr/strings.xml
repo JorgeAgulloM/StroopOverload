@@ -367,7 +367,7 @@
     <string name="achievement_score_god_title">SINGULARITÉ QUANTIQUE</string>
     <string name="achievement_score_god_desc">Dépasse les 14 000 points en une seule partie.</string>
     <string name="achievement_flawless_title">PURETÉ SYNAPTIQUE</string>
-    <string name="achievement_flawless_desc">Réalise 1 partie sans faute (5+ manches, 100% de précision) au cours de ta carrière.</string>
+    <string name="achievement_flawless_desc" formatted="false">Réalise 1 partie sans faute (5+ manches, 100% de précision) au cours de ta carrière.</string>
     <string name="achievement_flawless_tier2_title">EXÉCUTION SANS FAUTE</string>
     <string name="achievement_flawless_tier2_desc">Réalise 5 parties sans faute au cours de ta carrière.</string>
     <string name="achievement_flawless_tier3_title">ESPRIT PARFAIT</string>

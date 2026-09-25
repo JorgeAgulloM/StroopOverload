@@ -367,7 +367,7 @@
     <string name="achievement_score_god_title">SINGULARIDADE QUÂNTICA</string>
     <string name="achievement_score_god_desc">Ultrapasse 14.000 pontos em uma única partida.</string>
     <string name="achievement_flawless_title">PUREZA SINÁPTICA</string>
-    <string name="achievement_flawless_desc">Consiga 1 partida impecável (5+ rodadas, 100% de precisão) em sua carreira.</string>
+    <string name="achievement_flawless_desc" formatted="false">Consiga 1 partida impecável (5+ rodadas, 100% de precisão) em sua carreira.</string>
     <string name="achievement_flawless_tier2_title">EXECUÇÃO IMPECÁVEL</string>
     <string name="achievement_flawless_tier2_desc">Consiga 5 partidas impecáveis em sua carreira.</string>
     <string name="achievement_flawless_tier3_title">MENTE PERFEITA</string>

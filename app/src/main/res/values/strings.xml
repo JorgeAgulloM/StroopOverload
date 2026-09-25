@@ -367,7 +367,7 @@
     <string name="achievement_score_god_title">QUANTUM SINGULARITY</string>
     <string name="achievement_score_god_desc">Score over 14,000 points in a single run.</string>
     <string name="achievement_flawless_title">SYNAPTIC PURITY</string>
-    <string name="achievement_flawless_desc">Achieve 1 flawless run (5+ rounds, 100% accuracy) in your career.</string>
+    <string name="achievement_flawless_desc" formatted="false">Achieve 1 flawless run (5+ rounds, 100% accuracy) in your career.</string>
     <string name="achievement_flawless_tier2_title">FLAWLESS EXECUTION</string>
     <string name="achievement_flawless_tier2_desc">Achieve 5 flawless runs in your career.</string>
     <string name="achievement_flawless_tier3_title">PERFECT MIND</string>
