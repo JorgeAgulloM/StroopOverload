@@ -1,5 +1,6 @@
 package com.softyorch.stroopoverload.ui.screen
 
+import com.softyorch.stroopoverload.ui.components.FitLabel
 import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -15,7 +16,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -200,7 +200,9 @@ fun GameOverScreen(
                 }
                 Spacer(modifier = Modifier.height(12.dp))
                 val shareText = stringResource(R.string.game_over_share_text, result.finalScore, xpBreakdown?.total ?: 0, result.accuracy)
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                // Stacked, not side by side: at half width "COMPARTIR PUNTUACIÓN" and friends did not
+                // fit even shrunk, once the system font scale was raised.
+                Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     OutlinedButton(
                         onClick = {
                             val intent = Intent(Intent.ACTION_SEND).apply {
@@ -212,18 +214,18 @@ fun GameOverScreen(
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.tertiary),
                         border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.tertiary),
                         shape = RoundedCornerShape(4.dp),
-                        modifier = Modifier.weight(1f).heightIn(min = 48.dp)
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
                     ) {
-                        Text(stringResource(R.string.game_over_share_score), maxLines = 2, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center)
+                        FitLabel(stringResource(R.string.game_over_share_score))
                     }
                     OutlinedButton(
                         onClick = onMenu,
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = Muted),
                         border = androidx.compose.foundation.BorderStroke(1.dp, Muted),
                         shape = RoundedCornerShape(4.dp),
-                        modifier = Modifier.weight(1f).heightIn(min = 48.dp)
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
                     ) {
-                        Text(stringResource(R.string.game_over_main_menu), maxLines = 2, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center)
+                        FitLabel(stringResource(R.string.game_over_main_menu))
                     }
                 }
                 Spacer(modifier = Modifier.height(24.dp))
