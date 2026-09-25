@@ -1,5 +1,7 @@
 package com.softyorch.stroopoverload.ui.screen.multiplayer
 
+import com.softyorch.stroopoverload.ui.theme.LimitFontScale
+import com.softyorch.stroopoverload.ui.theme.GAME_BOARD_FONT_SCALE
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -145,23 +147,27 @@ fun MultiplayerScreen(
                 // "playing", so every client gets the full answer window regardless of how
                 // long their own countdown animation/render took -- no more racing a
                 // deadline that started ticking before they could see the board.
-                RoomStatus.STARTING -> MultiplayerStartingScreen(room, audioPlayer)
-                RoomStatus.PLAYING, RoomStatus.FINISHED -> if (room.mode == RoomMode.SOLO_SURVIVAL) {
-                    SoloSurvivalGameScreen(
-                        room = room,
-                        myUid = myUid,
-                        onColorTapped = { viewModel.submitAnswer(it) },
-                        onExit = { viewModel.exitRoom() },
-                        audioPlayer = audioPlayer,
-                    )
-                } else {
-                    MultiplayerGameScreen(
-                        room = room,
-                        myUid = myUid,
-                        onColorTapped = { viewModel.submitAnswer(it) },
-                        onExit = { viewModel.exitRoom() },
-                        audioPlayer = audioPlayer,
-                    )
+                RoomStatus.STARTING -> LimitFontScale(max = GAME_BOARD_FONT_SCALE) {
+                    MultiplayerStartingScreen(room, audioPlayer)
+                }
+                RoomStatus.PLAYING, RoomStatus.FINISHED -> LimitFontScale(max = GAME_BOARD_FONT_SCALE) {
+                    if (room.mode == RoomMode.SOLO_SURVIVAL) {
+                        SoloSurvivalGameScreen(
+                            room = room,
+                            myUid = myUid,
+                            onColorTapped = { viewModel.submitAnswer(it) },
+                            onExit = { viewModel.exitRoom() },
+                            audioPlayer = audioPlayer,
+                        )
+                    } else {
+                        MultiplayerGameScreen(
+                            room = room,
+                            myUid = myUid,
+                            onColorTapped = { viewModel.submitAnswer(it) },
+                            onExit = { viewModel.exitRoom() },
+                            audioPlayer = audioPlayer,
+                        )
+                    }
                 }
             }
         }

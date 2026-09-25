@@ -1,5 +1,7 @@
 package com.softyorch.stroopoverload.ui
 
+import com.softyorch.stroopoverload.ui.theme.LimitFontScale
+import com.softyorch.stroopoverload.ui.theme.GAME_BOARD_FONT_SCALE
 import android.app.Application
 import androidx.activity.compose.LocalActivity
 import androidx.compose.runtime.*
@@ -214,26 +216,28 @@ fun StroopNavGraph() {
             val gameVm: GameViewModel = viewModel()
             LaunchedEffect(Unit) { gameVm.startGame(selectedGameMode, previousHighScore) }
 
-            GameScreen(
-                viewModel = gameVm,
-                isAdFree = currentProfile.isAdFree || currentProfile.isPremium,
-                onLeaveMatch = { navController.popBackStack() },
-                onGameOver = { result, streak ->
-                    lastResult = result
-                    scope.launch {
-                        val prof = repository.getProfile()
-                        val xpBreakdown = XpSystem.calculateGameXp(result, prof.dailyStreak, streak)
-                        val newAch = repository.recordGameResult(result, xpBreakdown.total, streak)
-                        lastXpBreakdown = xpBreakdown
-                        lastNewAchievements = newAch
-                        currentProfile = repository.getProfile()
-                        previousHighScore = currentProfile.highScore
-                        navController.navigate(ROUTE_GAME_OVER) {
-                            popUpTo(ROUTE_HOME)
+            LimitFontScale(max = GAME_BOARD_FONT_SCALE) {
+                GameScreen(
+                    viewModel = gameVm,
+                    isAdFree = currentProfile.isAdFree || currentProfile.isPremium,
+                    onLeaveMatch = { navController.popBackStack() },
+                    onGameOver = { result, streak ->
+                        lastResult = result
+                        scope.launch {
+                            val prof = repository.getProfile()
+                            val xpBreakdown = XpSystem.calculateGameXp(result, prof.dailyStreak, streak)
+                            val newAch = repository.recordGameResult(result, xpBreakdown.total, streak)
+                            lastXpBreakdown = xpBreakdown
+                            lastNewAchievements = newAch
+                            currentProfile = repository.getProfile()
+                            previousHighScore = currentProfile.highScore
+                            navController.navigate(ROUTE_GAME_OVER) {
+                                popUpTo(ROUTE_HOME)
+                            }
                         }
-                    }
-                },
-            )
+                    },
+                )
+            }
         }
         composable(ROUTE_GAME_OVER) {
             // lastResult lives in plain `remember`: after the process is killed in the background
