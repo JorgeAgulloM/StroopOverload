@@ -66,6 +66,7 @@ val GAMEPLAY_MUSIC_TRACKS = listOf(
     R.raw.music_gameplay_02,
     R.raw.music_gameplay_03,
     R.raw.music_gameplay_04,
+    R.raw.music_gameplay_05,
 )
 
 @Composable
