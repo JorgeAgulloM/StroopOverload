@@ -111,6 +111,7 @@ test("eliminating the second-to-last player finishes the game with a winner", as
   const after = await getRoom();
   expect(after.status).toBe("finished");
   expect(after.winnerUid).toBe("c");
+  expect(typeof after.finishedAtMs).toBe("number"); // the result screen's match duration
 });
 
 test("stale round numbers are ignored (already resolved by a racing trigger)", async () => {

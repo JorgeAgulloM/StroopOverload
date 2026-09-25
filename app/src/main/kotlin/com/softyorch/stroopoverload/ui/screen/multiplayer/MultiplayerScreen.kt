@@ -26,6 +26,7 @@ import com.softyorch.stroopoverload.audio.MusicManager
 import com.softyorch.stroopoverload.audio.MusicTrack
 import com.softyorch.stroopoverload.data.FirebaseGameRepository
 import com.softyorch.stroopoverload.data.FirebaseMultiplayerRepository
+import com.softyorch.stroopoverload.data.ServerClock
 import com.softyorch.stroopoverload.domain.multiplayer.MultiplayerRoom
 import com.softyorch.stroopoverload.domain.multiplayer.RoomMode
 import com.softyorch.stroopoverload.domain.multiplayer.RoomStatus
@@ -193,7 +194,7 @@ private fun MultiplayerStartingScreen(room: MultiplayerRoom, audioPlayer: AudioP
     var phase by remember(room.startsAtMs) { mutableStateOf(StartingPhase.LOADING) }
 
     LaunchedEffect(room.startsAtMs) {
-        val remainingMs = room.startsAtMs?.let { it - System.currentTimeMillis() } ?: 0L
+        val remainingMs = room.startsAtMs?.let { it - ServerClock.shared.nowMs() } ?: 0L
         val waitBeforeCountdownMs = (remainingMs - COUNTDOWN_ANIMATION_MS).coerceAtLeast(0L)
         if (waitBeforeCountdownMs > 0) delay(waitBeforeCountdownMs)
         phase = StartingPhase.COUNTDOWN

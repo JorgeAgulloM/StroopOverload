@@ -94,11 +94,12 @@ export function rankSoloSurvivalPlayers(
  */
 export function finishedMatchUpdate(
   players: Readonly<Record<string, RoomPlayerDoc>>,
-  survivor: string
-): Pick<RoomDoc, "players" | "status" | "winnerUid" | "stimulus" | "deadlineAtMs"> {
+  survivor: string,
+  nowMs: number = Date.now()
+): Pick<RoomDoc, "players" | "status" | "winnerUid" | "stimulus" | "deadlineAtMs" | "finishedAtMs"> {
   const finishedPlayers = { ...players };
   for (const r of rankMistakeOrHotPotatoPlayers(players, survivor)) {
     finishedPlayers[r.uid] = { ...finishedPlayers[r.uid], placement: r.placement, finalScore: r.finalScore };
   }
-  return { players: finishedPlayers, status: "finished", winnerUid: survivor, stimulus: null, deadlineAtMs: null };
+  return { players: finishedPlayers, status: "finished", winnerUid: survivor, stimulus: null, deadlineAtMs: null, finishedAtMs: nowMs };
 }

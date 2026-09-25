@@ -229,6 +229,7 @@ describe("resolveSoloAnswer", () => {
     expect(after.winnerUid).toBe("c");
     expect(after.players.c.alive).toBe(true); // the sole survivor, not busted themselves
     expect(after.deadlineAtMs).toBeNull();
+    expect(typeof after.finishedAtMs).toBe("number");
   });
 
   test("the sole survivor is ranked first even when a busted player scored more", async () => {
@@ -283,6 +284,7 @@ describe("finishSoloSurvivalSession", () => {
     expect(after.status).toBe("finished");
     expect(after.winnerUid).toBe("b"); // highest score wins even though busted earlier
     expect(after.deadlineAtMs).toBeNull();
+    expect(typeof after.finishedAtMs).toBe("number");
   });
 
   test("ties break toward whoever joined first (lowest order)", async () => {

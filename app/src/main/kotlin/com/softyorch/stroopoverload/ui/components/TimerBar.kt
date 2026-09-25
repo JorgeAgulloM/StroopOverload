@@ -19,6 +19,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.StateFlow
 import androidx.compose.ui.tooling.preview.Preview
+import com.softyorch.stroopoverload.data.ServerClock
 import com.softyorch.stroopoverload.ui.theme.StroopTheme
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Arrangement
@@ -64,7 +65,8 @@ fun TimerBarHost(progress: StateFlow<Float>, modifier: Modifier, trackColor: Col
 }
 
 /**
- * Counts down to an absolute server deadline, ticking on its own clock.
+ * Counts down to an absolute server deadline, ticking on its own clock -- the server's, via
+ * [ServerClock], since the deadline is a server timestamp.
  *
  * Same reasoning as [TimerBarHost]: the online screens used to hold the ticking
  * "now" themselves, so every tick recomposed the entire match screen -- board,
@@ -72,8 +74,8 @@ fun TimerBarHost(progress: StateFlow<Float>, modifier: Modifier, trackColor: Col
  */
 @Composable
 fun DeadlineTimerBar(deadlineAtMs: Long?, totalMs: Long, modifier: Modifier, trackColor: Color) {
-    var nowMs by remember { mutableLongStateOf(System.currentTimeMillis()) }
-    LaunchedTicker(enabled = deadlineAtMs != null) { nowMs = it }
+    var nowMs by remember { mutableLongStateOf(ServerClock.shared.nowMs()) }
+    LaunchedTicker(enabled = deadlineAtMs != null) { nowMs = ServerClock.shared.nowMs() }
 
     val progress = if (deadlineAtMs == null || totalMs <= 0L) {
         0f
@@ -84,12 +86,12 @@ fun DeadlineTimerBar(deadlineAtMs: Long?, totalMs: Long, modifier: Modifier, tra
 }
 
 @Composable
-private fun LaunchedTicker(enabled: Boolean, onTick: (Long) -> Unit) {
+private fun LaunchedTicker(enabled: Boolean, onTick: () -> Unit) {
     androidx.compose.runtime.LaunchedEffect(enabled) {
         if (!enabled) return@LaunchedEffect
         while (true) {
             delay(TICK_MS)
-            onTick(System.currentTimeMillis())
+            onTick()
         }
     }
 }

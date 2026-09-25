@@ -92,6 +92,8 @@ data class MultiplayerRoom(
      * profile back, instead of guessing when the award landed.
      */
     val awardsAppliedAtMs: Long? = null,
+    /** Server time the match ended. Null while it is on, and for rooms finished by older backends. */
+    val finishedAtMs: Long? = null,
 ) {
     val currentTurnUid: String? get() = turnOrder.getOrNull(turnIndex)
     fun isMyTurn(uid: String): Boolean = currentTurnUid == uid

@@ -116,9 +116,9 @@ describe("finishedMatchUpdate", () => {
       c: player({ uid: "c", order: 2, matchScore: 100, alive: false, eliminatedAtMs: 1000 }),
     };
 
-    const update = finishedMatchUpdate(players, "a");
+    const update = finishedMatchUpdate(players, "a", 9_000);
 
-    expect(update).toMatchObject({ status: "finished", winnerUid: "a", stimulus: null, deadlineAtMs: null });
+    expect(update).toMatchObject({ status: "finished", winnerUid: "a", stimulus: null, deadlineAtMs: null, finishedAtMs: 9_000 });
     const ranked = rankMistakeOrHotPotatoPlayers(players, "a");
     for (const r of ranked) {
       expect(update.players[r.uid]).toMatchObject({ placement: r.placement, finalScore: r.finalScore });

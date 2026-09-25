@@ -171,6 +171,7 @@ export function applySoloAnswer(
         status: "finished",
         winnerUid,
         deadlineAtMs: null,
+        finishedAtMs: Date.now(),
       });
     } else {
       tx.update(roomRef, { players });
@@ -232,6 +233,7 @@ export async function finishSoloSurvivalSession(roomId: string): Promise<void> {
       status: "finished",
       winnerUid,
       deadlineAtMs: null,
+      finishedAtMs: Date.now(),
     });
   });
 }

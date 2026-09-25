@@ -25,6 +25,10 @@ class FirebaseMultiplayerRepository(
     private val database: FirebaseDatabase = FirebaseDatabase.getInstance(),
 ) : MultiplayerRepository {
 
+    init {
+        ServerClock.listenTo(database)
+    }
+
     override suspend fun createRoom(displayName: String, mode: RoomMode): Result<Pair<String, String>> = call("createRoom") {
         val data = mapOf("displayName" to displayName, "mode" to mode.toFirestoreValue())
         val result = callTyped("createRoom", data)
@@ -160,6 +164,7 @@ class FirebaseMultiplayerRepository(
             startsAtMs = data["startsAtMs"] as? Long,
             createdAtMs = data["createdAtMs"] as? Long ?: 0L,
             awardsAppliedAtMs = data["awardsAppliedAtMs"] as? Long,
+            finishedAtMs = data["finishedAtMs"] as? Long,
         )
     }
 

@@ -21,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.softyorch.stroopoverload.R
+import com.softyorch.stroopoverload.data.ServerClock
 import com.softyorch.stroopoverload.core.formatMultiplier
 import com.softyorch.stroopoverload.audio.AudioPlayer
 import com.softyorch.stroopoverload.audio.GameSfx
@@ -54,9 +55,11 @@ fun MatchFinishedOverlay(room: MultiplayerRoom, myUid: String, onExit: () -> Uni
     LaunchedEffect(room.roomId) {
         audioPlayer.play(if (iWon) GameSfx.RESULT_VICTORY else GameSfx.RESULT_DEFEAT)
     }
-    // Captured once, the instant this dialog first composes -- a fine enough
-    // approximation of "when the match ended" since FINISHED just arrived.
-    val finishedAtMs = remember(room.roomId) { System.currentTimeMillis() }
+    // The server's finish time. Only rooms finished by an older backend lack it; for those,
+    // the moment this dialog first composes (on the server clock) is close enough, since
+    // FINISHED usually just arrived -- though not after reattaching to the room later.
+    val firstShownAtMs = remember(room.roomId) { ServerClock.shared.nowMs() }
+    val finishedAtMs = room.finishedAtMs ?: firstShownAtMs
     val durationSeconds = if (matchStartMs > 0) ((finishedAtMs - matchStartMs).coerceAtLeast(0L) / 1000).toInt() else null
 
     Dialog(
