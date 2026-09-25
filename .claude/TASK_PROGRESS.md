@@ -1453,10 +1453,22 @@ placement mismatch (MEDIUM) · #1, #2, #3, #7 confirmed live.
 
 ---
 
-## >>> RESUME HERE (updated 2026-09-25) <<<
+## >>> RESUME HERE (updated 2026-09-25, after PR #2 merge) <<<
 
 **Branch** `refactor/audit-hardening`, NOT pushed (no PR yet). Everything below is committed except the items in
 "Uncommitted". **Prod (`stroopoverload-softyorch`) runs exactly the committed backend** (last deploy 2026-09-25: index + functions). App Check enforcement still OFF.
+
+### Status 2026-09-25 evening
+- **PR #2 merged into develop** (ef4694d). GitGuardian flagged the smoke test's generated password (false positive,
+  user marked it; now `randomUUID()`). Branch `refactor/audit-hardening` done.
+- Branch `feat/music-update`: user replaced dashboard + gameplay_01..04 and added gameplay_05. Their export carried
+  a Theora "Cover" video stream -> Samsung's SECOggExtractor failed with `MediaPlayerNative: error (1, -2147483648)`
+  (no music at all). The user re-exported all 7 tracks audio-only (waiting_room included); gameplay_05 added to
+  GAMEPLAY_MUSIC_TRACKS (shared by local + online play). Verified on the Samsung: dashboard, waiting room and
+  gameplay_05 play.
+  **When exporting music: audio-only Ogg Vorbis, no cover art.**
+- Remaining before Play: real AdMob ids (blocker), human checks (emails, sound/timer feel, online interstitial),
+  versionCode bump, App Check registration then enforcement. Open product questions unchanged.
 
 ### Done this session (commits after c1b52a9)
 | Commit | What |
