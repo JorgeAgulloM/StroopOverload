@@ -1,10 +1,16 @@
 package com.softyorch.stroopoverload.ui.components
 
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -29,6 +35,16 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Shadow
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.text.TextStyle
 
 /**
  * One answer quadrant of the 2x2 board, shared by local play and every online
@@ -43,35 +59,128 @@ fun QuadrantBox(
     modifier: Modifier = Modifier,
     onTap: () -> Unit,
 ) {
+    val neon = color.composeColor
+    val shape = RoundedCornerShape(14.dp)
+    // ── Flash on miss ──
     val flashAlpha by animateFloatAsState(
         targetValue = if (isFlashing) 0.85f else 0f,
-        animationSpec = tween(if (isFlashing) 120 else 400),
+        animationSpec = tween(if (isFlashing) 100 else 350),
         label = "quadrantFlash",
     )
-
+    // ── Subtle neon pulse (only when enabled) ──
+    val infiniteTransition = rememberInfiniteTransition(label = "neonPulse")
+    val pulseAlpha by infiniteTransition.animateFloat(
+        initialValue = 0.35f,
+        targetValue = 0.7f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(1200),
+            repeatMode = RepeatMode.Reverse,
+        ),
+        label = "pulseAlpha",
+    )
+    val borderAlpha = if (enabled) pulseAlpha else 0.15f
+    // ── Press scale ──
+    var isPressed by remember { mutableStateOf(false) }
+    val scale by animateFloatAsState(
+        targetValue = if (isPressed) 0.93f else 1f,
+        animationSpec = tween(80),
+        label = "pressScale",
+    )
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(8.dp))
-            .border(2.dp, color.composeColor.copy(alpha = if (enabled) 0.7f else 0.25f), RoundedCornerShape(8.dp))
-            .background(color.composeColor.copy(alpha = if (enabled) 0.15f else 0.05f))
-            .clickable(enabled = enabled, onClick = onTap),
+            .graphicsLayer {
+                scaleX = scale
+                scaleY = scale
+            }
+            .clip(shape)
+            // Outer neon glow border (pulsating)
+            .border(
+                width = 2.dp,
+                brush = Brush.linearGradient(
+                    colors = listOf(
+                        neon.copy(alpha = borderAlpha),
+                        neon.copy(alpha = borderAlpha * 0.4f),
+                        neon.copy(alpha = borderAlpha),
+                    )
+                ),
+                shape = shape,
+            )
+            // Background: deep dark with subtle radial glow from center
+            .drawBehind {
+                // Dark base
+                drawRect(Color(0xFF08080E))
+                // Radial neon glow at center
+                drawCircle(
+                    brush = Brush.radialGradient(
+                        colors = listOf(
+                            neon.copy(alpha = if (enabled) 0.18f else 0.04f),
+                            Color.Transparent,
+                        ),
+                        center = Offset(size.width / 2f, size.height / 2f),
+                        radius = size.minDimension * 0.7f,
+                    )
+                )
+                // Subtle top highlight strip
+                drawRect(
+                    brush = Brush.verticalGradient(
+                        colors = listOf(
+                            neon.copy(alpha = if (enabled) 0.12f else 0.02f),
+                            Color.Transparent,
+                        ),
+                        startY = 0f,
+                        endY = size.height * 0.3f,
+                    )
+                )
+            }
+            .pointerInput(enabled) {
+                if (enabled) {
+                    detectTapGestures(
+                        onPress = {
+                            isPressed = true
+                            tryAwaitRelease()
+                            isPressed = false
+                        },
+                        onTap = { onTap() },
+                    )
+                }
+            },
         contentAlignment = Alignment.Center,
     ) {
+        // ── Neon text label ──
         Text(
             text = stringResource(color.displayNameRes),
-            color = color.composeColor.copy(alpha = if (enabled) 1f else 0.4f),
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Black,
-            letterSpacing = 3.sp,
+            color = neon.copy(alpha = if (enabled) 1f else 0.35f),
+            style = TextStyle(
+                fontSize = 22.sp,
+                fontWeight = FontWeight.Black,
+                letterSpacing = 4.sp,
+                shadow = if (enabled) {
+                    Shadow(
+                        color = neon.copy(alpha = 0.8f),
+                        blurRadius = 20f,
+                    )
+                } else null,
+            ),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
+        // ── Miss flash overlay (tinted with neon for cohesion) ──
         if (flashAlpha > 0f) {
-            Box(modifier = Modifier.fillMaxSize().background(Color.White.copy(alpha = flashAlpha)))
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.radialGradient(
+                            colors = listOf(
+                                Color.White.copy(alpha = flashAlpha),
+                                neon.copy(alpha = flashAlpha * 0.5f),
+                            )
+                        )
+                    )
+            )
         }
     }
 }
-
 @Preview(showBackground = true, backgroundColor = 0xFF000000, widthDp = 360)
 @Composable
 private fun QuadrantBoxPreview() {
