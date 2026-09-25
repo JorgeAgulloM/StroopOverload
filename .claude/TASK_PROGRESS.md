@@ -1453,7 +1453,7 @@ placement mismatch (MEDIUM) · #1, #2, #3, #7 confirmed live.
 
 ---
 
-## >>> RESUME HERE (session closed 2026-09-24) <<<
+## >>> RESUME HERE (updated 2026-09-25) <<<
 
 **Branch** `refactor/audit-hardening`, NOT pushed (no PR yet). Everything below is committed except the items in
 "Uncommitted". **Prod (`stroopoverload-softyorch`) runs exactly the committed backend**: rules + all functions incl.
@@ -1470,15 +1470,23 @@ placement mismatch (MEDIUM) · #1, #2, #3, #7 confirmed live.
 
 Tests at the end: functions 225/225 (emulator), Kotlin 171/171, debug + release build OK. Prod smoke all groups green.
 
-### Uncommitted (on purpose)
-- `app/src/main/kotlin/.../ui/components/QuadrantBox.kt` — **user's own parallel work** (+152 lines, pointerInput
-  instead of clickable). Not Claude's; never stage it. Reviewer note: `pointerInput` drops button semantics for
-  TalkBack/UI tests — suggest keeping `clickable(indication = null, interactionSource = …)` for the press effect.
-- `functions/e2e/prod-smoke.mjs` — REST smoke against PROD (groups: rules solo mistake hotpotato survival leave).
-  Creates + deletes throwaway accounts. User hasn't decided whether it goes in the repo.
+### Uncommitted
+- Nothing (QuadrantBox and functions/e2e committed 2026-09-25).
+
+### 2026-09-25
+- 75ef95f **#8 online part fixed**: MultiplayerViewModel keeps roomId+uid in SavedStateHandle (explicit
+  factory in MultiplayerScreen) and reattaches after process death. Kotlin 174/174, debug build OK.
+  Device (SM-A165F): waiting room PGBUQ restored after `am kill`. Live match verified too: throwaway PROD
+  bot (scratch script built from prod-smoke helpers) hosted a mistake room PR6MH, phone joined, app killed
+  mid round 1 -> presence offline eliminated YorchDebug -> relaunch reattached and showed the final result
+  ("Ganó E2E_BOT"). Bot account/room/profile cleaned up. YorchDebug got one real lost match.
+- 84efa68 QuadrantBox neon styling committed at the user's request (reviewer objection stands:
+  `pointerInput` drops button semantics for TalkBack/UI tests).
+- a3c0165 `functions/e2e/prod-smoke.mjs` committed (user approved).
+- adb serial now `adb-R58Y8113L3N-m1uuPO (2)._adb-tls-connect._tcp` (has a space; quote it). `$TEMP/ui.sh` quotes it.
+- NOTE: flavors are gone; fresh APK is `app/build/outputs/apk/debug/app-debug.apk` (apk/dev/ is stale July).
 
 ### Still open (parked findings)
-- **#8 online part**: process death mid online match → silently back to Home, no "your match ended" message.
 - **#10 lows**: DeadlineTimerBar uses device clock (no server offset); room code uniqueness is query-then-write;
   unbounded queries in sweepStuckRooms / deleteMyMultiplayerData; `WaitingRoomScreen` LazyColumn items without `key`;
   `!!` after null checks in AuthScreen.
@@ -1488,8 +1496,8 @@ Tests at the end: functions 225/225 (emulator), Kotlin 171/171, debug + release 
   dedupe window 50 runIds; leaving a waiting room via process death relies on the 6 h purge.
 
 ### Next steps, in order
-1. Decide on QuadrantBox (user) and on committing `functions/e2e/`.
-2. #8 online part, then the #10 lows.
+1. ~~Decide on QuadrantBox and functions/e2e~~ -- both committed 2026-09-25.
+2. #10 lows (#8 online done 75ef95f).
 3. Human checklist on a device (release build, sound/timer feel, real registration emails, ads, other locales).
 4. Push branch + PR; before Play: bump versionCode, register App Check debug token + Play Integrity, then
    `ENFORCE_APP_CHECK = true` once the installed base runs the new client.
