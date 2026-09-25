@@ -1510,7 +1510,21 @@ Tests at the end: functions 225/225 (emulator), Kotlin 171/171, debug + release 
 ### Next steps, in order
 1. ~~Decide on QuadrantBox and functions/e2e~~ -- both committed 2026-09-25.
 2. ~~#10 lows~~ done and deployed 2026-09-25.
-3. Human checklist on a device (release build, sound/timer feel, real registration emails, ads, other locales).
+3. Device checklist -- automatable part DONE 2026-09-25 on AVD Pixel_9_Pro_API_36 (release build; the phone was
+   left alone because a release install wipes its debug data). Results:
+   - Release/R8: launch, guest login, UMP consent form, native ads (validator "no implementation issues"),
+     solo run scoring (correct tap -> 110 pts, round 2, high score, XP), share chooser text OK.
+   - **LAUNCH BLOCKER (known since July)**: admob/admob.properties PROD_* values are Google's TEST ids
+     (ca-app-pub-3940256099942544...). Consent form says "Publisher Test Ads". Needs a real AdMob account +
+     app id + 3 ad units before Play, or the live app earns nothing.
+   - 9dda6c8 stimulus word wrapped mid-word at 360 dp in pt-BR ("VERMEL / HO"; es "AMARILLO" same length)
+     -> shared StimulusWord (one line, TextAutoSize.StepBased, 16 dp side padding). Verified at 360 dp.
+   - ed210c1 game-over share/menu buttons truncated in fr/de/pt-BR -> 2 centred lines. Verified fr at 360 dp.
+   - Minor, not fixed: "TROPHÉES SYNAPTIQUES…" title truncated in fr/de; profile title wraps to 2 lines.
+   - Test-only: the AdMob native validator popup covers the bottom quadrants on test devices (fooled the
+     auto-player). Not shown to real users.
+   - STILL HUMAN: sound/music/timer feel in a real match; registration / forgot / change-password emails
+     arriving in a real inbox; online interstitial (needs a registered account).
 4. Push branch + PR; before Play: bump versionCode, register App Check debug token + Play Integrity, then
    `ENFORCE_APP_CHECK = true` once the installed base runs the new client.
 
