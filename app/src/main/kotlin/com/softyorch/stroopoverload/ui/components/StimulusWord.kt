@@ -46,6 +46,8 @@ fun StimulusWord(
             fontWeight = FontWeight.Black,
             letterSpacing = letterSpacing,
             textAlign = TextAlign.Center,
+            // The inherited bodyLarge line height (24 sp) would box a 64 sp word too short.
+            lineHeight = TextUnit.Unspecified,
             shadow = if (glow) Shadow(color = color, blurRadius = 24f) else null,
         ),
         maxLines = 1,
