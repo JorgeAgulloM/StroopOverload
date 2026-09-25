@@ -1523,6 +1523,12 @@ Tests at the end: functions 225/225 (emulator), Kotlin 171/171, debug + release 
    - Minor, not fixed: "TROPHÉES SYNAPTIQUES…" title truncated in fr/de; profile title wraps to 2 lines.
    - Test-only: the AdMob native validator popup covers the bottom quadrants on test devices (fooled the
      auto-player). Not shown to real users.
+   - 2026-09-25 later (user requests, verified on the Samsung at system font 2.0 and 1.0):
+     24d7be7 waiting-room scanner above Start + fixed 28 dp bar row (button no longer jumps);
+     e1b2999 LimitFontScale: app capped at 1.3, game board (local/online/solo survival) locked at 1.0;
+     5d360a5 game-over share/menu stacked full width + FitLabel (side by side they never fit in es);
+     a1319e4 StimulusWord lineHeight reset (reviewer HIGH: inherited 24 sp line box);
+     b2b5ad1 achievement_flawless_desc formatted="false" -> lintDebug now passes (was 7 errors).
    - STILL HUMAN: sound/music/timer feel in a real match; registration / forgot / change-password emails
      arriving in a real inbox; online interstitial (needs a registered account).
 4. Push branch + PR; before Play: bump versionCode, register App Check debug token + Play Integrity, then
