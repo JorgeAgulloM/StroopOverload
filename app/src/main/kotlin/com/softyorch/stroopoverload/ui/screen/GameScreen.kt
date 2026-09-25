@@ -32,6 +32,7 @@ import com.softyorch.stroopoverload.domain.GameMode
 import com.softyorch.stroopoverload.domain.GameResult
 import com.softyorch.stroopoverload.game.GameState
 import com.softyorch.stroopoverload.game.GameViewModel
+import com.softyorch.stroopoverload.ui.components.StimulusWord
 import com.softyorch.stroopoverload.ui.components.CountdownOverlay
 import com.softyorch.stroopoverload.ui.components.QuadrantBox
 import com.softyorch.stroopoverload.ui.theme.*
@@ -243,19 +244,12 @@ fun GameScreen(
                         
                         Spacer(modifier = Modifier.height(28.dp))
                         
-                        // Palabra principal con EFECTO NEÓN (Sombra paralela brillante del mismo color de la tinta)
-                        Text(
+                        StimulusWord(
                             text = stringResource(s.wordLabel.displayNameRes),
                             color = s.inkColor.composeColor,
-                            fontSize = 64.sp,
-                            fontWeight = FontWeight.Black,
+                            maxFontSize = 64.sp,
                             letterSpacing = 8.sp,
-                            style = androidx.compose.ui.text.TextStyle(
-                                shadow = androidx.compose.ui.graphics.Shadow(
-                                    color = s.inkColor.composeColor,
-                                    blurRadius = 24f // Crea el resplandor difuminado tipo neón
-                                )
-                            )
+                            glow = true,
                         )
                     }
                 }

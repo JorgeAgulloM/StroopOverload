@@ -22,6 +22,7 @@ import com.softyorch.stroopoverload.core.StroopColor
 import com.softyorch.stroopoverload.domain.multiplayer.MultiplayerRoom
 import com.softyorch.stroopoverload.domain.multiplayer.RoomPlayer
 import com.softyorch.stroopoverload.domain.multiplayer.RoomStatus
+import com.softyorch.stroopoverload.ui.components.StimulusWord
 import com.softyorch.stroopoverload.ui.components.QuadrantBox
 import com.softyorch.stroopoverload.ui.theme.Muted
 import kotlinx.coroutines.delay
@@ -182,11 +183,10 @@ private fun ColumnScope.PlayingContent(me: RoomPlayer?, onColorTapped: (StroopCo
                 fontSize = 11.sp,
             )
             Spacer(modifier = Modifier.height(12.dp))
-            Text(
+            StimulusWord(
                 text = stringResource(stimulus.wordLabel.displayNameRes),
                 color = stimulus.inkColor.composeColor,
-                fontSize = 46.sp,
-                fontWeight = FontWeight.Black,
+                maxFontSize = 46.sp,
                 letterSpacing = 4.sp,
             )
         }

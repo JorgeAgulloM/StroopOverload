@@ -33,6 +33,7 @@ import com.softyorch.stroopoverload.core.StroopColor
 import com.softyorch.stroopoverload.domain.multiplayer.MultiplayerRoom
 import com.softyorch.stroopoverload.domain.multiplayer.RoomMode
 import com.softyorch.stroopoverload.domain.multiplayer.RoomStatus
+import com.softyorch.stroopoverload.ui.components.StimulusWord
 import com.softyorch.stroopoverload.ui.components.QuadrantBox
 import com.softyorch.stroopoverload.ui.theme.Muted
 import com.softyorch.stroopoverload.ui.theme.NeonRed
@@ -186,11 +187,10 @@ private fun ColumnScope.PlayingContent(room: MultiplayerRoom, myTurn: Boolean, o
                 fontSize = 11.sp,
             )
             Spacer(modifier = Modifier.height(12.dp))
-            Text(
+            StimulusWord(
                 text = stringResource(stimulus.wordLabel.displayNameRes),
                 color = stimulus.inkColor.composeColor,
-                fontSize = 46.sp,
-                fontWeight = FontWeight.Black,
+                maxFontSize = 46.sp,
                 letterSpacing = 4.sp,
             )
             if (!myTurn) {
