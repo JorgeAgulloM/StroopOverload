@@ -22,8 +22,11 @@ import com.softyorch.stroopoverload.core.StroopColor
 import com.softyorch.stroopoverload.domain.multiplayer.MultiplayerRoom
 import com.softyorch.stroopoverload.domain.multiplayer.RoomPlayer
 import com.softyorch.stroopoverload.domain.multiplayer.RoomStatus
+import com.softyorch.stroopoverload.ui.components.StimulusWord
+import com.softyorch.stroopoverload.ui.components.QuadrantBox
 import com.softyorch.stroopoverload.ui.theme.Muted
 import kotlinx.coroutines.delay
+import com.softyorch.stroopoverload.ui.components.DeadlineTimerBar
 
 private const val SOLO_LEVELS_PER_DIFFICULTY = 5
 
@@ -48,24 +51,6 @@ fun SoloSurvivalGameScreen(
     audioPlayer: AudioPlayer,
 ) {
     val me = room.player(myUid)
-
-    var nowMs by remember { mutableStateOf(System.currentTimeMillis()) }
-    LaunchedEffect(room.roomId) {
-        while (true) {
-            delay(100L)
-            nowMs = System.currentTimeMillis()
-        }
-    }
-
-    val timerProgress = remember(me?.soloDeadlineAtMs, me?.soloRound, nowMs) {
-        val deadline = me?.soloDeadlineAtMs
-        if (deadline == null) {
-            0f
-        } else {
-            val totalMs = soloTimeLimitMs((me.soloRound).coerceAtLeast(0)).toFloat()
-            ((deadline - nowMs).toFloat() / totalMs).coerceIn(0f, 1f)
-        }
-    }
 
     Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         Column(
@@ -120,13 +105,15 @@ fun SoloSurvivalGameScreen(
             // match now ends the moment only one survivor remains anyway, so
             // surfacing "Xs left" on the session clock was just confusing.
             if (room.status == RoomStatus.PLAYING && me?.alive == true) {
-                TimerBar(
-                    progress = timerProgress,
+                DeadlineTimerBar(
+                    deadlineAtMs = me?.soloDeadlineAtMs,
+                    totalMs = soloTimeLimitMs((me?.soloRound ?: 0).coerceAtLeast(0)),
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(8.dp)
                         .clip(RoundedCornerShape(4.dp))
                         .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(4.dp)),
+                    trackColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
                 )
                 Spacer(modifier = Modifier.height(10.dp))
             }
@@ -196,11 +183,10 @@ private fun ColumnScope.PlayingContent(me: RoomPlayer?, onColorTapped: (StroopCo
                 fontSize = 11.sp,
             )
             Spacer(modifier = Modifier.height(12.dp))
-            Text(
+            StimulusWord(
                 text = stringResource(stimulus.wordLabel.displayNameRes),
                 color = stimulus.inkColor.composeColor,
-                fontSize = 46.sp,
-                fontWeight = FontWeight.Black,
+                maxFontSize = 46.sp,
                 letterSpacing = 4.sp,
             )
         }

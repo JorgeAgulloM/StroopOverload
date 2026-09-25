@@ -1,22 +1,30 @@
 import { initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
-import { getDatabase } from "firebase-admin/database";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { onTaskDispatched } from "firebase-functions/v2/tasks";
 import { onValueWritten } from "firebase-functions/v2/database";
+import { onSchedule } from "firebase-functions/v2/scheduler";
+import { onDocumentUpdated } from "firebase-functions/v2/firestore";
 import { generateUniqueRoomCode, findJoinableRoomByCode, roomsCol } from "./roomRepo";
 import { GameModeId, ResolutionReason, RoomDoc, RoomPlayerDoc } from "./types";
-import { generateStimulus } from "./stimulus";
-import { timeLimitMsForRound } from "./turnLogic";
-import { resolveRound } from "./resolveRound";
-import { armBomb, explodeBomb as explodeBombFn, resolveHotPotatoTurn } from "./resolveHotPotato";
+import { applyRoundResolution, resolveRound, scheduleNextRoundTimeout } from "./resolveRound";
+import { applyHotPotatoTurn, explodeBomb as explodeBombFn } from "./resolveHotPotato";
+import { applySoloAnswer, finishSoloSurvivalSession, resolveSoloAnswer, scheduleNextSoloTimeout } from "./soloSurvival";
+import { judgeAnswer, parseAnsweredRound } from "./answerJudge";
+import { beginMatch } from "./matchStart";
+import { leaveWaitingRoom } from "./roomLeave";
+import { deletePlayerRooms, purgeExpiredRooms as purgeExpiredRoomsFn, sweepStuckRooms as sweepStuckRoomsFn } from "./roomWatchdog";
+import { scheduleGameStart } from "./taskQueue";
 import {
-  beginSoloSurvivalMatch,
-  finishSoloSurvivalSession,
-  resolveSoloAnswer,
-  SOLO_SESSION_DURATION_MS,
-} from "./soloSurvival";
-import { scheduleTimeoutCheck, scheduleGameStart, scheduleSoloPlayerTimeoutCheck } from "./taskQueue";
+  assertWithinRateLimit,
+  CREATE_ROOM_LIMIT,
+  JOIN_ROOM_LIMIT,
+  LEAVE_ROOM_LIMIT,
+  RATE_LIMIT_WINDOW_MS,
+  SUBMIT_SOLO_RUN_LIMIT,
+} from "./rateLimit";
+import { clampWinStreak, SoloMode, validateSoloRun } from "./profileScoring";
+import { applyMatchAwards, applySoloRun } from "./userProfile";
 
 initializeApp();
 
@@ -29,7 +37,22 @@ const VALID_GAME_MODES: readonly GameModeId[] = ["mistake", "hot_potato", "solo_
 // how long the countdown animation plays, never match fairness.
 const STARTING_COUNTDOWN_MS = 4000;
 
-export const createRoom = onCall(async (request) => {
+// App Check proves a call came from a genuine, unmodified build of this app.
+// Enforcement is OFF until a build that actually sends App Check tokens is the
+// one players are running: flipping it on rejects every already-installed
+// client outright, which would break live matches. Steps: ship the client that
+// initializes App Check (see StroopApplication), register the app in the
+// Firebase console (Play Integrity), watch the "unverified requests" metric
+// drop, then set this to true and redeploy.
+const ENFORCE_APP_CHECK = false;
+
+// Caps the blast radius of a traffic spike (accidental or hostile) on the
+// Firestore/Cloud Tasks bill. Well above any plausible real concurrency here.
+const MAX_INSTANCES = 10;
+
+const CALLABLE_OPTIONS = { enforceAppCheck: ENFORCE_APP_CHECK, maxInstances: MAX_INSTANCES } as const;
+
+export const createRoom = onCall(CALLABLE_OPTIONS, async (request) => {
   const uid = request.auth?.uid;
   if (!uid) throw new HttpsError("unauthenticated", "Debes iniciar sesión.");
   const displayName =
@@ -40,6 +63,7 @@ export const createRoom = onCall(async (request) => {
   const mode: GameModeId = VALID_GAME_MODES.includes(requestedMode) ? requestedMode : "mistake";
 
   try {
+    await assertWithinRateLimit(uid, "createRoom", CREATE_ROOM_LIMIT, RATE_LIMIT_WINDOW_MS);
     const code = await generateUniqueRoomCode();
     const roomRef = roomsCol().doc();
     const hostPlayer: RoomPlayerDoc = {
@@ -74,14 +98,14 @@ export const createRoom = onCall(async (request) => {
   }
 });
 
-export const joinRoom = onCall(async (request) => {
+export const joinRoom = onCall(CALLABLE_OPTIONS, async (request) => {
   const uid = request.auth?.uid;
   if (!uid) throw new HttpsError("unauthenticated", "Debes iniciar sesión.");
   const code = String(request.data?.code ?? "")
     .toUpperCase()
     .trim();
   if (!/^[ABCDEFGHJKLMNPQRSTUVWXYZ23456789]{5}$/.test(code)) {
-    throw new HttpsError("invalid-argument", "Código de sala inválido.");
+    throw new HttpsError("invalid-argument", "Código de sala inválido.", { reason: "INVALID_CODE" });
   }
   const displayName =
     String(request.data?.displayName ?? "")
@@ -89,18 +113,19 @@ export const joinRoom = onCall(async (request) => {
       .slice(0, MAX_DISPLAY_NAME_LENGTH) || "Pilot";
 
   try {
+    await assertWithinRateLimit(uid, "joinRoom", JOIN_ROOM_LIMIT, RATE_LIMIT_WINDOW_MS);
     const existingDoc = await findJoinableRoomByCode(code);
-    if (!existingDoc) throw new HttpsError("not-found", "Sala no encontrada o ya empezada.");
+    if (!existingDoc) throw new HttpsError("not-found", "Sala no encontrada o ya empezada.", { reason: "ROOM_NOT_FOUND" });
     const roomRef = existingDoc.ref;
 
     return await getFirestore().runTransaction(async (tx) => {
       const doc = await tx.get(roomRef);
-      if (!doc.exists) throw new HttpsError("not-found", "Sala no existe.");
+      if (!doc.exists) throw new HttpsError("not-found", "Sala no existe.", { reason: "ROOM_NOT_FOUND" });
       const room = doc.data() as RoomDoc;
-      if (room.status !== "waiting") throw new HttpsError("failed-precondition", "La partida ya empezó.");
+      if (room.status !== "waiting") throw new HttpsError("failed-precondition", "La partida ya empezó.", { reason: "ALREADY_STARTED" });
       if (room.players[uid]) return { roomId: roomRef.id };
       if (Object.keys(room.players).length >= MAX_PLAYERS_PER_ROOM) {
-        throw new HttpsError("resource-exhausted", "Sala llena.");
+        throw new HttpsError("resource-exhausted", "Sala llena.", { reason: "ROOM_FULL" });
       }
 
       const order = Object.keys(room.players).length;
@@ -123,7 +148,25 @@ export const joinRoom = onCall(async (request) => {
   }
 });
 
-export const startGame = onCall(async (request) => {
+// Leaving a room before its match starts (see roomLeave.ts). The client calls it on its way
+// out of the waiting room; after the start, leaving is a forfeit handled by presence.
+export const leaveRoom = onCall(CALLABLE_OPTIONS, async (request) => {
+  const uid = request.auth?.uid;
+  if (!uid) throw new HttpsError("unauthenticated", "Debes iniciar sesión.");
+  const roomId = String(request.data?.roomId ?? "").trim();
+  if (!roomId) throw new HttpsError("invalid-argument", "roomId inválido.");
+
+  try {
+    await assertWithinRateLimit(uid, "leaveRoom", LEAVE_ROOM_LIMIT, RATE_LIMIT_WINDOW_MS);
+    return { left: await leaveWaitingRoom(roomId, uid) };
+  } catch (err) {
+    if (err instanceof HttpsError) throw err;
+    console.error(`leaveRoom failed for uid ${uid}, room ${roomId}`, err);
+    throw new HttpsError("internal", "No se pudo salir de la sala.");
+  }
+});
+
+export const startGame = onCall(CALLABLE_OPTIONS, async (request) => {
   const uid = request.auth?.uid;
   if (!uid) throw new HttpsError("unauthenticated", "Debes iniciar sesión.");
   const roomId = String(request.data?.roomId ?? "").trim();
@@ -158,50 +201,11 @@ export const startGame = onCall(async (request) => {
 // synchronous call happened -- so every client's answer window is the full
 // configured duration regardless of how long their local countdown/render took.
 export const beginRound = onTaskDispatched<{ roomId: string }>(
-  { retryConfig: { maxAttempts: 5, minBackoffSeconds: 1 } },
+  { retryConfig: { maxAttempts: 5, minBackoffSeconds: 1 }, maxInstances: MAX_INSTANCES },
   async (req) => {
     const { roomId } = req.data;
     try {
-      const roomRef = roomsCol().doc(roomId);
-      const modeDoc = await roomRef.get();
-      if (!modeDoc.exists) return;
-      const mode = (modeDoc.data() as RoomDoc).mode;
-
-      if (mode === "solo_survival") {
-        const playerDeadlines = await beginSoloSurvivalMatch(roomId);
-        if (playerDeadlines.length === 0) return; // stale/already handled
-        await Promise.all(
-          playerDeadlines.map((d) => scheduleSoloPlayerTimeoutCheck(roomId, d.uid, d.round, d.deadlineAtMs - Date.now()))
-        );
-        await scheduleTimeoutCheck(roomId, 0, SOLO_SESSION_DURATION_MS);
-        return;
-      }
-
-      let scheduled: { round: number; deadlineAtMs: number } | null = null;
-
-      await getFirestore().runTransaction(async (tx) => {
-        const doc = await tx.get(roomRef);
-        if (!doc.exists) return;
-        const room = doc.data() as RoomDoc;
-        if (room.status !== "starting") return; // stale/already handled
-
-        const stimulus = generateStimulus();
-        const deadlineAtMs = Date.now() + timeLimitMsForRound(1);
-        tx.update(roomRef, { status: "playing", round: 1, turnIndex: 0, stimulus, deadlineAtMs });
-        scheduled = { round: 1, deadlineAtMs };
-      });
-
-      if (scheduled) {
-        const { round, deadlineAtMs } = scheduled as { round: number; deadlineAtMs: number };
-        if (mode === "hot_potato") {
-          // No timeout task for this mode -- the current holder can take as
-          // long as they want between stimuli; only the hidden bomb (armed
-          // below) applies real pressure. See resolveHotPotato.ts.
-          await armBomb(roomId);
-        } else {
-          await scheduleTimeoutCheck(roomId, round, deadlineAtMs - Date.now());
-        }
-      }
+      await beginMatch(roomId);
     } catch (err) {
       console.error(`beginRound failed for room ${roomId}`, err);
       throw err;
@@ -210,12 +214,12 @@ export const beginRound = onTaskDispatched<{ roomId: string }>(
 );
 
 // Fired by the Cloud Task armBomb schedules. See resolveHotPotato.ts for the logic.
-export const explodeBomb = onTaskDispatched<{ roomId: string }>(
-  { retryConfig: { maxAttempts: 5, minBackoffSeconds: 1 } },
+export const explodeBomb = onTaskDispatched<{ roomId: string; bombAtMs?: number }>(
+  { retryConfig: { maxAttempts: 5, minBackoffSeconds: 1 }, maxInstances: MAX_INSTANCES },
   async (req) => {
-    const { roomId } = req.data;
+    const { roomId, bombAtMs } = req.data;
     try {
-      await explodeBombFn(roomId);
+      await explodeBombFn(roomId, bombAtMs);
     } catch (err) {
       console.error(`explodeBomb failed for room ${roomId}`, err);
       throw err;
@@ -223,57 +227,129 @@ export const explodeBomb = onTaskDispatched<{ roomId: string }>(
   }
 );
 
-export const submitAnswer = onCall(async (request) => {
+interface AnswerOutcome {
+  reason: ResolutionReason;
+  applied: boolean;
+  afterCommit: () => Promise<void>;
+}
+
+/**
+ * One transaction: read the room, judge the answer against that snapshot
+ * (answerJudge.ts), and apply it with the engine for the room's mode. It used to
+ * read the room outside the transaction first -- only to pick the engine and
+ * validate -- and then the engine read it again, an extra round trip on every
+ * tap of a reaction-time game.
+ *
+ * `round` in the request is optional so clients that predate it keep working.
+ */
+export const submitAnswer = onCall(CALLABLE_OPTIONS, async (request) => {
   const uid = request.auth?.uid;
   if (!uid) throw new HttpsError("unauthenticated", "Debes iniciar sesión.");
   const roomId = String(request.data?.roomId ?? "").trim();
   if (!roomId) throw new HttpsError("invalid-argument", "roomId inválido.");
   const selectedColor = String(request.data?.selectedColor ?? "");
+  const answeredRound = parseAnsweredRound(request.data?.round);
+  if (answeredRound === "invalid") throw new HttpsError("invalid-argument", "round inválido.");
 
   try {
     const roomRef = roomsCol().doc(roomId);
-    const doc = await roomRef.get();
-    if (!doc.exists) throw new HttpsError("not-found", "Sala no existe.");
-    const room = doc.data() as RoomDoc;
+    const outcome = await getFirestore().runTransaction<AnswerOutcome>(async (tx) => {
+      const doc = await tx.get(roomRef);
+      if (!doc.exists) throw new HttpsError("not-found", "Sala no existe.");
+      const room = doc.data() as RoomDoc;
+      const verdict = judgeAnswer(room, uid, selectedColor, answeredRound, Date.now());
+      if (!verdict.ok) throw verdict.error;
+      const { reason, round } = verdict;
 
-    if (room.mode === "solo_survival") {
-      const me = room.players[uid];
-      if (!me || !me.alive) throw new HttpsError("failed-precondition", "Ya estás eliminado.");
-      if (!me.soloStimulus || me.soloDeadlineAtMs == null) throw new HttpsError("failed-precondition", "No hay ronda activa.");
-      if (Date.now() > me.soloDeadlineAtMs) throw new HttpsError("deadline-exceeded", "Se acabó el tiempo.");
+      if (room.mode === "solo_survival") {
+        const result = applySoloAnswer(tx, roomRef, room, uid, reason, round);
+        return {
+          reason,
+          applied: result.applied,
+          afterCommit: () => scheduleNextSoloTimeout(roomId, uid, result.scheduled),
+        };
+      }
+      if (room.mode === "hot_potato") {
+        const applied = applyHotPotatoTurn(tx, roomRef, room, uid, reason, round);
+        return { reason, applied, afterCommit: async () => undefined };
+      }
+      const result = applyRoundResolution(tx, roomRef, room, uid, reason, round);
+      return {
+        reason,
+        applied: result.applied,
+        afterCommit: () => scheduleNextRoundTimeout(roomId, result.scheduled),
+      };
+    });
 
-      const reason: ResolutionReason = selectedColor === me.soloStimulus.inkColor ? "correct" : "wrong";
-      const applied = await resolveSoloAnswer(roomId, uid, reason, me.soloRound ?? 0);
-      if (!applied) throw new HttpsError("deadline-exceeded", "La ronda ya se resolvió (probablemente por timeout).");
-      return { accepted: true, reason };
-    }
-
-    const currentTurnUid = room.turnOrder[room.turnIndex];
-    if (currentTurnUid !== uid) throw new HttpsError("permission-denied", "No es tu turno.");
-    if (!room.stimulus || !room.deadlineAtMs) throw new HttpsError("failed-precondition", "No hay ronda activa.");
-    // hot_potato has no enforced per-stimulus deadline (see resolveHotPotato.ts) --
-    // the holder can answer whenever, so a late answer here is never stale.
-    if (room.mode !== "hot_potato" && Date.now() > room.deadlineAtMs) {
-      throw new HttpsError("deadline-exceeded", "Se acabó el tiempo.");
-    }
-
-    // `selectedColor` is compared against the stimulus's ink color as a plain
-    // string equality check. Any value that isn't an exact match --
-    // including empty, missing, or otherwise malformed input -- naturally
-    // falls through to "wrong", which is already the correct, safe
-    // semantics for an invalid answer. No separate allow-list validation
-    // against StroopColorId is needed here.
-    const reason: ResolutionReason = selectedColor === room.stimulus.inkColor ? "correct" : "wrong";
-    const applied =
-      room.mode === "hot_potato"
-        ? await resolveHotPotatoTurn(roomId, uid, reason, room.round)
-        : await resolveRound(roomId, uid, reason, room.round);
-    if (!applied) throw new HttpsError("deadline-exceeded", "La ronda ya se resolvió (probablemente por timeout).");
-    return { accepted: true, reason };
+    // With the judge and the engine on one snapshot this only trips when the room
+    // is not "playing" (e.g. the answer landed after the match finished).
+    if (!outcome.applied) throw new HttpsError("deadline-exceeded", "La ronda ya se resolvió.");
+    await outcome.afterCommit();
+    return { accepted: true, reason: outcome.reason };
   } catch (err) {
     if (err instanceof HttpsError) throw err;
     console.error(`submitAnswer failed for uid ${uid}, room ${roomId}`, err);
     throw new HttpsError("internal", "No se pudo registrar la respuesta.");
+  }
+});
+
+const MAX_CLAIMED_ACHIEVEMENTS_PER_RUN = 30;
+// A client-generated UUID in practice; anything short and plain is accepted.
+const RUN_ID_PATTERN = /^[A-Za-z0-9-]{8,64}$/;
+
+/**
+ * Records a finished single-player run and returns the profile scoring fields the
+ * server computed from it. This is the only way those fields change: clients can
+ * no longer write points/experience/level/highScore themselves (firestore.rules),
+ * because the leaderboard used to be whatever a client claimed it was.
+ *
+ * Honest about its limits: the stimuli of a solo run are generated on the device,
+ * so the server cannot verify that a run happened -- it recomputes the score and XP
+ * from the reported counts and rejects what is impossible (profileScoring.ts).
+ *
+ * The client queues finished runs and retries them until this answers, so a run played
+ * with no connection is submitted later. `runId` makes that retry safe (applySoloRun).
+ */
+export const submitSoloRun = onCall(CALLABLE_OPTIONS, async (request) => {
+  const uid = request.auth?.uid;
+  if (!uid) throw new HttpsError("unauthenticated", "Debes iniciar sesión.");
+  // Anonymous accounts never appear on the leaderboard, so nothing should be written for them.
+  if (request.auth?.token?.firebase?.sign_in_provider === "anonymous") {
+    throw new HttpsError("permission-denied", "Las cuentas de invitado no puntúan.", { reason: "ANONYMOUS" });
+  }
+
+  const run = {
+    mode: String(request.data?.mode ?? "") as SoloMode,
+    correctHits: Number(request.data?.correctHits),
+    totalRounds: Number(request.data?.totalRounds),
+    survivalMs: Number(request.data?.survivalMs),
+    finalScore: Number(request.data?.finalScore),
+  };
+  const rejection = validateSoloRun(run);
+  if (rejection) {
+    console.warn(`submitSoloRun rejected for uid ${uid}: ${rejection}`, run);
+    throw new HttpsError("invalid-argument", "Partida no válida.", { reason: "INVALID_RUN" });
+  }
+
+  const claimedAchievementIds = Array.isArray(request.data?.achievementIds)
+    ? (request.data.achievementIds as unknown[]).slice(0, MAX_CLAIMED_ACHIEVEMENTS_PER_RUN).map(String)
+    : [];
+
+  const winStreak = clampWinStreak(Number(request.data?.winStreak), run.correctHits);
+
+  const rawRunId = request.data?.runId;
+  if (rawRunId !== undefined && rawRunId !== null && !(typeof rawRunId === "string" && RUN_ID_PATTERN.test(rawRunId))) {
+    throw new HttpsError("invalid-argument", "Partida no válida.", { reason: "INVALID_RUN" });
+  }
+  const runId = typeof rawRunId === "string" ? rawRunId : null;
+
+  try {
+    await assertWithinRateLimit(uid, "submitSoloRun", SUBMIT_SOLO_RUN_LIMIT, RATE_LIMIT_WINDOW_MS);
+    return await applySoloRun(uid, run, claimedAchievementIds, winStreak, Date.now(), runId);
+  } catch (err) {
+    if (err instanceof HttpsError) throw err;
+    console.error(`submitSoloRun failed for uid ${uid}`, err);
+    throw new HttpsError("internal", "No se pudo registrar la partida.");
   }
 });
 
@@ -284,24 +360,12 @@ export const submitAnswer = onCall(async (request) => {
 // retained history, so wiping the whole doc is safe: it removes this
 // user's uid/nickname without needing to special-case "redact vs delete"
 // for the other player's copy of a finished match.
-export const deleteMyMultiplayerData = onCall(async (request) => {
+export const deleteMyMultiplayerData = onCall(CALLABLE_OPTIONS, async (request) => {
   const uid = request.auth?.uid;
   if (!uid) throw new HttpsError("unauthenticated", "Debes iniciar sesión.");
 
   try {
-    const snap = await roomsCol().where(`players.${uid}.uid`, "==", uid).get();
-    const db = getDatabase();
-    await Promise.all(
-      snap.docs.map(async (doc) => {
-        await doc.ref.delete();
-        try {
-          await db.ref(`presence/${doc.id}`).remove();
-        } catch (err) {
-          console.error(`deleteMyMultiplayerData: failed to remove presence for room ${doc.id}`, err);
-        }
-      })
-    );
-    return { roomsDeleted: snap.size };
+    return { roomsDeleted: await deletePlayerRooms(uid) };
   } catch (err) {
     console.error(`deleteMyMultiplayerData failed for uid ${uid}`, err);
     throw new HttpsError("internal", "No se pudieron eliminar los datos multijugador.");
@@ -314,7 +378,7 @@ interface ResolveTimeoutTaskData {
 }
 
 export const resolveTimeout = onTaskDispatched<ResolveTimeoutTaskData>(
-  { retryConfig: { maxAttempts: 5, minBackoffSeconds: 1 } },
+  { retryConfig: { maxAttempts: 5, minBackoffSeconds: 1 }, maxInstances: MAX_INSTANCES },
   async (req) => {
     const { roomId, round } = req.data;
     try {
@@ -360,7 +424,7 @@ interface ResolveSoloPlayerTimeoutTaskData {
 // their own stimulus/deadline, so each gets its own scheduled check instead
 // of sharing one room-level timeout.
 export const resolveSoloPlayerTimeout = onTaskDispatched<ResolveSoloPlayerTimeoutTaskData>(
-  { retryConfig: { maxAttempts: 5, minBackoffSeconds: 1 } },
+  { retryConfig: { maxAttempts: 5, minBackoffSeconds: 1 }, maxInstances: MAX_INSTANCES },
   async (req) => {
     const { roomId, uid, round } = req.data;
     try {
@@ -381,7 +445,9 @@ export const resolveSoloPlayerTimeout = onTaskDispatched<ResolveSoloPlayerTimeou
   }
 );
 
-export const onPresenceChanged = onValueWritten("presence/{roomId}/{uid}", async (event) => {
+export const onPresenceChanged = onValueWritten(
+  { ref: "presence/{roomId}/{uid}", maxInstances: MAX_INSTANCES },
+  async (event) => {
   const roomId = event.params.roomId;
   const uid = event.params.uid;
   try {
@@ -410,3 +476,37 @@ export const onPresenceChanged = onValueWritten("presence/{roomId}/{uid}", async
     console.error(`onPresenceChanged failed for room ${roomId}, uid ${uid}`, err);
   }
 });
+
+// Safety net for rooms whose next Cloud Task was never enqueued (see
+// roomWatchdog.ts). A stuck room is recovered within about a minute.
+export const sweepStuckRooms = onSchedule("every 1 minutes", async () => {
+  const repaired = await sweepStuckRoomsFn();
+  if (repaired > 0) console.warn(`sweepStuckRooms: repaired ${repaired} stuck room(s)`);
+});
+
+export const purgeExpiredRooms = onSchedule("every 60 minutes", async () => {
+  const deleted = await purgeExpiredRoomsFn();
+  if (deleted > 0) console.log(`purgeExpiredRooms: deleted ${deleted} expired room(s)`);
+});
+
+// Pays out a finished match to every player's profile. Unlike a solo run this is
+// fully verified -- the backend generated the stimuli, checked every answer against
+// its deadline and ranked the players itself. Idempotent per room, so a retried
+// delivery cannot pay twice (see userProfile.applyMatchAwards).
+export const onRoomFinished = onDocumentUpdated(
+  { document: "rooms/{roomId}", maxInstances: MAX_INSTANCES },
+  async (event) => {
+    const before = event.data?.before.data();
+    const after = event.data?.after.data();
+    if (!after || before?.status === "finished" || after.status !== "finished") return;
+
+    const roomId = event.params.roomId;
+    try {
+      const awarded = await applyMatchAwards(roomId);
+      if (awarded > 0) console.log(`onRoomFinished: awarded ${awarded} player(s) in room ${roomId}`);
+    } catch (err) {
+      console.error(`onRoomFinished failed for room ${roomId}`, err);
+      throw err; // let the trigger retry; applyMatchAwards is idempotent
+    }
+  }
+);

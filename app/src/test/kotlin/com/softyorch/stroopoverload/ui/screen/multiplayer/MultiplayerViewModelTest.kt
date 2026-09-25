@@ -1,7 +1,11 @@
 package com.softyorch.stroopoverload.ui.screen.multiplayer
 
+import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.ViewModelStore
 import app.cash.turbine.test
 import com.softyorch.stroopoverload.core.StroopColor
+import com.softyorch.stroopoverload.data.MultiplayerCallException
+import com.softyorch.stroopoverload.data.MultiplayerCallFailure
 import com.softyorch.stroopoverload.domain.multiplayer.MultiplayerRoom
 import com.softyorch.stroopoverload.domain.multiplayer.RoomMode
 import com.softyorch.stroopoverload.domain.multiplayer.RoomPlayer
@@ -154,6 +158,7 @@ class MultiplayerViewModelTest {
                 ),
                 turnOrder = listOf("player-1", "player-2"),
                 turnIndex = 0,
+                round = 7,
             )
         )
         dispatcher.scheduler.advanceUntilIdle()
@@ -162,6 +167,7 @@ class MultiplayerViewModelTest {
         dispatcher.scheduler.advanceUntilIdle()
 
         assertEquals(1, fake.submitAnswerCallCount)
+        assertEquals(7, fake.lastSubmittedRound) // the shared round the tap was aimed at
     }
 
     @Test
@@ -179,11 +185,12 @@ class MultiplayerViewModelTest {
                 status = RoomStatus.PLAYING,
                 mode = RoomMode.SOLO_SURVIVAL,
                 players = listOf(
-                    RoomPlayer(uid = "player-1", displayName = "Neo", alive = true),
-                    RoomPlayer(uid = "player-2", displayName = "Trinity", alive = true),
+                    RoomPlayer(uid = "player-1", displayName = "Neo", alive = true, soloRound = 2),
+                    RoomPlayer(uid = "player-2", displayName = "Trinity", alive = true, soloRound = 5),
                 ),
                 turnOrder = listOf("player-1", "player-2"),
                 turnIndex = 0,
+                round = 0, // solo_survival never advances the shared round
             )
         )
         dispatcher.scheduler.advanceUntilIdle()
@@ -192,6 +199,7 @@ class MultiplayerViewModelTest {
         dispatcher.scheduler.advanceUntilIdle()
 
         assertEquals(1, fake.submitAnswerCallCount)
+        assertEquals(5, fake.lastSubmittedRound) // this player's own soloRound
     }
 
     @Test
@@ -312,8 +320,7 @@ class MultiplayerViewModelTest {
             dispatcher.scheduler.advanceUntilIdle()
 
             val error = awaitItem() as MultiplayerUiState.Error
-            val reason = error.reason as MultiplayerErrorReason.CreateRoomFailed
-            assertEquals("nope", reason.detail)
+            assertEquals(MultiplayerErrorReason.CreateRoomFailed(MultiplayerCallFailure.UNKNOWN), error.reason)
         }
     }
 
@@ -331,8 +338,44 @@ class MultiplayerViewModelTest {
             dispatcher.scheduler.advanceUntilIdle()
 
             val error = awaitItem() as MultiplayerUiState.Error
-            val reason = error.reason as MultiplayerErrorReason.JoinRoomFailed
-            assertEquals("nope", reason.detail)
+            // Raw exception text never reaches the UI (it isn't localized).
+            assertEquals(MultiplayerErrorReason.JoinRoomFailed(MultiplayerCallFailure.UNKNOWN), error.reason)
+        }
+    }
+
+    @Test
+    fun `joinRoom typed failure is carried through so the UI can explain it`() = runTest {
+        val fake = FakeMultiplayerRepository()
+        fake.joinRoomResult = Result.failure(MultiplayerCallException(MultiplayerCallFailure.ROOM_FULL))
+        val viewModel = MultiplayerViewModel(fake)
+
+        viewModel.state.test {
+            assertEquals(MultiplayerUiState.Idle, awaitItem())
+
+            viewModel.joinRoom(uid = "player-2", code = "ZZZZZ", displayName = "Trinity")
+            assertEquals(MultiplayerUiState.Connecting, awaitItem())
+            dispatcher.scheduler.advanceUntilIdle()
+
+            val error = awaitItem() as MultiplayerUiState.Error
+            assertEquals(MultiplayerErrorReason.JoinRoomFailed(MultiplayerCallFailure.ROOM_FULL), error.reason)
+        }
+    }
+
+    @Test
+    fun `createRoom rate-limited failure is carried through so the UI can explain it`() = runTest {
+        val fake = FakeMultiplayerRepository()
+        fake.createRoomResult = Result.failure(MultiplayerCallException(MultiplayerCallFailure.RATE_LIMITED))
+        val viewModel = MultiplayerViewModel(fake)
+
+        viewModel.state.test {
+            assertEquals(MultiplayerUiState.Idle, awaitItem())
+
+            viewModel.createRoom(uid = "host-1", displayName = "Neo")
+            assertEquals(MultiplayerUiState.Connecting, awaitItem())
+            dispatcher.scheduler.advanceUntilIdle()
+
+            val error = awaitItem() as MultiplayerUiState.Error
+            assertEquals(MultiplayerErrorReason.CreateRoomFailed(MultiplayerCallFailure.RATE_LIMITED), error.reason)
         }
     }
 
@@ -438,7 +481,7 @@ class MultiplayerViewModelTest {
 
             val failed = awaitItem() as MultiplayerUiState.InRoom
             assertEquals(false, failed.isStartingGame) // unlocked so the host can retry
-            assertEquals("network down", failed.startGameError?.detail)
+            assertEquals(MultiplayerErrorReason.StartGameFailed, failed.startGameError)
             assertEquals("room-1", failed.room.roomId) // still in the room, not bounced to Lobby
         }
     }
@@ -457,8 +500,265 @@ class MultiplayerViewModelTest {
             dispatcher.scheduler.advanceUntilIdle()
 
             val error = awaitItem() as MultiplayerUiState.Error
-            val reason = error.reason as MultiplayerErrorReason.ConnectionLost
-            assertEquals("boom", reason.detail)
+            assertEquals(MultiplayerErrorReason.ConnectionLost, error.reason)
         }
+    }
+
+    @Test
+    fun `exitRoom marks the player offline in the room they leave, once`() = runTest {
+        val fake = FakeMultiplayerRepository()
+        val viewModel = MultiplayerViewModel(fake)
+        viewModel.createRoom(uid = "host-1", displayName = "Neo")
+        dispatcher.scheduler.advanceUntilIdle()
+
+        viewModel.exitRoom()
+        viewModel.exitRoom()
+
+        assertEquals(listOf("room-1" to "host-1"), fake.leftPresence)
+        assertEquals(MultiplayerUiState.Idle, viewModel.state.value)
+    }
+
+    @Test
+    fun `exitRoom without ever entering a room marks nothing offline`() = runTest {
+        val fake = FakeMultiplayerRepository()
+        val viewModel = MultiplayerViewModel(fake)
+
+        viewModel.exitRoom()
+
+        assertTrue(fake.leftPresence.isEmpty())
+    }
+
+    private suspend fun enterPlayingRoom(fake: FakeMultiplayerRepository, viewModel: MultiplayerViewModel, round: Int) {
+        viewModel.createRoom(uid = "player-1", displayName = "Neo")
+        dispatcher.scheduler.advanceUntilIdle()
+        emitHotPotatoRound(fake, round)
+    }
+
+    @Test
+    fun `a double tap on the same stimulus sends one answer`() = runTest {
+        val fake = FakeMultiplayerRepository()
+        val viewModel = MultiplayerViewModel(fake)
+        enterPlayingRoom(fake, viewModel, round = 3)
+
+        viewModel.submitAnswer(StroopColor.RED)
+        viewModel.submitAnswer(StroopColor.BLUE) // before the first call even ran
+        dispatcher.scheduler.advanceUntilIdle()
+        viewModel.submitAnswer(StroopColor.GREEN) // after it succeeded, snapshot not updated yet
+        dispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(1, fake.submitAnswerCallCount)
+    }
+
+    @Test
+    fun `a new round can be answered again`() = runTest {
+        val fake = FakeMultiplayerRepository()
+        val viewModel = MultiplayerViewModel(fake)
+        enterPlayingRoom(fake, viewModel, round = 3)
+
+        viewModel.submitAnswer(StroopColor.RED)
+        dispatcher.scheduler.advanceUntilIdle()
+        emitHotPotatoRound(fake, round = 4) // hot_potato: a wrong answer re-prompts the same holder
+        viewModel.submitAnswer(StroopColor.RED)
+        dispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(2, fake.submitAnswerCallCount)
+        assertEquals(4, fake.lastSubmittedRound)
+    }
+
+    @Test
+    fun `a rejected answer can be retried on the same stimulus`() = runTest {
+        val fake = FakeMultiplayerRepository()
+        val viewModel = MultiplayerViewModel(fake)
+        enterPlayingRoom(fake, viewModel, round = 3)
+
+        fake.submitAnswerResult = Result.failure(RuntimeException("unavailable"))
+        viewModel.submitAnswer(StroopColor.RED)
+        dispatcher.scheduler.advanceUntilIdle()
+        fake.submitAnswerResult = Result.success(Unit)
+        viewModel.submitAnswer(StroopColor.RED)
+        dispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(2, fake.submitAnswerCallCount)
+    }
+
+    /** player-1 holds the turn. */
+    private suspend fun emitHotPotatoRound(fake: FakeMultiplayerRepository, round: Int) {
+        fake.emitRoom(
+            MultiplayerRoom(
+                roomId = "room-1",
+                status = RoomStatus.PLAYING,
+                mode = RoomMode.HOT_POTATO,
+                players = listOf(
+                    RoomPlayer(uid = "player-1", displayName = "Neo"),
+                    RoomPlayer(uid = "player-2", displayName = "Trinity"),
+                ),
+                turnOrder = listOf("player-1", "player-2"),
+                turnIndex = 0,
+                round = round,
+            )
+        )
+        dispatcher.scheduler.advanceUntilIdle()
+    }
+
+    private suspend fun emitRoomWithStatus(fake: FakeMultiplayerRepository, status: RoomStatus) {
+        fake.emitRoom(
+            MultiplayerRoom(
+                roomId = "room-1",
+                status = status,
+                mode = RoomMode.MISTAKE,
+                hostUid = "player-1",
+                players = listOf(
+                    RoomPlayer(uid = "player-1", displayName = "Neo"),
+                    RoomPlayer(uid = "player-2", displayName = "Trinity"),
+                ),
+                turnOrder = listOf("player-1", "player-2"),
+            )
+        )
+        dispatcher.scheduler.advanceUntilIdle()
+    }
+
+    @Test
+    fun `leaving a waiting room gives up the slot on the server`() = runTest {
+        // Going offline alone does nothing before a match starts: the player kept their slot,
+        // and a host who left stranded the rest.
+        val fake = FakeMultiplayerRepository()
+        val viewModel = MultiplayerViewModel(fake)
+        viewModel.createRoom(uid = "player-1", displayName = "Neo")
+        dispatcher.scheduler.advanceUntilIdle()
+        emitRoomWithStatus(fake, RoomStatus.WAITING)
+
+        viewModel.exitRoom()
+
+        assertEquals(listOf("room-1"), fake.leftRooms)
+    }
+
+    @Test
+    fun `leaving a match in progress is a forfeit, not a leaveRoom call`() = runTest {
+        val fake = FakeMultiplayerRepository()
+        val viewModel = MultiplayerViewModel(fake)
+        viewModel.createRoom(uid = "player-1", displayName = "Neo")
+        dispatcher.scheduler.advanceUntilIdle()
+        emitRoomWithStatus(fake, RoomStatus.PLAYING)
+
+        viewModel.exitRoom()
+
+        assertTrue(fake.leftRooms.isEmpty())
+        assertEquals(listOf("room-1" to "player-1"), fake.leftPresence)
+    }
+
+    @Test
+    fun `backing out of the waiting room (ViewModel cleared) also gives up the slot`() = runTest {
+        val fake = FakeMultiplayerRepository()
+        val store = ViewModelStore()
+        val viewModel = MultiplayerViewModel(fake)
+        store.put("multiplayer", viewModel)
+        viewModel.createRoom(uid = "player-1", displayName = "Neo")
+        dispatcher.scheduler.advanceUntilIdle()
+        emitRoomWithStatus(fake, RoomStatus.WAITING)
+
+        store.clear()
+
+        assertEquals(listOf("room-1"), fake.leftRooms)
+    }
+
+    @Test
+    fun `leaving before the first room snapshot arrives still gives up the slot`() = runTest {
+        // createRoom/joinRoom already seated the player server-side; only the UI is still
+        // Connecting.
+        val fake = FakeMultiplayerRepository()
+        val store = ViewModelStore()
+        val viewModel = MultiplayerViewModel(fake)
+        store.put("multiplayer", viewModel)
+        viewModel.joinRoom(uid = "player-2", code = "ABCDE", displayName = "Trinity")
+        dispatcher.scheduler.advanceUntilIdle()
+        assertEquals(MultiplayerUiState.Connecting, viewModel.state.value)
+
+        store.clear()
+
+        assertEquals(listOf("room-1"), fake.leftRooms)
+    }
+
+    @Test
+    fun `leaving after the room listener failed still gives up the slot`() = runTest {
+        val fake = FakeMultiplayerRepository()
+        fake.observeRoomFlow = flow { throw RuntimeException("listener died") }
+        val store = ViewModelStore()
+        val viewModel = MultiplayerViewModel(fake)
+        store.put("multiplayer", viewModel)
+        viewModel.createRoom(uid = "player-1", displayName = "Neo")
+        dispatcher.scheduler.advanceUntilIdle()
+        assertTrue(viewModel.state.value is MultiplayerUiState.Error)
+
+        store.clear()
+
+        assertEquals(listOf("room-1"), fake.leftRooms)
+    }
+
+    @Test
+    fun `a room is only given up once`() = runTest {
+        val fake = FakeMultiplayerRepository()
+        val store = ViewModelStore()
+        val viewModel = MultiplayerViewModel(fake)
+        store.put("multiplayer", viewModel)
+        viewModel.createRoom(uid = "player-1", displayName = "Neo")
+        dispatcher.scheduler.advanceUntilIdle()
+        emitRoomWithStatus(fake, RoomStatus.WAITING)
+
+        viewModel.exitRoom()
+        store.clear()
+
+        assertEquals(listOf("room-1"), fake.leftRooms)
+    }
+
+    @Test
+    fun `after process death the restored ViewModel reattaches to the room it was in`() = runTest {
+        // The SavedStateHandle is what survives the process; the repository and its
+        // listeners do not, so the restored ViewModel gets a fresh one.
+        val savedState = SavedStateHandle()
+        val before = MultiplayerViewModel(FakeMultiplayerRepository(), savedState)
+        before.createRoom(uid = "player-1", displayName = "Neo")
+        dispatcher.scheduler.advanceUntilIdle()
+
+        val fake = FakeMultiplayerRepository()
+        val restored = MultiplayerViewModel(fake, savedState)
+        assertEquals(MultiplayerUiState.Connecting, restored.state.value)
+        dispatcher.scheduler.advanceUntilIdle()
+        emitRoomWithStatus(fake, RoomStatus.PLAYING)
+
+        val inRoom = restored.state.value as MultiplayerUiState.InRoom
+        assertEquals("room-1", inRoom.room.roomId)
+        assertEquals("player-1", inRoom.myUid)
+        assertTrue(fake.presenceTracked)
+    }
+
+    @Test
+    fun `a room the player left is not reattached after process death`() = runTest {
+        val savedState = SavedStateHandle()
+        val before = MultiplayerViewModel(FakeMultiplayerRepository(), savedState)
+        before.createRoom(uid = "player-1", displayName = "Neo")
+        dispatcher.scheduler.advanceUntilIdle()
+        before.exitRoom()
+
+        val fake = FakeMultiplayerRepository()
+        val restored = MultiplayerViewModel(fake, savedState)
+        dispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(MultiplayerUiState.Idle, restored.state.value)
+        assertTrue(!fake.presenceTracked)
+    }
+
+    @Test
+    fun `reattaching to a room that no longer exists reports the connection as lost`() = runTest {
+        val savedState = SavedStateHandle()
+        val before = MultiplayerViewModel(FakeMultiplayerRepository(), savedState)
+        before.joinRoom(uid = "player-2", code = "ABCDE", displayName = "Trinity")
+        dispatcher.scheduler.advanceUntilIdle()
+
+        val fake = FakeMultiplayerRepository()
+        fake.observeRoomFlow = flow { throw IllegalStateException("room deleted") }
+        val restored = MultiplayerViewModel(fake, savedState)
+        dispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(MultiplayerUiState.Error(MultiplayerErrorReason.ConnectionLost), restored.state.value)
     }
 }

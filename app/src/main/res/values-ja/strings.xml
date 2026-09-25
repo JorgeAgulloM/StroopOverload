@@ -9,6 +9,7 @@
     <string name="common_profile_icon_desc">プロフィール</string>
     <string name="common_locked">ロック中</string>
     <string name="common_cancel">キャンセル</string>
+    <string name="common_ok">OK</string>
     <string name="common_show_password">パスワードを表示</string>
     <string name="common_hide_password">パスワードを隠す</string>
 
@@ -77,6 +78,13 @@
     <string name="countdown_get_ready">準備しろ</string>
     <string name="countdown_go">スタート!</string>
 
+    <!-- Leaving a match in progress -->
+    <string name="exit_match_title">ゲームを終了しますか？</string>
+    <string name="exit_match_local_message">ここで終了します。スコアは記録されません。</string>
+    <string name="exit_match_online_message">このマッチを放棄します。他のパイロットはそのまま続行します。</string>
+    <string name="exit_match_confirm">終了</string>
+    <string name="exit_match_stay">続ける</string>
+
     <!-- Game over screen -->
     <string name="game_over_victory_title">[ シナプス勝利 ]</string>
     <string name="game_over_defeat_title">[ ニューラル・オーバーロード ]</string>
@@ -89,7 +97,7 @@
     <string name="game_over_rounds_survived">生存ラウンド数</string>
     <string name="game_over_time_elapsed">経過時間</string>
     <string name="game_over_perfect_bonus">パーフェクトボーナス</string>
-    <string name="game_over_flawless_100">パーフェクト 100%%</string>
+    <string name="game_over_flawless_100">パーフェクト 100%</string>
     <string name="game_over_xp_header">[ XP合成 ]</string>
     <string name="game_over_xp_total">+%1$d XP</string>
     <string name="game_over_xp_base">ベース（%1$s）</string>
@@ -167,6 +175,10 @@
     <string name="profile_delete_account_error_network">ネットワークエラーです。もう一度お試しください。</string>
     <string name="profile_delete_account_error_generic">アカウントを削除できませんでした。もう一度お試しください。</string>
     <string name="profile_sign_out">[ ニューラルセッション終了 // サインアウト ]</string>
+    <string name="profile_guest_sign_out_title">ゲストセッションからサインアウトしますか？</string>
+    <string name="profile_guest_sign_out_message">ゲストの進行状況はこの端末にのみ保存されています。サインアウトすると、レベル、XP、統計、実績は完全に失われます。後でアカウントを作成しても復元されません。</string>
+    <string name="profile_guest_sign_out_confirm">サインアウト</string>
+    <string name="profile_guest_sign_out_cancel">とどまる</string>
     <string name="profile_achievement_hidden_title">\?\?\?</string>
     <string name="profile_achievement_hidden_desc">機密シナプストロフィー</string>
 
@@ -237,7 +249,6 @@
     <string name="mp_lobby_create_room">ルームを作成</string>
     <string name="mp_lobby_room_code_label">ルームコード</string>
     <string name="mp_lobby_join_room">ルームに参加</string>
-    <string name="mp_lobby_default_name">パイロット</string>
     <string name="mp_lobby_mode_label">ゲームモード</string>
     <string name="mp_mode_mistake_title">ミスモード</string>
     <string name="mp_mode_mistake_desc">一度でも間違えると脱落。最後まで残ったパイロットの勝利。</string>
@@ -292,14 +303,15 @@
     <string name="mp_finish_survived_full">最後まで生き残った</string>
 
     <!-- Multiplayer solo_survival screen -->
-    <string name="mp_solo_time_left">残り%1$d秒</string>
-    <string name="mp_solo_score_label">スコア</string>
-    <string name="mp_solo_you_tag">あなた</string>
+    <string name="common_pilot_handle_fallback">@pilot-%1$s</string>
+    <string name="rarity_common">コモン</string>
+    <string name="rarity_uncommon">アンコモン</string>
+    <string name="rarity_rare">レア</string>
+    <string name="rarity_epic">エピック</string>
+    <string name="rarity_legendary">レジェンダリー</string>
+    <string name="mp_finish_name_you">%1$s（あなた）</string>
     <string name="mp_solo_busted_title">脱落しました</string>
     <string name="mp_solo_busted_subtitle">最終スコア: %1$d — 試合は他のプレイヤーで続行中。</string>
-    <string name="mp_solo_leaderboard_title">ランキング</string>
-    <string name="mp_solo_you_won">勝利！</string>
-    <string name="mp_solo_won_by">%1$sが%2$dptsで勝利</string>
 
     <!-- Multiplayer anonymous-account gate dialog -->
     <string name="mp_anon_gate_title">オンライン機能はロック中</string>
@@ -311,6 +323,11 @@
     <string name="mp_error_join_room">ルームに参加できませんでした。</string>
     <string name="mp_error_start_game">対戦を開始できませんでした。</string>
     <string name="mp_error_connection_lost">ルームとの接続が失われました。</string>
+    <string name="mp_error_room_not_found">そのコードで参加できるルームはありません。</string>
+    <string name="mp_error_room_full">ルームは満員です（最大4人）。</string>
+    <string name="mp_error_room_already_started">その試合はすでに始まっています。</string>
+    <string name="mp_error_invalid_code">無効なコード：英数字5文字で入力してください。</string>
+    <string name="mp_error_rate_limited">試行回数が多すぎます。少し待ってください。</string>
 
     <!-- Achievements -->
     <string name="achievement_first_blood_title">ニューラル・イニシエーション</string>
@@ -350,7 +367,7 @@
     <string name="achievement_score_god_title">クオンタムシンギュラリティ</string>
     <string name="achievement_score_god_desc">1回のプレイで14,000点を超える。</string>
     <string name="achievement_flawless_title">シナプティックピュリティ</string>
-    <string name="achievement_flawless_desc">キャリアでパーフェクトラン（5ラウンド以上・正答率100%）を1回達成する。</string>
+    <string name="achievement_flawless_desc" formatted="false">キャリアでパーフェクトラン（5ラウンド以上・正答率100%）を1回達成する。</string>
     <string name="achievement_flawless_tier2_title">フローレスエクセキューション</string>
     <string name="achievement_flawless_tier2_desc">キャリアでパーフェクトランを5回達成する。</string>
     <string name="achievement_flawless_tier3_title">パーフェクトマインド</string>

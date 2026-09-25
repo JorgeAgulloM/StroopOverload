@@ -86,6 +86,14 @@ data class MultiplayerRoom(
     val winnerUid: String? = null,
     val startsAtMs: Long? = null,
     val createdAtMs: Long = 0L,
+    /**
+     * Set by the backend (onRoomFinished) once every player's profile has been
+     * credited with this match's points. The client waits for it before reading its
+     * profile back, instead of guessing when the award landed.
+     */
+    val awardsAppliedAtMs: Long? = null,
+    /** Server time the match ended. Null while it is on, and for rooms finished by older backends. */
+    val finishedAtMs: Long? = null,
 ) {
     val currentTurnUid: String? get() = turnOrder.getOrNull(turnIndex)
     fun isMyTurn(uid: String): Boolean = currentTurnUid == uid
@@ -100,5 +108,16 @@ data class MultiplayerRoom(
     fun canAnswer(uid: String): Boolean = when (mode) {
         RoomMode.SOLO_SURVIVAL -> player(uid)?.alive == true
         RoomMode.MISTAKE, RoomMode.HOT_POTATO -> isMyTurn(uid)
+    }
+
+    /**
+     * The round an answer from [uid] is aimed at: the shared [round], or the
+     * player's own soloRound in solo_survival. Sent with the answer so the backend
+     * can reject a tap that lands after its stimulus was already replaced (a quick
+     * double tap) instead of scoring it against a stimulus the player never saw.
+     */
+    fun answerRound(uid: String): Int = when (mode) {
+        RoomMode.SOLO_SURVIVAL -> player(uid)?.soloRound ?: 0
+        RoomMode.MISTAKE, RoomMode.HOT_POTATO -> round
     }
 }

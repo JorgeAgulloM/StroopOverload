@@ -1,12 +1,16 @@
 package com.softyorch.stroopoverload.ui.screen.multiplayer
 
+import com.softyorch.stroopoverload.data.MultiplayerCallFailure
 import com.softyorch.stroopoverload.domain.multiplayer.MultiplayerRoom
 
+// No raw exception text in here on purpose: it isn't localized (the backend's
+// HttpsError messages are Spanish-only). The repository logs the underlying
+// cause; the UI maps each reason to a string resource.
 sealed interface MultiplayerErrorReason {
-    data class CreateRoomFailed(val detail: String?) : MultiplayerErrorReason
-    data class JoinRoomFailed(val detail: String?) : MultiplayerErrorReason
-    data class StartGameFailed(val detail: String?) : MultiplayerErrorReason
-    data class ConnectionLost(val detail: String?) : MultiplayerErrorReason
+    data class CreateRoomFailed(val failure: MultiplayerCallFailure) : MultiplayerErrorReason
+    data class JoinRoomFailed(val failure: MultiplayerCallFailure) : MultiplayerErrorReason
+    data object StartGameFailed : MultiplayerErrorReason
+    data object ConnectionLost : MultiplayerErrorReason
 }
 
 sealed interface MultiplayerUiState {

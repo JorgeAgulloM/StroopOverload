@@ -5,6 +5,7 @@ import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseUser
 import com.softyorch.stroopoverload.R
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.tasks.await
 
 sealed interface LoginError {
@@ -98,37 +99,39 @@ sealed interface DeleteAccountError {
 class DeleteAccountException(val reason: DeleteAccountError) : Exception()
 
 class AuthService(
-    private val auth: FirebaseAuth = try { FirebaseAuth.getInstance() } catch (e: Exception) { null } ?: FirebaseAuth.getInstance()
-) {
-    val currentUser: FirebaseUser? get() = auth.currentUser
-    val currentUid: String? get() = auth.currentUser?.uid
-    val isEmailVerified: Boolean get() = auth.currentUser?.isEmailVerified ?: false
+    private val auth: FirebaseAuth = FirebaseAuth.getInstance()
+) : AuthRepository {
+    override val currentUid: String? get() = auth.currentUser?.uid
+    override val isAnonymousSession: Boolean? get() = auth.currentUser?.isAnonymous
+    override val isEmailVerified: Boolean get() = auth.currentUser?.isEmailVerified ?: false
 
     var pendingNickname: String? = null
         private set
 
-    fun consumePendingNickname(): String? {
+    override fun consumePendingNickname(): String? {
         val nick = pendingNickname
         pendingNickname = null
         return nick
     }
 
-    suspend fun signInWithEmail(email: String, pass: String): Result<FirebaseUser> = try {
+    override suspend fun signInWithEmail(email: String, pass: String): Result<AuthUser> = try {
         val res = auth.signInWithEmailAndPassword(email, pass).await()
         val user = res.user
-        if (user != null) Result.success(user) else Result.failure(Exception("User is null"))
+        if (user != null) Result.success(user.toAuthUser()) else Result.failure(Exception("User is null"))
+    } catch (e: CancellationException) {
+        throw e
     } catch (e: Exception) {
         Log.e("AuthService", "SignIn error: ${e.message}", e)
         Result.failure(e)
     }
 
-    suspend fun registerWithEmail(
+    override suspend fun registerWithEmail(
         email: String,
         emailConfirm: String,
         pass: String,
         passConfirm: String,
         nickname: String,
-    ): Result<FirebaseUser> {
+    ): Result<AuthUser> {
         val validationErr = validateRegistration(email, emailConfirm, pass, passConfirm, nickname)
         if (validationErr != null) return Result.failure(RegistrationValidationException(validationErr))
 
@@ -138,36 +141,45 @@ class AuthService(
             val user = res.user
             if (user != null) {
                 sendVerificationEmailFireAndForget()
-                Result.success(user)
+                Result.success(user.toAuthUser())
             } else {
                 Result.failure(Exception("User creation returned null"))
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Log.e("AuthService", "Register error: ${e.message}", e)
             Result.failure(e)
         }
     }
 
-    suspend fun signInAnonymously(): String? {
+    override suspend fun signInAnonymously(): String? {
         if (currentUid != null) return currentUid
         return try {
             val result = auth.signInAnonymously().await()
             result.user?.uid
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
-            Log.e("AuthService", "Firebase Auth error (offline/unconfigured): ${e.message}", e)
-            "guest_local_0001"
+            // No fake uid on failure: a caller that got one would report the player as
+            // signed in with a local id that no Firebase session backs, so nothing they
+            // played would ever reach the cloud. Null lets the caller say sign-in failed.
+            Log.e("AuthService", "Anonymous sign-in failed: ${e.message}", e)
+            null
         }
     }
 
     fun sendVerificationEmailFireAndForget() {
         try {
             auth.currentUser?.sendEmailVerification()
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Log.w("AuthService", "Failed to send verification email: ${e.message}")
         }
     }
 
-    suspend fun resendVerificationEmailWithCooldown(lastSentEpochMs: Long): Long {
+    override suspend fun resendVerificationEmailWithCooldown(lastSentEpochMs: Long): Long {
         val now = System.currentTimeMillis()
         val elapsedSec = ((now - lastSentEpochMs) / 1000).toInt()
         val cooldownSec = 60
@@ -176,33 +188,41 @@ class AuthService(
         }
         try {
             auth.currentUser?.sendEmailVerification()?.await()
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Log.w("AuthService", "Resend verification email failed: ${e.message}")
         }
         return now
     }
 
-    suspend fun reloadUser(): Boolean {
+    override suspend fun reloadUser(): Boolean {
         return try {
             auth.currentUser?.reload()?.await()
             isEmailVerified
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             false
         }
     }
 
-    fun signOut() {
+    override fun signOut() {
         try {
             auth.signOut()
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Log.w("AuthService", "SignOut error: ${e.message}")
         }
         pendingNickname = null
     }
 
-    suspend fun sendPasswordResetEmail(email: String): Result<Unit> = try {
+    override suspend fun sendPasswordResetEmail(email: String): Result<Unit> = try {
         auth.sendPasswordResetEmail(email.trim()).await()
         Result.success(Unit)
+    } catch (e: CancellationException) {
+        throw e
     } catch (e: Exception) {
         Log.w("AuthService", "Password reset error: ${e.message}", e)
         Result.failure(e)
@@ -216,7 +236,7 @@ class AuthService(
             val credential = EmailAuthProvider.getCredential(email, currentPassword)
             user.reauthenticate(credential).await()
             Result.success(Unit)
-        } catch (e: kotlinx.coroutines.CancellationException) {
+        } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             Log.w("AuthService", "Reauthenticate error: ${e.message}", e)
@@ -224,7 +244,7 @@ class AuthService(
         }
     }
 
-    suspend fun changePassword(currentPassword: String, newPassword: String): Result<Unit> {
+    override suspend fun changePassword(currentPassword: String, newPassword: String): Result<Unit> {
         val user = auth.currentUser ?: return Result.failure(ChangePasswordException(ChangePasswordError.NotSignedIn))
 
         reauthenticate(currentPassword).onFailure { e ->
@@ -237,7 +257,7 @@ class AuthService(
         return try {
             user.updatePassword(newPassword).await()
             Result.success(Unit)
-        } catch (e: kotlinx.coroutines.CancellationException) {
+        } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             Log.w("AuthService", "Change password error: ${e.message}", e)
@@ -249,7 +269,7 @@ class AuthService(
      * Reauthenticates, then wipes remote/local data via [wipeUserData] (while the session is still
      * valid, since Firestore rules need request.auth.uid to match), then deletes the Firebase user.
      */
-    suspend fun deleteAccount(currentPassword: String, wipeUserData: suspend () -> Unit): Result<Unit> {
+    override suspend fun deleteAccount(currentPassword: String, wipeUserData: suspend () -> Unit): Result<Unit> {
         val user = auth.currentUser ?: return Result.failure(DeleteAccountException(DeleteAccountError.NotSignedIn))
 
         reauthenticate(currentPassword).onFailure { e ->
@@ -261,7 +281,7 @@ class AuthService(
             user.delete().await()
             pendingNickname = null
             Result.success(Unit)
-        } catch (e: kotlinx.coroutines.CancellationException) {
+        } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
             Log.w("AuthService", "Delete account error: ${e.message}", e)
@@ -269,7 +289,24 @@ class AuthService(
         }
     }
 
+    private fun FirebaseUser.toAuthUser() = AuthUser(uid = uid, isEmailVerified = isEmailVerified)
+
     companion object {
+        /**
+         * Same expression as android.util.Patterns.EMAIL_ADDRESS, copied so validation runs
+         * under plain JUnit: the android.jar stub leaves that field null, which made
+         * [validateRegistration] -- and every ViewModel path through it -- untestable.
+         */
+        private val EMAIL_ADDRESS = Regex(
+            "[a-zA-Z0-9\\+\\.\\_\\%\\-\\+]{1,256}" +
+                "\\@" +
+                "[a-zA-Z0-9][a-zA-Z0-9\\-]{0,64}" +
+                "(" +
+                "\\." +
+                "[a-zA-Z0-9][a-zA-Z0-9\\-]{0,25}" +
+                ")+"
+        )
+
         @androidx.annotation.StringRes
         fun registrationErrorRes(error: RegistrationError): Int = when (error) {
             RegistrationError.NicknameTooShort -> R.string.auth_validation_nickname_short
@@ -301,7 +338,7 @@ class AuthService(
             nickname: String,
         ): RegistrationError? {
             if (nickname.trim().length < 3) return RegistrationError.NicknameTooShort
-            if (!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()) return RegistrationError.InvalidEmailFormat
+            if (!EMAIL_ADDRESS.matches(email)) return RegistrationError.InvalidEmailFormat
             if (email.trim() != emailConfirm.trim()) return RegistrationError.EmailMismatch
             validatePasswordStrength(pass)?.let { return it }
             if (pass != passConfirm) return RegistrationError.PasswordMismatch

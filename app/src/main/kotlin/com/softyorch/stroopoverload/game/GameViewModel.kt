@@ -33,8 +33,16 @@ class GameViewModel(
     private var sessionTimerJob: Job? = null
     private var previousHighScore = 0
     private var pendingMode = GameMode.ENDLESS
+    private var gameOverClaimed = false
 
+    /**
+     * Starts a run from the menu. Ignored once a run has started: the game screen calls this
+     * from an effect that runs again whenever the Activity is recreated (theme change, split
+     * screen) while this ViewModel survives, and that restarted the run in progress.
+     */
     fun startGame(mode: GameMode = GameMode.ENDLESS, previousHigh: Int = 0) {
+        if (_state.value != GameState.Menu) return
+        gameOverClaimed = false
         pendingMode = mode
         previousHighScore = previousHigh
         _state.value = GameState.Countdown
@@ -184,6 +192,17 @@ class GameViewModel(
         }
     }
 
+    /**
+     * True exactly once per finished run: whoever gets it records the run. The game-over
+     * effect runs again when the Activity is recreated, and recording twice counted the run
+     * twice.
+     */
+    fun claimGameOver(): Boolean {
+        if (_state.value !is GameState.GameOver || gameOverClaimed) return false
+        gameOverClaimed = true
+        return true
+    }
+
     private fun endGame(playing: GameState.Playing) {
         timerJob?.cancel()
         sessionTimerJob?.cancel()
@@ -201,7 +220,8 @@ class GameViewModel(
                 durationSeconds = (playing.survivalMs / 1000).toInt(),
                 moveCount = playing.totalRounds,
                 mode = playing.mode,
-            )
+            ),
+            endStreak = playing.currentStreak,
         )
     }
 

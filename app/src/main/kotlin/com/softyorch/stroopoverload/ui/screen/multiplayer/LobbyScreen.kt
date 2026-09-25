@@ -1,5 +1,6 @@
 package com.softyorch.stroopoverload.ui.screen.multiplayer
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -15,6 +16,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.softyorch.stroopoverload.R
+import com.softyorch.stroopoverload.data.MultiplayerCallFailure
 import com.softyorch.stroopoverload.domain.multiplayer.RoomMode
 import com.softyorch.stroopoverload.ui.components.hudCornerBrackets
 import com.softyorch.stroopoverload.ui.theme.Muted
@@ -142,8 +144,22 @@ private fun ModeCard(mode: RoomMode, selected: Boolean, enabled: Boolean, onClic
 
 @Composable
 private fun errorReasonText(reason: MultiplayerErrorReason): String = when (reason) {
-    is MultiplayerErrorReason.CreateRoomFailed -> reason.detail ?: stringResource(R.string.mp_error_create_room)
-    is MultiplayerErrorReason.JoinRoomFailed -> reason.detail ?: stringResource(R.string.mp_error_join_room)
-    is MultiplayerErrorReason.StartGameFailed -> reason.detail ?: stringResource(R.string.mp_error_start_game)
-    is MultiplayerErrorReason.ConnectionLost -> reason.detail ?: stringResource(R.string.mp_error_connection_lost)
+    is MultiplayerErrorReason.CreateRoomFailed -> stringResource(
+        callFailureTextRes(reason.failure, generic = R.string.mp_error_create_room)
+    )
+    is MultiplayerErrorReason.JoinRoomFailed -> stringResource(
+        callFailureTextRes(reason.failure, generic = R.string.mp_error_join_room)
+    )
+    MultiplayerErrorReason.StartGameFailed -> stringResource(R.string.mp_error_start_game)
+    MultiplayerErrorReason.ConnectionLost -> stringResource(R.string.mp_error_connection_lost)
+}
+
+@StringRes
+private fun callFailureTextRes(failure: MultiplayerCallFailure, @StringRes generic: Int): Int = when (failure) {
+    MultiplayerCallFailure.ROOM_NOT_FOUND -> R.string.mp_error_room_not_found
+    MultiplayerCallFailure.ROOM_FULL -> R.string.mp_error_room_full
+    MultiplayerCallFailure.ALREADY_STARTED -> R.string.mp_error_room_already_started
+    MultiplayerCallFailure.INVALID_CODE -> R.string.mp_error_invalid_code
+    MultiplayerCallFailure.RATE_LIMITED -> R.string.mp_error_rate_limited
+    MultiplayerCallFailure.UNKNOWN -> generic
 }

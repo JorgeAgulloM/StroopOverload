@@ -12,10 +12,12 @@ export async function scheduleGameStart(roomId: string, delayMs: number): Promis
   await queue.enqueue({ roomId }, { scheduleDelaySeconds });
 }
 
-export async function scheduleBombExplosion(roomId: string, delayMs: number): Promise<void> {
+// bombAtMs identifies which bomb this task is for, so a duplicate delivery or a
+// task for a bomb that was since replaced can be recognised and ignored.
+export async function scheduleBombExplosion(roomId: string, delayMs: number, bombAtMs: number): Promise<void> {
   const queue = getFunctions().taskQueue("explodeBomb");
   const scheduleDelaySeconds = Math.max(1, Math.ceil(delayMs / 1000));
-  await queue.enqueue({ roomId }, { scheduleDelaySeconds });
+  await queue.enqueue({ roomId, bombAtMs }, { scheduleDelaySeconds });
 }
 
 // solo_survival only -- unlike the turn-based modes' single per-round timeout,

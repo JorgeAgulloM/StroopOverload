@@ -1,4 +1,4 @@
-import { RoomPlayerDoc } from "./types";
+import { RoomDoc, RoomPlayerDoc } from "./types";
 
 // Mirrors the Android client's local single-player formula (GameConfig.kt):
 // 100 pts per correct answer + a streak bonus (streak*10, capped at 100).
@@ -66,13 +66,40 @@ export function rankMistakeOrHotPotatoPlayers(
  * turn/elimination-order to rank by -- every player's own run is independent).
  * Tiebreak matches soloSurvival.ts's own winner tiebreak: lowest `order`
  * (earliest joiner) wins ties.
+ *
+ * `winnerUid`, when given, takes placement 1 whatever their score: a sole survivor
+ * wins for still standing, and must not be paid less than a player who busted.
  */
-export function rankSoloSurvivalPlayers(players: Readonly<Record<string, RoomPlayerDoc>>): RankedPlayer[] {
+export function rankSoloSurvivalPlayers(
+  players: Readonly<Record<string, RoomPlayerDoc>>,
+  winnerUid: string | null = null
+): RankedPlayer[] {
   const ordered = Object.values(players).sort(
-    (a, b) => (b.soloScore ?? 0) - (a.soloScore ?? 0) || a.order - b.order
+    (a, b) =>
+      Number(b.uid === winnerUid) - Number(a.uid === winnerUid) ||
+      (b.soloScore ?? 0) - (a.soloScore ?? 0) ||
+      a.order - b.order
   );
   return ordered.map((p, i) => {
     const placement = i + 1;
     return { uid: p.uid, placement, finalScore: finalScoreForPlacement(p.soloScore ?? 0, placement) };
   });
+}
+
+/**
+ * The room update that ends a mistake/hot_potato match with `survivor` as the
+ * sole player left: every player ranked and scored, the board cleared. Shared by
+ * an answer that eliminates the second-to-last player (resolveRound) and a bomb
+ * that does (explodeBomb).
+ */
+export function finishedMatchUpdate(
+  players: Readonly<Record<string, RoomPlayerDoc>>,
+  survivor: string,
+  nowMs: number = Date.now()
+): Pick<RoomDoc, "players" | "status" | "winnerUid" | "stimulus" | "deadlineAtMs" | "finishedAtMs"> {
+  const finishedPlayers = { ...players };
+  for (const r of rankMistakeOrHotPotatoPlayers(players, survivor)) {
+    finishedPlayers[r.uid] = { ...finishedPlayers[r.uid], placement: r.placement, finalScore: r.finalScore };
+  }
+  return { players: finishedPlayers, status: "finished", winnerUid: survivor, stimulus: null, deadlineAtMs: null, finishedAtMs: nowMs };
 }

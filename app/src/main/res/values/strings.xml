@@ -9,6 +9,7 @@
     <string name="common_profile_icon_desc">Profile</string>
     <string name="common_locked">LOCKED</string>
     <string name="common_cancel">Cancel</string>
+    <string name="common_ok">OK</string>
     <string name="common_show_password">Show password</string>
     <string name="common_hide_password">Hide password</string>
 
@@ -77,6 +78,13 @@
     <string name="countdown_get_ready">GET READY</string>
     <string name="countdown_go">GO!</string>
 
+    <!-- Leaving a match in progress -->
+    <string name="exit_match_title">Leave the match?</string>
+    <string name="exit_match_local_message">This run ends here. Your score will not be recorded.</string>
+    <string name="exit_match_online_message">You forfeit the match. The other pilots keep playing without you.</string>
+    <string name="exit_match_confirm">LEAVE</string>
+    <string name="exit_match_stay">KEEP PLAYING</string>
+
     <!-- Game over screen -->
     <string name="game_over_victory_title">[ SYNAPSE VICTORY ]</string>
     <string name="game_over_defeat_title">[ NEURAL OVERLOAD ]</string>
@@ -89,7 +97,7 @@
     <string name="game_over_rounds_survived">ROUNDS SURVIVED</string>
     <string name="game_over_time_elapsed">TIME ELAPSED</string>
     <string name="game_over_perfect_bonus">PERFECT BONUS</string>
-    <string name="game_over_flawless_100">FLAWLESS 100%%</string>
+    <string name="game_over_flawless_100">FLAWLESS 100%</string>
     <string name="game_over_xp_header">[ XP SYNTHESIS ]</string>
     <string name="game_over_xp_total">+%1$d XP</string>
     <string name="game_over_xp_base">BASE (%1$s)</string>
@@ -167,6 +175,10 @@
     <string name="profile_delete_account_error_network">Network error. Try again.</string>
     <string name="profile_delete_account_error_generic">Couldn\'t delete the account. Try again.</string>
     <string name="profile_sign_out">[ TERMINATE NEURAL SESSION // SIGN OUT ]</string>
+    <string name="profile_guest_sign_out_title">Sign out of the guest session?</string>
+    <string name="profile_guest_sign_out_message">Guest progress is saved only on this device. If you sign out, your level, XP, stats and achievements are lost for good, even if you then create an account.</string>
+    <string name="profile_guest_sign_out_confirm">SIGN OUT</string>
+    <string name="profile_guest_sign_out_cancel">STAY</string>
     <string name="profile_achievement_hidden_title">\?\?\?</string>
     <string name="profile_achievement_hidden_desc">Confidential Synaptic Trophy</string>
 
@@ -237,7 +249,6 @@
     <string name="mp_lobby_create_room">CREATE ROOM</string>
     <string name="mp_lobby_room_code_label">Room code</string>
     <string name="mp_lobby_join_room">JOIN ROOM</string>
-    <string name="mp_lobby_default_name">Pilot</string>
     <string name="mp_lobby_mode_label">GAME MODE</string>
     <string name="mp_mode_mistake_title">MISTAKE MODE</string>
     <string name="mp_mode_mistake_desc">One wrong tap and you\'re out. Last pilot standing wins.</string>
@@ -292,14 +303,15 @@
     <string name="mp_finish_survived_full">Survived the full match</string>
 
     <!-- Multiplayer solo_survival screen -->
-    <string name="mp_solo_time_left">%1$ds LEFT</string>
-    <string name="mp_solo_score_label">SCORE</string>
-    <string name="mp_solo_you_tag">YOU</string>
+    <string name="common_pilot_handle_fallback">@pilot-%1$s</string>
+    <string name="rarity_common">Common</string>
+    <string name="rarity_uncommon">Uncommon</string>
+    <string name="rarity_rare">Rare</string>
+    <string name="rarity_epic">Epic</string>
+    <string name="rarity_legendary">Legendary</string>
+    <string name="mp_finish_name_you">%1$s (YOU)</string>
     <string name="mp_solo_busted_title">YOU\'RE OUT</string>
     <string name="mp_solo_busted_subtitle">Final score: %1$d — the match continues without you.</string>
-    <string name="mp_solo_leaderboard_title">LEADERBOARD</string>
-    <string name="mp_solo_you_won">YOU WIN!</string>
-    <string name="mp_solo_won_by">%1$s wins with %2$d pts</string>
 
     <!-- Multiplayer anonymous-account gate dialog -->
     <string name="mp_anon_gate_title">ONLINE ACCESS LOCKED</string>
@@ -311,6 +323,11 @@
     <string name="mp_error_join_room">Could not join the room.</string>
     <string name="mp_error_start_game">Could not start the match.</string>
     <string name="mp_error_connection_lost">Connection to the room was lost.</string>
+    <string name="mp_error_room_not_found">No open room with that code.</string>
+    <string name="mp_error_room_full">That room is full (4 players max).</string>
+    <string name="mp_error_room_already_started">That match has already started.</string>
+    <string name="mp_error_invalid_code">Invalid code: 5 letters/numbers.</string>
+    <string name="mp_error_rate_limited">Too many attempts. Wait a moment.</string>
 
     <!-- Achievements -->
     <string name="achievement_first_blood_title">NEURAL INITIATION</string>
@@ -350,7 +367,7 @@
     <string name="achievement_score_god_title">QUANTUM SINGULARITY</string>
     <string name="achievement_score_god_desc">Score over 14,000 points in a single run.</string>
     <string name="achievement_flawless_title">SYNAPTIC PURITY</string>
-    <string name="achievement_flawless_desc">Achieve 1 flawless run (5+ rounds, 100% accuracy) in your career.</string>
+    <string name="achievement_flawless_desc" formatted="false">Achieve 1 flawless run (5+ rounds, 100% accuracy) in your career.</string>
     <string name="achievement_flawless_tier2_title">FLAWLESS EXECUTION</string>
     <string name="achievement_flawless_tier2_desc">Achieve 5 flawless runs in your career.</string>
     <string name="achievement_flawless_tier3_title">PERFECT MIND</string>

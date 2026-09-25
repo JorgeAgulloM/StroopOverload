@@ -1,9 +1,6 @@
 package com.softyorch.stroopoverload.ui.screen
 
 import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
@@ -11,7 +8,6 @@ import androidx.compose.animation.scaleOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -20,8 +16,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -38,28 +32,51 @@ import com.softyorch.stroopoverload.domain.GameMode
 import com.softyorch.stroopoverload.domain.GameResult
 import com.softyorch.stroopoverload.game.GameState
 import com.softyorch.stroopoverload.game.GameViewModel
+import com.softyorch.stroopoverload.ui.components.StimulusWord
 import com.softyorch.stroopoverload.ui.components.CountdownOverlay
+import com.softyorch.stroopoverload.ui.components.QuadrantBox
 import com.softyorch.stroopoverload.ui.theme.*
+import com.softyorch.stroopoverload.ui.components.TimerBarHost
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.activity.compose.BackHandler
+import com.softyorch.stroopoverload.ui.components.ExitMatchDialog
 
 @Composable
 fun GameScreen(
     viewModel: GameViewModel,
-    onGameOver: (GameResult) -> Unit,
+    /** Called once per finished run with its result and the streak it ended on. */
+    onGameOver: (result: GameResult, endStreak: Int) -> Unit,
+    onLeaveMatch: () -> Unit,
     isAdFree: Boolean = false,
 ) {
     val context = LocalContext.current
     val audioPlayer = remember { AudioPlayer(context) }
     DisposableEffect(Unit) { onDispose { audioPlayer.release() } }
 
-    val state by viewModel.state.collectAsState()
-    val stimulus by viewModel.stimulus.collectAsState()
-    val timerProgress by viewModel.timerProgress.collectAsState()
+    val state by viewModel.state.collectAsStateWithLifecycle()
+    val stimulus by viewModel.stimulus.collectAsStateWithLifecycle()
 
     LaunchedEffect(stimulus) {
         stimulus?.audioColor?.let { audioPlayer.play(it) }
     }
 
     val playingState = state as? GameState.Playing
+
+    // Back during a live run used to abandon it silently: no score recorded, no
+    // warning. Only guarded while actually playing -- menus and the game-over
+    // screen keep the normal back behaviour.
+    var showLeaveConfirmation by remember { mutableStateOf(false) }
+    BackHandler(enabled = playingState != null) { showLeaveConfirmation = true }
+    if (showLeaveConfirmation) {
+        ExitMatchDialog(
+            messageRes = R.string.exit_match_local_message,
+            onConfirm = {
+                showLeaveConfirmation = false
+                onLeaveMatch()
+            },
+            onDismiss = { showLeaveConfirmation = false },
+        )
+    }
 
     // correctHits/missFlashColor only ever change on their respective event
     // (monotonic increment / flash-then-clear), so keying LaunchedEffect on
@@ -76,8 +93,9 @@ fun GameScreen(
     when (val s = state) {
         is GameState.GameOver -> {
             LaunchedEffect(s) {
+                if (!viewModel.claimGameOver()) return@LaunchedEffect
                 audioPlayer.play(if (s.result.won) GameSfx.MATCH_WIN else GameSfx.MATCH_LOSE)
-                onGameOver(s.result)
+                onGameOver(s.result, s.endStreak)
             }
         }
         else -> Unit
@@ -141,13 +159,14 @@ fun GameScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             // Cyber Timer Gauge
-            TimerBar(
-                progress = timerProgress,
+            TimerBarHost(
+                progress = viewModel.timerProgress,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(8.dp)
                     .clip(RoundedCornerShape(4.dp))
                     .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(4.dp)),
+                trackColor = CyberDark,
             )
 
             Spacer(modifier = Modifier.height(10.dp))
@@ -157,26 +176,80 @@ fun GameScreen(
                 modifier = Modifier
                     .weight(1.0f)
                     .fillMaxWidth()
-                    .border(2.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(12.dp))
-                    .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)),
+                    .border(
+                        width = 2.dp, 
+                        brush = androidx.compose.ui.graphics.Brush.linearGradient(
+                            colors = listOf(
+                                NeonYellow.copy(alpha = 0.4f), 
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.8f), 
+                                MaterialTheme.colorScheme.secondary.copy(alpha = 0.4f)
+                            )
+                        ), 
+                        shape = RoundedCornerShape(16.dp)
+                    )
+                    .background(
+                        brush = androidx.compose.ui.graphics.Brush.verticalGradient(
+                            colors = listOf(
+                                MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
+                                MaterialTheme.colorScheme.surface.copy(alpha = 0.2f)
+                            )
+                        ),
+                        shape = RoundedCornerShape(16.dp)
+                    )
+                    .clip(RoundedCornerShape(16.dp)),
                 contentAlignment = Alignment.Center
             ) {
+                // Decoración de esquinas Ciberpunk (HUD Brackets)
+                Box(Modifier.fillMaxSize()) {
+                    val cornerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.7f)
+                    androidx.compose.foundation.Canvas(Modifier.fillMaxSize()) {
+                        val strokeWidth = 3.dp.toPx()
+                        val length = 24.dp.toPx()
+                        // Top-Left
+                        drawLine(cornerColor, androidx.compose.ui.geometry.Offset(0f, 0f), androidx.compose.ui.geometry.Offset(length, 0f), strokeWidth)
+                        drawLine(cornerColor, androidx.compose.ui.geometry.Offset(0f, 0f), androidx.compose.ui.geometry.Offset(0f, length), strokeWidth)
+                        // Top-Right
+                        drawLine(cornerColor, androidx.compose.ui.geometry.Offset(size.width, 0f), androidx.compose.ui.geometry.Offset(size.width - length, 0f), strokeWidth)
+                        drawLine(cornerColor, androidx.compose.ui.geometry.Offset(size.width, 0f), androidx.compose.ui.geometry.Offset(size.width, length), strokeWidth)
+                        // Bottom-Left
+                        drawLine(cornerColor, androidx.compose.ui.geometry.Offset(0f, size.height), androidx.compose.ui.geometry.Offset(length, size.height), strokeWidth)
+                        drawLine(cornerColor, androidx.compose.ui.geometry.Offset(0f, size.height), androidx.compose.ui.geometry.Offset(0f, size.height - length), strokeWidth)
+                        // Bottom-Right
+                        drawLine(cornerColor, androidx.compose.ui.geometry.Offset(size.width, size.height), androidx.compose.ui.geometry.Offset(size.width - length, size.height), strokeWidth)
+                        drawLine(cornerColor, androidx.compose.ui.geometry.Offset(size.width, size.height), androidx.compose.ui.geometry.Offset(size.width, size.height - length), strokeWidth)
+                    }
+                }
+
                 stimulus?.let { s ->
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = stringResource(R.string.game_stimulus_hint),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Muted,
-                            letterSpacing = 2.sp,
-                            fontSize = 11.sp
-                        )
-                        Spacer(modifier = Modifier.height(12.dp))
-                        Text(
+                        // Cartel holográfico de pista (Hint)
+                        Box(
+                            modifier = Modifier
+                                .background(
+                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                                    RoundedCornerShape(4.dp)
+                                )
+                                .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f), RoundedCornerShape(4.dp))
+                                .padding(horizontal = 16.dp, vertical = 6.dp)
+                        ) {
+                            Text(
+                                text = stringResource(R.string.game_stimulus_hint),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.primary,
+                                letterSpacing = 3.sp,
+                                fontSize = 10.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                        
+                        Spacer(modifier = Modifier.height(28.dp))
+                        
+                        StimulusWord(
                             text = stringResource(s.wordLabel.displayNameRes),
                             color = s.inkColor.composeColor,
-                            fontSize = 46.sp,
-                            fontWeight = FontWeight.Black,
-                            letterSpacing = 4.sp,
+                            maxFontSize = 64.sp,
+                            letterSpacing = 8.sp,
+                            glow = true,
                         )
                     }
                 }
@@ -231,52 +304,4 @@ private fun formatMillisAsClock(millis: Long): String {
     val minutes = totalSeconds / 60
     val seconds = totalSeconds % 60
     return "%d:%02d".format(minutes, seconds)
-}
-
-@Composable
-private fun QuadrantBox(color: StroopColor, isFlashing: Boolean, modifier: Modifier, onTap: () -> Unit) {
-    val bgAlpha = remember { mutableFloatStateOf(0.15f) }
-    val flashAlpha by animateFloatAsState(
-        targetValue = if (isFlashing) 0.85f else 0f,
-        animationSpec = tween(if (isFlashing) 120 else 400),
-        label = "quadrantFlash",
-    )
-
-    Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(8.dp))
-            .border(2.dp, color.composeColor.copy(alpha = 0.7f), RoundedCornerShape(8.dp))
-            .background(color.composeColor.copy(alpha = bgAlpha.floatValue))
-            .clickable(onClick = onTap),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text = stringResource(color.displayNameRes),
-            color = color.composeColor,
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Black,
-            letterSpacing = 3.sp,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-        if (flashAlpha > 0f) {
-            Box(modifier = Modifier.fillMaxSize().background(Color.White.copy(alpha = flashAlpha)))
-        }
-    }
-}
-
-@Composable
-private fun TimerBar(progress: Float, modifier: Modifier) {
-    val barColor = lerp(MaterialTheme.colorScheme.error, MaterialTheme.colorScheme.primary, progress)
-    val animatedColor by animateColorAsState(targetValue = barColor, label = "timerColor")
-
-    Box(modifier = modifier) {
-        Box(modifier = Modifier.fillMaxSize().background(CyberDark))
-        Box(
-            modifier = Modifier
-                .fillMaxHeight()
-                .fillMaxWidth(fraction = progress.coerceIn(0f, 1f))
-                .background(animatedColor)
-        )
-    }
 }

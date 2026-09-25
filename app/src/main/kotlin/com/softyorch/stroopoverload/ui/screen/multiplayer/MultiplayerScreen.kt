@@ -1,5 +1,7 @@
 package com.softyorch.stroopoverload.ui.screen.multiplayer
 
+import com.softyorch.stroopoverload.ui.theme.LimitFontScale
+import com.softyorch.stroopoverload.ui.theme.GAME_BOARD_FONT_SCALE
 import androidx.activity.compose.LocalActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -8,14 +10,16 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import com.softyorch.stroopoverload.R
 import com.softyorch.stroopoverload.ads.InterstitialAdManager
 import com.softyorch.stroopoverload.audio.AudioPlayer
@@ -23,24 +27,33 @@ import com.softyorch.stroopoverload.audio.GameSfx
 import com.softyorch.stroopoverload.audio.MusicManager
 import com.softyorch.stroopoverload.audio.MusicTrack
 import com.softyorch.stroopoverload.data.FirebaseGameRepository
+import com.softyorch.stroopoverload.data.FirebaseMultiplayerRepository
+import com.softyorch.stroopoverload.data.ServerClock
 import com.softyorch.stroopoverload.domain.multiplayer.MultiplayerRoom
 import com.softyorch.stroopoverload.domain.multiplayer.RoomMode
 import com.softyorch.stroopoverload.domain.multiplayer.RoomStatus
 import com.softyorch.stroopoverload.ui.GAMEPLAY_MUSIC_TRACKS
 import com.softyorch.stroopoverload.ui.components.CountdownOverlay
 import kotlinx.coroutines.delay
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.activity.compose.BackHandler
+import com.softyorch.stroopoverload.ui.components.ExitMatchDialog
 
 @Composable
 fun MultiplayerScreen(
     myUid: String,
+    onLeaveMatch: () -> Unit,
     myNickname: String,
     repository: FirebaseGameRepository,
     interstitialAdManager: InterstitialAdManager,
     isAdFree: Boolean,
     musicManager: MusicManager,
 ) {
-    val viewModel: MultiplayerViewModel = viewModel()
-    val state by viewModel.state.collectAsState()
+    // Explicit factory: the default one would call the no-arg constructor and hand the
+    // ViewModel a blank SavedStateHandle, so a match interrupted by process death would
+    // never be reattached.
+    val viewModel: MultiplayerViewModel = viewModel(factory = MultiplayerViewModelFactory)
+    val state by viewModel.state.collectAsStateWithLifecycle()
     val activity = LocalActivity.current
     val context = LocalContext.current
     val audioPlayer = remember { AudioPlayer(context) }
@@ -52,6 +65,24 @@ fun MultiplayerScreen(
     // PLAYING/FINISHED share the same shuffled gameplay playlist as local
     // single-player. Lobby/idle/connecting/error stay silent.
     val roomStatus = (state as? MultiplayerUiState.InRoom)?.room?.status
+
+    // Leaving a live match forfeits it: presence drops, and in "mistake" mode the
+    // backend eliminates the disconnected player. Worth a confirmation, unlike
+    // backing out of the lobby or the result screen.
+    val isMatchLive = roomStatus == RoomStatus.STARTING || roomStatus == RoomStatus.PLAYING
+    var showLeaveConfirmation by remember { mutableStateOf(false) }
+    BackHandler(enabled = isMatchLive) { showLeaveConfirmation = true }
+    if (showLeaveConfirmation) {
+        ExitMatchDialog(
+            messageRes = R.string.exit_match_online_message,
+            onConfirm = {
+                showLeaveConfirmation = false
+                viewModel.exitRoom()
+                onLeaveMatch()
+            },
+            onDismiss = { showLeaveConfirmation = false },
+        )
+    }
     val musicTrack = when (roomStatus) {
         RoomStatus.WAITING, RoomStatus.STARTING -> MusicTrack.Loop(R.raw.music_waiting_room)
         RoomStatus.PLAYING, RoomStatus.FINISHED -> MusicTrack.Playlist(GAMEPLAY_MUSIC_TRACKS)
@@ -92,16 +123,14 @@ fun MultiplayerScreen(
         )
         is MultiplayerUiState.InRoom -> {
             val room = current.room
-            if (room.status == RoomStatus.FINISHED) {
-                // Fires once per unique roomId reaching FINISHED in this composition
-                // (recomposition alone won't re-key it) -- applyMultiplayerScore is
-                // also idempotent per-roomId itself (survives app restarts/reconnects).
+            if (room.status == RoomStatus.FINISHED && room.awardsAppliedAtMs != null) {
+                // The backend credits every player's profile itself (onRoomFinished) and
+                // stamps awardsAppliedAtMs when it is done; this just pulls the settled
+                // numbers back into the local profile. Keyed on the room so recomposition
+                // alone won't repeat it, and guarded again per-room inside the repository
+                // (which survives app restarts and reconnects).
                 LaunchedEffect(room.roomId) {
-                    val me = room.player(myUid)
-                    val finalScore = me?.finalScore
-                    if (finalScore != null) {
-                        repository.applyMultiplayerScore(room.roomId, finalScore, me.placement == 1)
-                    }
+                    repository.syncMatchResult(room.roomId)
                 }
             }
             when (room.status) {
@@ -118,23 +147,27 @@ fun MultiplayerScreen(
                 // "playing", so every client gets the full answer window regardless of how
                 // long their own countdown animation/render took -- no more racing a
                 // deadline that started ticking before they could see the board.
-                RoomStatus.STARTING -> MultiplayerStartingScreen(room, audioPlayer)
-                RoomStatus.PLAYING, RoomStatus.FINISHED -> if (room.mode == RoomMode.SOLO_SURVIVAL) {
-                    SoloSurvivalGameScreen(
-                        room = room,
-                        myUid = myUid,
-                        onColorTapped = { viewModel.submitAnswer(it) },
-                        onExit = { viewModel.exitRoom() },
-                        audioPlayer = audioPlayer,
-                    )
-                } else {
-                    MultiplayerGameScreen(
-                        room = room,
-                        myUid = myUid,
-                        onColorTapped = { viewModel.submitAnswer(it) },
-                        onExit = { viewModel.exitRoom() },
-                        audioPlayer = audioPlayer,
-                    )
+                RoomStatus.STARTING -> LimitFontScale(max = GAME_BOARD_FONT_SCALE) {
+                    MultiplayerStartingScreen(room, audioPlayer)
+                }
+                RoomStatus.PLAYING, RoomStatus.FINISHED -> LimitFontScale(max = GAME_BOARD_FONT_SCALE) {
+                    if (room.mode == RoomMode.SOLO_SURVIVAL) {
+                        SoloSurvivalGameScreen(
+                            room = room,
+                            myUid = myUid,
+                            onColorTapped = { viewModel.submitAnswer(it) },
+                            onExit = { viewModel.exitRoom() },
+                            audioPlayer = audioPlayer,
+                        )
+                    } else {
+                        MultiplayerGameScreen(
+                            room = room,
+                            myUid = myUid,
+                            onColorTapped = { viewModel.submitAnswer(it) },
+                            onExit = { viewModel.exitRoom() },
+                            audioPlayer = audioPlayer,
+                        )
+                    }
                 }
             }
         }
@@ -167,7 +200,7 @@ private fun MultiplayerStartingScreen(room: MultiplayerRoom, audioPlayer: AudioP
     var phase by remember(room.startsAtMs) { mutableStateOf(StartingPhase.LOADING) }
 
     LaunchedEffect(room.startsAtMs) {
-        val remainingMs = room.startsAtMs?.let { it - System.currentTimeMillis() } ?: 0L
+        val remainingMs = room.startsAtMs?.let { it - ServerClock.shared.nowMs() } ?: 0L
         val waitBeforeCountdownMs = (remainingMs - COUNTDOWN_ANIMATION_MS).coerceAtLeast(0L)
         if (waitBeforeCountdownMs > 0) delay(waitBeforeCountdownMs)
         phase = StartingPhase.COUNTDOWN
@@ -186,4 +219,8 @@ private fun MultiplayerStartingScreen(room: MultiplayerRoom, audioPlayer: AudioP
             StartingPhase.LOADING, StartingPhase.BRIDGING -> PreloadWaitingRoom(room)
         }
     }
+}
+
+private val MultiplayerViewModelFactory = viewModelFactory {
+    initializer { MultiplayerViewModel(FirebaseMultiplayerRepository(), createSavedStateHandle()) }
 }

@@ -1,7 +1,8 @@
 import { assertFails, assertSucceeds, initializeTestEnvironment, RulesTestEnvironment } from "@firebase/rules-unit-testing";
 import { readFileSync } from "fs";
 import * as path from "path";
-import * as admin from "firebase-admin";
+import { getApps, getApp } from "firebase-admin/app";
+import { DocumentData } from "firebase-admin/firestore";
 import { CallableRequest } from "firebase-functions/v2/https";
 import { Request as TaskRequest } from "firebase-functions/v2/tasks";
 import { DatabaseEvent, DataSnapshot } from "firebase-functions/v2/database";
@@ -16,9 +17,12 @@ import {
   resolveSoloPlayerTimeout,
   onPresenceChanged,
   deleteMyMultiplayerData,
+  submitSoloRun,
+  leaveRoom,
 } from "./index";
 import * as resolveRoundModule from "./resolveRound";
 import { scheduleBombExplosion, scheduleSoloPlayerTimeoutCheck, scheduleTimeoutCheck } from "./taskQueue";
+import { CREATE_ROOM_LIMIT, JOIN_ROOM_LIMIT, LEAVE_ROOM_LIMIT } from "./rateLimit";
 
 // deleteMyMultiplayerData also removes each deleted room's Realtime Database
 // presence node. There's no RTDB emulator in this test run (only Firestore,
@@ -58,17 +62,17 @@ beforeAll(async () => {
   // already creates the default admin app -- resolved against whatever
   // project the emulator environment provides (functions/.firebaserc's
   // default project), not a project ID this file picks. Calling
-  // admin.initializeApp({ projectId: ... }) again here would throw (duplicate
+  // initializeApp({ projectId: ... }) again here would throw (duplicate
   // default app) and, worse, using a *different* projectId for
   // initializeTestEnvironment than the one index.ts's admin app resolved to
   // would silently point the two Firestore clients at two different
   // emulator-side projects, making every write invisible to the test's
   // read-back. So: read back the project ID the already-initialized default
   // app actually resolved to, and reuse it for the rules-unit-testing env.
-  if (admin.apps.length === 0) {
+  if (getApps().length === 0) {
     throw new Error("Expected index.ts's module-load initializeApp() to have already run.");
   }
-  const projectId = admin.app().options.projectId;
+  const projectId = getApp().options.projectId;
   if (!projectId) {
     throw new Error("Default admin app has no resolved projectId; cannot align the Firestore emulator project.");
   }
@@ -125,18 +129,13 @@ async function seedRoom(overrides: Record<string, unknown> = {}): Promise<void> 
   });
 }
 
-async function getRoom(roomId: string): Promise<admin.firestore.DocumentData> {
-  let data: admin.firestore.DocumentData | undefined;
+async function getRoom(roomId: string): Promise<DocumentData> {
+  let data: DocumentData | undefined;
   await testEnv.withSecurityRulesDisabled(async (context) => {
     const snap = await context.firestore().collection("rooms").doc(roomId).get();
     data = snap.data();
   });
   return data!;
-}
-
-interface ResolveTimeoutTaskData {
-  roomId: string;
-  round: number;
 }
 
 // Builds a minimal Request<T>-shaped object (TaskContext & { data: T }) for
@@ -177,6 +176,8 @@ function buildPresenceEvent(
     data: new Change(new DataSnapshot(null), new DataSnapshot(afterState)),
     firebaseDatabaseHost: "https://test-instance.firebaseio.com",
     instance: "test-instance",
+    // Required since firebase-functions v7; onPresenceChanged ignores it.
+    authType: "unauthenticated",
     ref: `presence/${roomId}/${uid}`,
     location: "us-central1",
     params: { roomId, uid },
@@ -338,6 +339,100 @@ describe("joinRoom", () => {
   });
 });
 
+describe("leaveRoom", () => {
+  const P = (uid: string, order: number) => ({ uid, displayName: uid, avatarIndex: 0, alive: true, order, joinedAtMs: 0 });
+  const threePlayers = {
+    hostUid: "host-uid",
+    players: { "host-uid": P("host-uid", 0), "b-uid": P("b-uid", 1), "c-uid": P("c-uid", 2) },
+    turnOrder: ["host-uid", "b-uid", "c-uid"],
+  };
+
+  async function roomExists(): Promise<boolean> {
+    let exists = false;
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      exists = (await context.firestore().collection("rooms").doc("room-1").get()).exists;
+    });
+    return exists;
+  }
+
+  test("a guest leaving a waiting room frees their slot", async () => {
+    await seedRoom(threePlayers);
+
+    await expect(leaveRoom.run(buildRequest({ roomId: "room-1" }, "b-uid"))).resolves.toEqual({ left: true });
+
+    const room = await getRoom("room-1");
+    expect(Object.keys(room.players).sort()).toEqual(["c-uid", "host-uid"]);
+    expect(room.turnOrder).toEqual(["host-uid", "c-uid"]);
+    expect(room.hostUid).toBe("host-uid");
+    // Orders are compacted so the next joiner (order = player count) can't collide.
+    expect(room.players["c-uid"].order).toBe(1);
+  });
+
+  test("the host leaving hands the room to the next player instead of stranding it", async () => {
+    await seedRoom(threePlayers);
+
+    await leaveRoom.run(buildRequest({ roomId: "room-1" }, "host-uid"));
+
+    const room = await getRoom("room-1");
+    expect(room.hostUid).toBe("b-uid");
+    expect(room.turnOrder).toEqual(["b-uid", "c-uid"]);
+    expect(room.players["b-uid"].order).toBe(0);
+  });
+
+  test("the last player leaving deletes the room and its presence node", async () => {
+    await seedRoom();
+
+    await leaveRoom.run(buildRequest({ roomId: "room-1" }, "host-uid"));
+
+    expect(await roomExists()).toBe(false);
+    // Once the doc is gone nothing else would ever find this presence node again.
+    expect(mockDbRemove).toHaveBeenCalledTimes(1);
+  });
+
+  test("is rate limited per uid like the other room callables", async () => {
+    for (let i = 0; i < LEAVE_ROOM_LIMIT; i++) {
+      await leaveRoom.run(buildRequest({ roomId: "no-such-room" }, "spammer-uid"));
+    }
+
+    await expect(leaveRoom.run(buildRequest({ roomId: "no-such-room" }, "spammer-uid"))).rejects.toMatchObject({
+      code: "resource-exhausted",
+      details: { reason: "RATE_LIMITED" },
+    });
+  });
+
+  test("a new player can join after someone left", async () => {
+    await seedRoom(threePlayers);
+    await leaveRoom.run(buildRequest({ roomId: "room-1" }, "b-uid"));
+
+    await joinRoom.run(buildRequest({ code: "ABCDE", displayName: "D" }, "d-uid"));
+
+    const room = await getRoom("room-1");
+    expect(room.turnOrder).toEqual(["host-uid", "c-uid", "d-uid"]);
+    expect(room.players["d-uid"].order).toBe(2);
+  });
+
+  test("leaving a match that already started changes nothing (the disconnect path handles it)", async () => {
+    await seedRoom({ ...threePlayers, status: "playing" });
+
+    await expect(leaveRoom.run(buildRequest({ roomId: "room-1" }, "b-uid"))).resolves.toEqual({ left: false });
+
+    expect(Object.keys((await getRoom("room-1")).players)).toHaveLength(3);
+  });
+
+  test("leaving a room you're not in, or one that doesn't exist, is a no-op", async () => {
+    await seedRoom(threePlayers);
+
+    await expect(leaveRoom.run(buildRequest({ roomId: "room-1" }, "stranger-uid"))).resolves.toEqual({ left: false });
+    await expect(leaveRoom.run(buildRequest({ roomId: "no-such-room" }, "b-uid"))).resolves.toEqual({ left: false });
+    expect(Object.keys((await getRoom("room-1")).players)).toHaveLength(3);
+  });
+
+  test("requires a signed-in caller and a roomId", async () => {
+    await expect(leaveRoom.run(buildRequest({ roomId: "room-1" }, undefined))).rejects.toMatchObject({ code: "unauthenticated" });
+    await expect(leaveRoom.run(buildRequest({ roomId: "" }, "b-uid"))).rejects.toMatchObject({ code: "invalid-argument" });
+  });
+});
+
 describe("startGame", () => {
   async function seedTwoPlayerWaitingRoom(overrides: Record<string, unknown> = {}): Promise<void> {
     await seedRoom({
@@ -383,6 +478,66 @@ describe("startGame", () => {
   });
 });
 
+describe("submitSoloRun", () => {
+  const RUN = { mode: "ENDLESS", correctHits: 10, totalRounds: 11, survivalMs: 15_000, finalScore: 100, winStreak: 3 };
+
+  test("a retried run with the same runId pays once", async () => {
+    const first = await submitSoloRun.run(buildRequest({ ...RUN, runId: "3f2b9c1e-0000-4000-8000-000000000001" }, "solo-uid"));
+    const retry = await submitSoloRun.run(buildRequest({ ...RUN, runId: "3f2b9c1e-0000-4000-8000-000000000001" }, "solo-uid"));
+
+    expect(first).toMatchObject({ matchesPlayed: 1 });
+    expect(retry).toMatchObject({ matchesPlayed: 1, xpAwarded: 0 });
+  });
+
+  test("a malformed runId is rejected as an invalid run", async () => {
+    await expect(submitSoloRun.run(buildRequest({ ...RUN, runId: "no spaces allowed!" }, "solo-uid"))).rejects.toMatchObject({
+      code: "invalid-argument",
+      details: { reason: "INVALID_RUN" },
+    });
+  });
+
+  test("a run without a runId is still accepted", async () => {
+    await expect(submitSoloRun.run(buildRequest(RUN, "solo-uid"))).resolves.toMatchObject({ matchesPlayed: 1 });
+  });
+});
+
+describe("rate limiting", () => {
+  test("rejects room creation past the per-uid limit", async () => {
+    for (let i = 0; i < CREATE_ROOM_LIMIT; i++) {
+      await createRoom.run(buildRequest({ displayName: "Neo" }, "spammer-uid"));
+    }
+
+    await expect(createRoom.run(buildRequest({ displayName: "Neo" }, "spammer-uid"))).rejects.toMatchObject({
+      code: "resource-exhausted",
+      details: { reason: "RATE_LIMITED" },
+    });
+  });
+
+  test("rejects join attempts past the per-uid limit, so room codes can't be brute-forced", async () => {
+    // Every attempt uses a code no room has, i.e. the not-found path a
+    // brute-forcer would hit -- failures must count toward the limit too.
+    for (let i = 0; i < JOIN_ROOM_LIMIT; i++) {
+      await expect(joinRoom.run(buildRequest({ code: "ZZZZZ", displayName: "Trinity" }, "guesser-uid"))).rejects.toMatchObject({
+        details: { reason: "ROOM_NOT_FOUND" },
+      });
+    }
+
+    await expect(joinRoom.run(buildRequest({ code: "ZZZZZ", displayName: "Trinity" }, "guesser-uid"))).rejects.toMatchObject({
+      details: { reason: "RATE_LIMITED" },
+    });
+  });
+
+  test("counts per uid, so one player's spam doesn't block anyone else", async () => {
+    for (let i = 0; i < CREATE_ROOM_LIMIT; i++) {
+      await createRoom.run(buildRequest({ displayName: "Neo" }, "spammer-uid"));
+    }
+
+    await expect(createRoom.run(buildRequest({ displayName: "Trinity" }, "other-uid"))).resolves.toMatchObject({
+      roomId: expect.any(String),
+    });
+  });
+});
+
 describe("beginRound", () => {
   test("transitions 'starting' to 'playing' and computes round 1's stimulus/deadline fresh", async () => {
     await seedRoom({
@@ -424,7 +579,7 @@ describe("beginRound", () => {
 
     await beginRound.run(buildTaskRequest<{ roomId: string }>({ roomId: "room-1" }));
 
-    expect(scheduleBombExplosion).toHaveBeenCalledWith("room-1", expect.any(Number));
+    expect(scheduleBombExplosion).toHaveBeenCalledWith("room-1", expect.any(Number), expect.any(Number));
   });
 
   test("does not arm a bomb for the default 'mistake' mode", async () => {
@@ -532,21 +687,53 @@ describe("submitAnswer", () => {
     expect(room.turnIndex).toBe(1); // moved to "b"
   });
 
-  test("returns deadline-exceeded when resolveRound reports the round was already resolved by a racing timeout", async () => {
-    await seedPlayingRoom();
-    // Simulates "someone else's timeout already resolved this round between
-    // submitAnswer's own read and resolveRound's transactional read" without
-    // needing a real concurrent writer: resolveRound is spied on (not
-    // replaced wholesale via jest.mock, since other tests here need its real
-    // transactional behavior) and forced to report applied:false for exactly
-    // this one call.
-    const spy = jest.spyOn(resolveRoundModule, "resolveRound").mockResolvedValueOnce(false);
-
+  test("an answer that lands after the match finished is rejected and changes nothing", async () => {
+    // Stimulus, turn and deadline all still look answerable; only the status says
+    // the match is over -- the engine's own guard, now on the same snapshot.
+    await seedPlayingRoom({ status: "finished" });
     await expect(
       submitAnswer.run(buildRequest({ roomId: "room-1", selectedColor: "BLUE" }, "a"))
     ).rejects.toMatchObject({ code: "deadline-exceeded" });
+    const room = await getRoom("room-1");
+    expect(room.round).toBe(1);
+  });
 
-    spy.mockRestore();
+  test("rejects a malformed round", async () => {
+    await seedPlayingRoom();
+    await expect(
+      submitAnswer.run(buildRequest({ roomId: "room-1", selectedColor: "BLUE", round: "1" }, "a"))
+    ).rejects.toMatchObject({ code: "invalid-argument" });
+  });
+
+  test("accepts an answer that names the current round", async () => {
+    await seedPlayingRoom(); // round 1
+    const result = await submitAnswer.run(buildRequest({ roomId: "room-1", selectedColor: "BLUE", round: 1 }, "a"));
+    expect(result).toEqual({ accepted: true, reason: "correct" });
+  });
+
+  test("an answer aimed at a round that already moved on is rejected as stale, not scored", async () => {
+    await seedPlayingRoom({ mode: "hot_potato", round: 2 });
+    await expect(
+      submitAnswer.run(buildRequest({ roomId: "room-1", selectedColor: "RED", round: 1 }, "a"))
+    ).rejects.toMatchObject({ code: "deadline-exceeded", details: { reason: "STALE_ROUND" } });
+    const room = await getRoom("room-1");
+    expect(room.round).toBe(2); // no re-prompt, streak untouched
+  });
+
+  test("solo_survival: a double tap does not bust the player on a stimulus they never saw", async () => {
+    await seedSoloPlayingRoom(); // "a" on soloRound 0, inkColor BLUE
+    const first = await submitAnswer.run(buildRequest({ roomId: "room-1", selectedColor: "BLUE", round: 0 }, "a"));
+    expect(first).toEqual({ accepted: true, reason: "correct" });
+
+    // Second tap was aimed at the same round-0 stimulus but lands after round 1's
+    // stimulus replaced it. Before `round` existed it was judged against round 1.
+    await expect(
+      submitAnswer.run(buildRequest({ roomId: "room-1", selectedColor: "BLUE", round: 0 }, "a"))
+    ).rejects.toMatchObject({ code: "deadline-exceeded", details: { reason: "STALE_ROUND" } });
+
+    const room = await getRoom("room-1");
+    expect(room.players.a.alive).toBe(true);
+    expect(room.players.a.soloRound).toBe(1);
   });
 
   test("dispatches to the solo_survival resolver: a correct answer only advances the acting player's own round", async () => {

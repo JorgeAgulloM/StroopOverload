@@ -1,6 +1,5 @@
 package com.softyorch.stroopoverload.ui.screen.multiplayer
 
-import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.EaseOut
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.RepeatMode
@@ -11,7 +10,6 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -35,11 +33,14 @@ import com.softyorch.stroopoverload.core.StroopColor
 import com.softyorch.stroopoverload.domain.multiplayer.MultiplayerRoom
 import com.softyorch.stroopoverload.domain.multiplayer.RoomMode
 import com.softyorch.stroopoverload.domain.multiplayer.RoomStatus
+import com.softyorch.stroopoverload.ui.components.StimulusWord
+import com.softyorch.stroopoverload.ui.components.QuadrantBox
 import com.softyorch.stroopoverload.ui.theme.Muted
 import com.softyorch.stroopoverload.ui.theme.NeonRed
 import com.softyorch.stroopoverload.ui.theme.NeonYellow
 import com.softyorch.stroopoverload.ui.theme.TechAccent
 import kotlinx.coroutines.delay
+import com.softyorch.stroopoverload.ui.components.DeadlineTimerBar
 
 @Composable
 fun MultiplayerGameScreen(
@@ -50,23 +51,6 @@ fun MultiplayerGameScreen(
     audioPlayer: AudioPlayer,
 ) {
     val myTurn = room.canAnswer(myUid)
-
-    var nowMs by remember { mutableStateOf(System.currentTimeMillis()) }
-    LaunchedEffect(room.roomId) {
-        while (true) {
-            delay(100L)
-            nowMs = System.currentTimeMillis()
-        }
-    }
-    val timerProgress = remember(room.deadlineAtMs, room.round, nowMs) {
-        val deadline = room.deadlineAtMs
-        if (deadline == null) {
-            0f
-        } else {
-            val totalMs = timeLimitMsForRound(room.round.coerceAtLeast(1)).toFloat()
-            ((deadline - nowMs).toFloat() / totalMs).coerceIn(0f, 1f)
-        }
-    }
 
     Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.background)) {
         Column(
@@ -116,13 +100,15 @@ fun MultiplayerGameScreen(
             // with a fresh stimulus, so a decaying red/green bar here would falsely
             // suggest the same do-or-die urgency. No bar at all for hot_potato.
             if (room.status == RoomStatus.PLAYING && room.mode == RoomMode.MISTAKE) {
-                TimerBar(
-                    progress = timerProgress,
+                DeadlineTimerBar(
+                    deadlineAtMs = room.deadlineAtMs,
+                    totalMs = timeLimitMsForRound(room.round.coerceAtLeast(1)),
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(8.dp)
                         .clip(RoundedCornerShape(4.dp))
                         .border(1.dp, MaterialTheme.colorScheme.outline, RoundedCornerShape(4.dp)),
+                    trackColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
                 )
                 Spacer(modifier = Modifier.height(10.dp))
             }
@@ -201,11 +187,10 @@ private fun ColumnScope.PlayingContent(room: MultiplayerRoom, myTurn: Boolean, o
                 fontSize = 11.sp,
             )
             Spacer(modifier = Modifier.height(12.dp))
-            Text(
+            StimulusWord(
                 text = stringResource(stimulus.wordLabel.displayNameRes),
                 color = stimulus.inkColor.composeColor,
-                fontSize = 46.sp,
-                fontWeight = FontWeight.Black,
+                maxFontSize = 46.sp,
                 letterSpacing = 4.sp,
             )
             if (!myTurn) {
@@ -347,54 +332,6 @@ private fun HotPotatoBalloon(room: MultiplayerRoom) {
 
 private fun tricolorLerp(start: Color, mid: Color, end: Color, t: Float): Color =
     if (t <= 0.5f) lerp(start, mid, (t / 0.5f).coerceIn(0f, 1f)) else lerp(mid, end, ((t - 0.5f) / 0.5f).coerceIn(0f, 1f))
-
-@Composable
-internal fun QuadrantBox(color: StroopColor, enabled: Boolean, isFlashing: Boolean, modifier: Modifier, onTap: () -> Unit) {
-    // Same white-flash-on-miss treatment as local GameScreen's QuadrantBox.
-    val flashAlpha by animateFloatAsState(
-        targetValue = if (isFlashing) 0.85f else 0f,
-        animationSpec = tween(if (isFlashing) 120 else 400),
-        label = "mpQuadrantFlash",
-    )
-
-    Box(
-        modifier = modifier
-            .clip(RoundedCornerShape(8.dp))
-            .border(2.dp, color.composeColor.copy(alpha = if (enabled) 0.7f else 0.25f), RoundedCornerShape(8.dp))
-            .background(color.composeColor.copy(alpha = if (enabled) 0.15f else 0.05f))
-            .clickable(enabled = enabled, onClick = onTap),
-        contentAlignment = Alignment.Center,
-    ) {
-        Text(
-            text = stringResource(color.displayNameRes),
-            color = color.composeColor.copy(alpha = if (enabled) 1f else 0.4f),
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.Black,
-            letterSpacing = 3.sp,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
-        if (flashAlpha > 0f) {
-            Box(modifier = Modifier.fillMaxSize().background(Color.White.copy(alpha = flashAlpha)))
-        }
-    }
-}
-
-@Composable
-internal fun TimerBar(progress: Float, modifier: Modifier) {
-    val barColor = lerp(MaterialTheme.colorScheme.error, MaterialTheme.colorScheme.primary, progress)
-    val animatedColor by animateColorAsState(targetValue = barColor, label = "mpTimerColor")
-
-    Box(modifier = modifier) {
-        Box(modifier = Modifier.fillMaxSize().background(MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)))
-        Box(
-            modifier = Modifier
-                .fillMaxHeight()
-                .fillMaxWidth(fraction = progress.coerceIn(0f, 1f))
-                .background(animatedColor)
-        )
-    }
-}
 
 /** Mirrors turnLogic.ts's timeLimitMsForRound so the client can render a countdown bar without the server pushing a redundant "total ms" field. */
 internal fun timeLimitMsForRound(round: Int): Long {

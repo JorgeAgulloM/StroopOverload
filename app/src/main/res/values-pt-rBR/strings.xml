@@ -9,6 +9,7 @@
     <string name="common_profile_icon_desc">Perfil</string>
     <string name="common_locked">BLOQUEADO</string>
     <string name="common_cancel">Cancelar</string>
+    <string name="common_ok">OK</string>
     <string name="common_show_password">Mostrar senha</string>
     <string name="common_hide_password">Ocultar senha</string>
 
@@ -77,6 +78,13 @@
     <string name="countdown_get_ready">PREPARE-SE</string>
     <string name="countdown_go">VAI!</string>
 
+    <!-- Leaving a match in progress -->
+    <string name="exit_match_title">Sair da partida?</string>
+    <string name="exit_match_local_message">A partida termina aqui. Sua pontuação não será registrada.</string>
+    <string name="exit_match_online_message">Você abandona a partida. Os outros pilotos continuam sem você.</string>
+    <string name="exit_match_confirm">SAIR</string>
+    <string name="exit_match_stay">CONTINUAR</string>
+
     <!-- Game over screen -->
     <string name="game_over_victory_title">[ VITÓRIA SINÁPTICA ]</string>
     <string name="game_over_defeat_title">[ SOBRECARGA NEURAL ]</string>
@@ -89,7 +97,7 @@
     <string name="game_over_rounds_survived">RODADAS SOBREVIVIDAS</string>
     <string name="game_over_time_elapsed">TEMPO DECORRIDO</string>
     <string name="game_over_perfect_bonus">BÔNUS PERFEITO</string>
-    <string name="game_over_flawless_100">IMPECÁVEL 100%%</string>
+    <string name="game_over_flawless_100">IMPECÁVEL 100%</string>
     <string name="game_over_xp_header">[ SÍNTESE DE XP ]</string>
     <string name="game_over_xp_total">+%1$d XP</string>
     <string name="game_over_xp_base">BASE (%1$s)</string>
@@ -167,6 +175,10 @@
     <string name="profile_delete_account_error_network">Erro de rede. Tente novamente.</string>
     <string name="profile_delete_account_error_generic">Não foi possível excluir a conta. Tente novamente.</string>
     <string name="profile_sign_out">[ ENCERRAR SESSÃO NEURAL // SAIR ]</string>
+    <string name="profile_guest_sign_out_title">Sair da sessão de convidado?</string>
+    <string name="profile_guest_sign_out_message">O progresso de convidado fica salvo só neste dispositivo. Se você sair, seu nível, XP, estatísticas e conquistas serão perdidos para sempre, mesmo que depois você crie uma conta.</string>
+    <string name="profile_guest_sign_out_confirm">SAIR</string>
+    <string name="profile_guest_sign_out_cancel">FICAR</string>
     <string name="profile_achievement_hidden_title">\?\?\?</string>
     <string name="profile_achievement_hidden_desc">Troféu sináptico confidencial</string>
 
@@ -237,7 +249,6 @@
     <string name="mp_lobby_create_room">CRIAR SALA</string>
     <string name="mp_lobby_room_code_label">Código da sala</string>
     <string name="mp_lobby_join_room">ENTRAR NA SALA</string>
-    <string name="mp_lobby_default_name">Piloto</string>
     <string name="mp_lobby_mode_label">MODO DE JOGO</string>
     <string name="mp_mode_mistake_title">MODO ERRO</string>
     <string name="mp_mode_mistake_desc">Um erro e você está fora. Vence o último piloto de pé.</string>
@@ -292,14 +303,15 @@
     <string name="mp_finish_survived_full">Sobreviveu a partida inteira</string>
 
     <!-- Multiplayer solo_survival screen -->
-    <string name="mp_solo_time_left">%1$ds RESTANTES</string>
-    <string name="mp_solo_score_label">PONTOS</string>
-    <string name="mp_solo_you_tag">VOCÊ</string>
+    <string name="common_pilot_handle_fallback">@pilot-%1$s</string>
+    <string name="rarity_common">Comum</string>
+    <string name="rarity_uncommon">Incomum</string>
+    <string name="rarity_rare">Raro</string>
+    <string name="rarity_epic">Épico</string>
+    <string name="rarity_legendary">Lendário</string>
+    <string name="mp_finish_name_you">%1$s (VOCÊ)</string>
     <string name="mp_solo_busted_title">VOCÊ SAIU</string>
     <string name="mp_solo_busted_subtitle">Pontuação final: %1$d — a partida continua sem você.</string>
-    <string name="mp_solo_leaderboard_title">CLASSIFICAÇÃO</string>
-    <string name="mp_solo_you_won">VOCÊ VENCEU!</string>
-    <string name="mp_solo_won_by">%1$s vence com %2$d pts</string>
 
     <!-- Multiplayer anonymous-account gate dialog -->
     <string name="mp_anon_gate_title">ACESSO ONLINE BLOQUEADO</string>
@@ -311,6 +323,11 @@
     <string name="mp_error_join_room">Não foi possível entrar na sala.</string>
     <string name="mp_error_start_game">Não foi possível iniciar a partida.</string>
     <string name="mp_error_connection_lost">A conexão com a sala foi perdida.</string>
+    <string name="mp_error_room_not_found">Nenhuma sala aberta com esse código.</string>
+    <string name="mp_error_room_full">A sala está cheia (máx. 4 jogadores).</string>
+    <string name="mp_error_room_already_started">Essa partida já começou.</string>
+    <string name="mp_error_invalid_code">Código inválido: 5 letras/números.</string>
+    <string name="mp_error_rate_limited">Tentativas demais. Espere um momento.</string>
 
     <!-- Achievements -->
     <string name="achievement_first_blood_title">INICIAÇÃO NEURAL</string>
@@ -350,7 +367,7 @@
     <string name="achievement_score_god_title">SINGULARIDADE QUÂNTICA</string>
     <string name="achievement_score_god_desc">Ultrapasse 14.000 pontos em uma única partida.</string>
     <string name="achievement_flawless_title">PUREZA SINÁPTICA</string>
-    <string name="achievement_flawless_desc">Consiga 1 partida impecável (5+ rodadas, 100% de precisão) em sua carreira.</string>
+    <string name="achievement_flawless_desc" formatted="false">Consiga 1 partida impecável (5+ rodadas, 100% de precisão) em sua carreira.</string>
     <string name="achievement_flawless_tier2_title">EXECUÇÃO IMPECÁVEL</string>
     <string name="achievement_flawless_tier2_desc">Consiga 5 partidas impecáveis em sua carreira.</string>
     <string name="achievement_flawless_tier3_title">MENTE PERFEITA</string>

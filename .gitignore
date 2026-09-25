@@ -44,3 +44,13 @@ google-services.json
 admob.properties
 # GitHub Package credentials
 secrets/
+
+# Crash dumps (Git Bash, JVM)
+*.stackdump
+hs_err_pid*.log
+replay_pid*.log
+
+# Cloud Functions build output and dependencies
+functions/node_modules/
+functions/lib/
+functions/coverage/

@@ -3,12 +3,12 @@ package com.softyorch.stroopoverload.domain
 import androidx.annotation.StringRes
 import com.softyorch.stroopoverload.R
 
-enum class Rarity(val colorArgb: Long, val baseXp: Int) {
-    COMMON(0xFFB0BAC5, 25),
-    UNCOMMON(0xFF00C853, 75),
-    RARE(0xFF4A9EFF, 100),
-    EPIC(0xFFC06EFF, 250),
-    LEGENDARY(0xFFFFD400, 750);
+enum class Rarity(val colorArgb: Long, val baseXp: Int, @StringRes val labelRes: Int) {
+    COMMON(0xFFB0BAC5, 25, R.string.rarity_common),
+    UNCOMMON(0xFF00C853, 75, R.string.rarity_uncommon),
+    RARE(0xFF4A9EFF, 100, R.string.rarity_rare),
+    EPIC(0xFFC06EFF, 250, R.string.rarity_epic),
+    LEGENDARY(0xFFFFD400, 750, R.string.rarity_legendary);
 
     val composeColorArgb: Long get() = colorArgb
 }

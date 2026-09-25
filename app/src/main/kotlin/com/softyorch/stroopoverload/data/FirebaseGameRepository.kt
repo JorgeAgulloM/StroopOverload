@@ -2,25 +2,38 @@ package com.softyorch.stroopoverload.data
 
 import android.content.Context
 import android.util.Log
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.AggregateSource
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
+import com.google.firebase.functions.FirebaseFunctions
+import com.google.firebase.functions.FirebaseFunctionsException
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.SetOptions
 import com.softyorch.stroopoverload.core.GameConfig
 import com.softyorch.stroopoverload.data.local.AchievementsLocalStore
 import com.softyorch.stroopoverload.data.local.MultiplayerAwardStore
+import com.softyorch.stroopoverload.data.local.PendingRunStore
 import com.softyorch.stroopoverload.data.local.ProfileLocalStore
 import com.softyorch.stroopoverload.domain.Achievement
 import com.softyorch.stroopoverload.domain.AchievementDefinitions
 import com.softyorch.stroopoverload.domain.AchievementEngine
 import com.softyorch.stroopoverload.domain.CareerStats
 import com.softyorch.stroopoverload.domain.GameResult
+import com.softyorch.stroopoverload.domain.applyServerScoring
+import com.softyorch.stroopoverload.domain.serverScoringFrom
 import com.softyorch.stroopoverload.domain.UserProfile
-import com.softyorch.stroopoverload.domain.XpSystem
+import com.softyorch.stroopoverload.domain.isRecordable
+import com.softyorch.stroopoverload.domain.withAchievementXp
+import com.softyorch.stroopoverload.domain.withRunApplied
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withContext
+import java.util.UUID
 
 class FirebaseGameRepository private constructor(
     private val context: Context,
@@ -28,25 +41,44 @@ class FirebaseGameRepository private constructor(
     private val achievementsStore: AchievementsLocalStore = AchievementsLocalStore(context),
     private val achievementEngine: AchievementEngine = AchievementEngine(),
     private val multiplayerAwardStore: MultiplayerAwardStore = MultiplayerAwardStore(context),
+    private val pendingRuns: PendingRunStore = PendingRunStore(context),
     private val db: FirebaseFirestore? = try { FirebaseFirestore.getInstance() } catch (e: Exception) { null },
-) {
+    private val functions: FirebaseFunctions = FirebaseFunctions.getInstance(),
+) : GameRepository {
     private val users get() = db?.collection("users")
+
+    // Cloud work that must not hold up the UI and must outlive the screen that started it
+    // (the game-over navigation used to wait on it, and never came while offline).
+    // The repository is a process-wide singleton, so this scope lives as long as the app.
+    private val backgroundScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    private val pendingRunSync = PendingRunSync(
+        queue = pendingRuns,
+        submitter = ::submitPendingRun,
+        onScoring = { scoring -> profileStore.saveProfile(getProfile().applyServerScoring(scoring)) },
+    )
 
     private var cachedLeaderboard: List<UserProfile> = emptyList()
     private var lastLeaderboardFetchEpochMs: Long = 0L
 
-    fun getProfile(): UserProfile {
+    override fun getProfile(): UserProfile {
         return profileStore.getProfile() ?: UserProfile()
     }
 
-    suspend fun updateProfile(profile: UserProfile) = withContext(Dispatchers.IO) {
+    override suspend fun updateProfile(profile: UserProfile): Unit = withContext(Dispatchers.IO) {
         profileStore.saveProfile(profile)
         if (profile.userId.isNotBlank() && !profile.isAnonymous) {
             pushProfileToCloud(profile)
         }
     }
 
-    private suspend fun pushProfileToCloud(profile: UserProfile) {
+    /**
+     * Queues the profile write in Firestore's local cache and returns without waiting for
+     * the server: offline, awaiting the acknowledgement never returned, and everything
+     * behind it (the game-over screen, saving a nickname) hung until the connection came
+     * back. The cache is persistent, so the write still reaches the server later.
+     */
+    private fun pushProfileToCloud(profile: UserProfile) {
         val collection = users ?: return
         try {
             val map = mapOf(
@@ -56,34 +88,35 @@ class FirebaseGameRepository private constructor(
                 "displayName" to profile.displayName,
                 "isAnonymous" to profile.isAnonymous,
                 "avatarIndex" to profile.avatarIndex,
-                "points" to profile.points,
-                "highScore" to profile.highScore,
-                "matchesPlayed" to profile.matchesPlayed,
-                "matchesWon" to profile.matchesWon,
-                "matchesLost" to profile.matchesLost,
-                "experience" to profile.experience,
-                "level" to profile.level,
-                "dailyStreak" to profile.dailyStreak,
-                "lastPlayedAtEpochMs" to profile.lastPlayedAtEpochMs,
+                // Scoring fields are deliberately absent: points, highScore, experience,
+                // level, the match counters and dailyStreak are written only by Cloud
+                // Functions (submitSoloRun / onRoomFinished) and firestore.rules rejects
+                // any write to them from here. Sending them would fail the whole merge.
                 "profileCreated" to profile.profileCreated,
                 "unlockedPalettes" to profile.unlockedPalettes,
                 "updatedAt" to FieldValue.serverTimestamp(),
             )
-            collection.document(profile.userId).set(map, SetOptions.merge()).await()
+            collection.document(profile.userId).set(map, SetOptions.merge())
+                .addOnFailureListener { e -> Log.w("FirebaseRepo", "Profile push rejected: ${e.message}") }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
-            Log.w("FirebaseRepo", "Best-effort profile push failed (offline or unconfigured): ${e.message}")
+            Log.w("FirebaseRepo", "Best-effort profile push failed (unconfigured?): ${e.message}")
         }
     }
 
-    suspend fun syncUserProfile(uid: String, nickname: String? = null) = withContext(Dispatchers.IO) {
+    override suspend fun syncUserProfile(uid: String, nickname: String?, isAnonymous: Boolean): Unit = withContext(Dispatchers.IO) {
         val local = getProfile()
 
-        // Case 1: local profile already belongs to this exact account — nothing to do.
+        // Case 1: local profile already belongs to this exact account -- nothing to do, except
+        // repairing what older builds got wrong (a missing nickname, guests saved as registered).
         if (local.userId == uid && local.profileCreated) {
+            var repaired = local
             if (nickname != null && local.nickname.isBlank()) {
-                val updated = local.copy(nickname = nickname, uniqueName = local.copy(nickname = nickname, userId = uid).generateUniqueName())
-                updateProfile(updated)
+                repaired = repaired.copy(nickname = nickname, uniqueName = local.copy(nickname = nickname, userId = uid).generateUniqueName())
             }
+            repaired = repaired.repairedForSession(uid, isAnonymous) ?: repaired
+            if (repaired != local) updateProfile(repaired)
             return@withContext
         }
 
@@ -98,61 +131,31 @@ class FirebaseGameRepository private constructor(
 
         val collection = users
         val remoteDoc = if (collection != null) {
-            try { collection.document(uid).get().await() } catch (e: Exception) { null }
+            try {
+                collection.document(uid).get().await()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                null
+            }
         } else null
 
         if (remoteDoc != null && remoteDoc.exists()) {
             val data = remoteDoc.data ?: emptyMap()
-            val remoteProfile = UserProfile(
-                userId = uid,
-                uniqueName = data["uniqueName"] as? String ?: "@pilot-${uid.takeLast(4)}",
-                nickname = data["nickname"] as? String ?: (nickname ?: "Pilot_${uid.takeLast(4)}"),
-                isAnonymous = data["isAnonymous"] as? Boolean ?: false,
-                avatarIndex = (data["avatarIndex"] as? Long)?.toInt() ?: 0,
-                points = (data["points"] as? Long)?.toInt() ?: 0,
-                highScore = (data["highScore"] as? Long)?.toInt() ?: 0,
-                matchesPlayed = (data["matchesPlayed"] as? Long)?.toInt() ?: 0,
-                matchesWon = (data["matchesWon"] as? Long)?.toInt() ?: 0,
-                matchesLost = (data["matchesLost"] as? Long)?.toInt() ?: 0,
-                experience = (data["experience"] as? Long) ?: 0L,
-                level = (data["level"] as? Long)?.toInt() ?: 1,
-                dailyStreak = (data["dailyStreak"] as? Long)?.toInt() ?: 0,
-                lastPlayedAtEpochMs = data["lastPlayedAtEpochMs"] as? Long ?: 0L,
-                profileCreated = true,
-                unlockedPalettes = @Suppress("UNCHECKED_CAST") (data["unlockedPalettes"] as? List<String>) ?: listOf("default")
-            )
-            profileStore.saveProfile(remoteProfile)
+            val fallbackNickname = nickname ?: "Pilot_${uid.takeLast(4)}"
+            profileStore.saveProfile(profileFromRemote(uid, data, fallbackNickname, isAnonymous))
             restoreProgressFromCloud(data)
         } else if (isFreshInstall) {
             // Case 2: no remote doc yet, and there was no prior account on this device to
             // contaminate from — safe to carry over whatever local progress accumulated
             // (e.g. a few offline rounds played before registering).
             val nick = nickname ?: if (local.nickname.isNotBlank()) local.nickname else "Pilot_${uid.takeLast(4)}"
-            val newProfile = UserProfile(
-                userId = uid,
-                uniqueName = "@${nick.lowercase().trim()}-${uid.takeLast(4).lowercase()}",
-                nickname = nick,
-                isAnonymous = false,
-                points = local.points,
-                highScore = local.highScore,
-                experience = local.experience,
-                level = local.level,
-                profileCreated = true
-            )
-            updateProfile(newProfile)
+            updateProfile(newSessionProfile(uid, nick, isAnonymous, carriedOver = local))
         } else {
             // Case 3: switching to a different account than whatever was last used on this
             // device, and it has no remote doc — start clean, never inherit the previous
             // account's device-scoped stats.
-            val nick = nickname ?: "Pilot_${uid.takeLast(4)}"
-            val newProfile = UserProfile(
-                userId = uid,
-                uniqueName = "@${nick.lowercase().trim()}-${uid.takeLast(4).lowercase()}",
-                nickname = nick,
-                isAnonymous = false,
-                profileCreated = true
-            )
-            updateProfile(newProfile)
+            updateProfile(newSessionProfile(uid, nickname ?: "Pilot_${uid.takeLast(4)}", isAnonymous))
         }
     }
 
@@ -167,12 +170,14 @@ class FirebaseGameRepository private constructor(
             achievementsMap.forEach { (id, time) ->
                 achievementsStore.unlock(id, time)
             }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Log.w("FirebaseRepo", "Error restoring cloud progress: ${e.message}")
         }
     }
 
-    suspend fun clearLocalProgress() = withContext(Dispatchers.IO) {
+    override suspend fun clearLocalProgress(): Unit = withContext(Dispatchers.IO) {
         achievementsStore.clearProgress()
         profileStore.deleteProfile()
     }
@@ -182,45 +187,19 @@ class FirebaseGameRepository private constructor(
      * account. Deliberately does NOT swallow Firestore failures — the caller (account deletion)
      * must know if the cloud doc survived instead of reporting a false "deleted everything".
      */
-    suspend fun deleteAllUserData(uid: String) = withContext(Dispatchers.IO) {
+    override suspend fun deleteAllUserData(uid: String): Unit = withContext(Dispatchers.IO) {
+        // First: a queued run submitted after the delete would write the profile back.
+        pendingRunSync.discard(uid)
         users?.document(uid)?.delete()?.await()
         clearLocalProgress()
     }
 
-    suspend fun recordGameResult(result: GameResult, xpEarned: Int): List<Achievement> = withContext(Dispatchers.IO) {
-        if (result.correctHits == 0 || result.finalScore <= 0) {
+    override suspend fun recordGameResult(result: GameResult, xpEarned: Int, winStreak: Int): List<Achievement> = withContext(Dispatchers.IO) {
+        if (!result.isRecordable()) {
             return@withContext emptyList()
         }
-        val current = getProfile()
-        val deltaPoints = if (result.won) +100 else -25
-        val newPoints = (current.points + deltaPoints).coerceAtLeast(0)
-        val newHigh = maxOf(current.highScore, result.finalScore)
-        val newPlayed = current.matchesPlayed + 1
-        val newWon = if (result.won) current.matchesWon + 1 else current.matchesWon
-        val newLost = if (!result.won) current.matchesLost + 1 else current.matchesLost
-        val newXp = current.experience + xpEarned
-        val newLevel = XpSystem.levelFromTotalXp(newXp)
         val now = System.currentTimeMillis()
-
-        val lastDay = current.lastPlayedAtEpochMs / (1000 * 60 * 60 * 24)
-        val today = now / (1000 * 60 * 60 * 24)
-        val newStreak = when {
-            today == lastDay -> current.dailyStreak
-            today == lastDay + 1 -> current.dailyStreak + 1
-            else -> 1
-        }
-
-        val updated = current.copy(
-            points = newPoints,
-            highScore = newHigh,
-            matchesPlayed = newPlayed,
-            matchesWon = newWon,
-            matchesLost = newLost,
-            experience = newXp,
-            level = newLevel,
-            dailyStreak = newStreak,
-            lastPlayedAtEpochMs = now
-        )
+        val updated = getProfile().withRunApplied(result, xpEarned, now)
         updateProfile(updated)
 
         val career = achievementsStore.getCareerStats()
@@ -234,59 +213,128 @@ class FirebaseGameRepository private constructor(
         val newlyUnlockedAchievements = AchievementDefinitions.all.filter { it.id in newIds }
         val achievementXpBonus = newlyUnlockedAchievements.sumOf { it.xpReward }
 
-        val finalUpdated = if (achievementXpBonus > 0) {
-            val totalXpWithAchievements = updated.experience + achievementXpBonus
-            val finalLevel = XpSystem.levelFromTotalXp(totalXpWithAchievements)
-            updated.copy(experience = totalXpWithAchievements, level = finalLevel).also {
-                updateProfile(it)
-            }
-        } else {
-            updated
-        }
+        val finalUpdated = updated.withAchievementXp(achievementXpBonus)
+        if (finalUpdated != updated) updateProfile(finalUpdated)
 
         if (finalUpdated.userId.isNotBlank() && !finalUpdated.isAnonymous) {
             val allUnlockedMap = achievementsStore.getAllAchievements()
                 .filter { it.isUnlocked }
                 .associate { it.id to it.unlockedAt }
             syncProgressToCloud(finalUpdated.userId, updatedCareer, allUnlockedMap)
+            pendingRuns.add(
+                PendingSoloRun(
+                    runId = UUID.randomUUID().toString(),
+                    uid = finalUpdated.userId,
+                    mode = result.mode.name,
+                    correctHits = result.correctHits,
+                    totalRounds = result.totalRounds,
+                    survivalMs = result.survivalMs,
+                    finalScore = result.finalScore,
+                    // Feeds the same XP bonus the player already saw on the game-over screen;
+                    // the server clamps it to the run's correct answers.
+                    winStreak = winStreak,
+                    achievementIds = newIds.toList(),
+                    createdAtEpochMs = now,
+                )
+            )
+            flushPendingRuns()
         }
 
         return@withContext newlyUnlockedAchievements
     }
 
     /**
-     * Applies a finished multiplayer match's server-computed [pointsEarned] (see
-     * functions/src/scoring.ts -- already halved and placement-multiplied) to the
-     * local profile's points/XP/level/match counters. Idempotent per [roomId]:
-     * returns false and does nothing if this room's score was already applied
-     * (guards against a Firestore listener re-emitting the same FINISHED room).
-     * No-ops for anonymous profiles -- defense in depth, multiplayer entry is
-     * already gated on a non-anonymous account before a room can be joined.
+     * Reports the signed-in account's queued solo runs to the backend, which recomputes the
+     * score and XP and writes the profile itself -- the local numbers are provisional until
+     * it answers, and are replaced by whatever it returns. Runs the server can't be reached
+     * for stay queued; the next call (another run ending, or the next app start) retries them.
+     * Returns at once: the work happens in the background.
      */
-    suspend fun applyMultiplayerScore(roomId: String, pointsEarned: Int, won: Boolean): Boolean = withContext(Dispatchers.IO) {
+    override fun flushPendingRuns() {
+        val user = FirebaseAuth.getInstance().currentUser ?: return
+        if (user.isAnonymous) return
+        backgroundScope.launch { pendingRunSync.flush(user.uid) }
+    }
+
+    private suspend fun submitPendingRun(run: PendingSoloRun): SubmitOutcome {
+        // The callable acts for whoever is signed in right now; never let it apply another
+        // account's run.
+        if (FirebaseAuth.getInstance().currentUser?.uid != run.uid) return SubmitOutcome.RetryLater
+        val payload = mapOf(
+            "runId" to run.runId,
+            "mode" to run.mode,
+            "correctHits" to run.correctHits,
+            "totalRounds" to run.totalRounds,
+            "survivalMs" to run.survivalMs,
+            "finalScore" to run.finalScore,
+            "achievementIds" to run.achievementIds,
+            "winStreak" to run.winStreak,
+        )
+        return try {
+            val response = functions.getHttpsCallable("submitSoloRun").call(payload).await()
+            @Suppress("UNCHECKED_CAST")
+            val scoring = serverScoringFrom(response.data as? Map<String, Any?>)
+            if (scoring == null) Log.w("FirebaseRepo", "submitSoloRun returned no scoring fields")
+            SubmitOutcome.Accepted(scoring)
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            if (e is FirebaseFunctionsException && e.code in PERMANENT_SUBMIT_FAILURES) {
+                Log.w("FirebaseRepo", "submitSoloRun rejected run ${run.runId}: ${e.code}")
+                SubmitOutcome.Rejected
+            } else {
+                Log.w("FirebaseRepo", "submitSoloRun unreachable, run ${run.runId} stays queued: ${e.message}")
+                SubmitOutcome.RetryLater
+            }
+        }
+    }
+
+    /**
+     * Pulls the backend's copy of the scoring fields into the local profile. Used
+     * after a multiplayer match is settled server-side (onRoomFinished), since the
+     * client no longer computes those points itself.
+     */
+    override suspend fun refreshScoringFromCloud(uid: String): Unit = withContext(Dispatchers.IO) {
+        val collection = users ?: return@withContext
+        try {
+            val remote = collection.document(uid).get().await()
+            val scoring = serverScoringFrom(remote.data) ?: return@withContext
+            profileStore.saveProfile(getProfile().applyServerScoring(scoring))
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            Log.w("FirebaseRepo", "Could not refresh scoring from cloud: ${e.message}")
+        }
+    }
+
+    /**
+     * Pulls in a finished multiplayer match's points once the backend has settled
+     * them (onRoomFinished writes every player's profile from the finalScore it
+     * computed in functions/src/scoring.ts). The client used to apply those points
+     * to its own profile, which meant the server computed an authoritative number
+     * and then trusted the client to store it.
+     *
+     * [multiplayerAwardStore] now only keeps this from re-reading the same settled
+     * room; the award itself is idempotent server-side. No-ops for anonymous
+     * profiles, which never sync and never rank.
+     *
+     * @return true if this call pulled in the match's result.
+     */
+    override suspend fun syncMatchResult(roomId: String): Boolean = withContext(Dispatchers.IO) {
         if (multiplayerAwardStore.hasAwarded(roomId)) return@withContext false
         val current = getProfile()
-        if (current.isAnonymous) {
+        if (current.isAnonymous || current.userId.isBlank()) {
             multiplayerAwardStore.markAwarded(roomId)
             return@withContext false
         }
 
-        val newXp = current.experience + pointsEarned.coerceAtLeast(0)
-        val updated = current.copy(
-            points = (current.points + pointsEarned).coerceAtLeast(0),
-            experience = newXp,
-            level = XpSystem.levelFromTotalXp(newXp),
-            matchesPlayed = current.matchesPlayed + 1,
-            matchesWon = if (won) current.matchesWon + 1 else current.matchesWon,
-            matchesLost = if (!won) current.matchesLost + 1 else current.matchesLost,
-            lastPlayedAtEpochMs = System.currentTimeMillis(),
-        )
-        updateProfile(updated)
+        refreshScoringFromCloud(current.userId)
         multiplayerAwardStore.markAwarded(roomId)
         true
     }
 
-    private suspend fun syncProgressToCloud(
+    /** Like [pushProfileToCloud]: queued in Firestore's cache, never awaited. */
+    private fun syncProgressToCloud(
         uid: String,
         career: CareerStats,
         achievements: Map<String, Long>,
@@ -298,13 +346,16 @@ class FirebaseGameRepository private constructor(
                 "achievements" to achievements,
                 "updatedAt" to FieldValue.serverTimestamp()
             )
-            collection.document(uid).set(map, SetOptions.merge()).await()
+            collection.document(uid).set(map, SetOptions.merge())
+                .addOnFailureListener { e -> Log.w("FirebaseRepo", "Progress sync rejected: ${e.message}") }
+        } catch (e: CancellationException) {
+            throw e
         } catch (e: Exception) {
             Log.w("FirebaseRepo", "Failed to sync progress to cloud: ${e.message}")
         }
     }
 
-    suspend fun getLeaderboard(forceRefresh: Boolean = false): List<UserProfile> = withContext(Dispatchers.IO) {
+    override suspend fun getLeaderboard(forceRefresh: Boolean): List<UserProfile> = withContext(Dispatchers.IO) {
         val now = System.currentTimeMillis()
         if (!forceRefresh && cachedLeaderboard.isNotEmpty() && (now - lastLeaderboardFetchEpochMs < 300_000L)) {
             return@withContext cachedLeaderboard
@@ -337,6 +388,8 @@ class FirebaseGameRepository private constructor(
                     lastLeaderboardFetchEpochMs = now
                     return@withContext remoteEntries
                 }
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 Log.w("FirebaseRepo", "Leaderboard fetch error (offline or unconfigured): ${e.message}")
             }
@@ -354,7 +407,7 @@ class FirebaseGameRepository private constructor(
         return@withContext list
     }
 
-    suspend fun getUserRank(myPoints: Int): Int = withContext(Dispatchers.IO) {
+    override suspend fun getUserRank(myPoints: Int): Int = withContext(Dispatchers.IO) {
         val collection = users
         if (collection != null) {
             try {
@@ -363,6 +416,8 @@ class FirebaseGameRepository private constructor(
                     .get(AggregateSource.SERVER)
                     .await()
                 return@withContext (agg.count + 1).toInt()
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 Log.w("FirebaseRepo", "Rank query fallback: ${e.message}")
             }
@@ -371,12 +426,20 @@ class FirebaseGameRepository private constructor(
         if (idx != -1) idx + 1 else cachedLeaderboard.size + 1
     }
 
-    fun getCareerStats(): CareerStats = achievementsStore.getCareerStats()
-    fun getAllAchievements(): List<Achievement> = achievementsStore.getAllAchievements()
+    override fun getCareerStats(): CareerStats = achievementsStore.getCareerStats()
+    override fun getAllAchievements(): List<Achievement> = achievementsStore.getAllAchievements()
 
     companion object {
         @Volatile
         private var INSTANCE: FirebaseGameRepository? = null
+
+        // The server refused the run itself (implausible, or a guest account): sending it
+        // again gets the same answer. Anything else -- offline, timeout, rate limit -- retries.
+        private val PERMANENT_SUBMIT_FAILURES = setOf(
+            FirebaseFunctionsException.Code.INVALID_ARGUMENT,
+            FirebaseFunctionsException.Code.PERMISSION_DENIED,
+            FirebaseFunctionsException.Code.FAILED_PRECONDITION,
+        )
 
         fun getInstance(context: Context): FirebaseGameRepository {
             return INSTANCE ?: synchronized(this) {

@@ -1,8 +1,11 @@
 package com.softyorch.stroopoverload.ui
 
+import com.softyorch.stroopoverload.ui.theme.LimitFontScale
+import com.softyorch.stroopoverload.ui.theme.GAME_BOARD_FONT_SCALE
 import android.app.Application
 import androidx.activity.compose.LocalActivity
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
@@ -19,15 +22,17 @@ import com.softyorch.stroopoverload.ads.InterstitialAdManager
 import com.softyorch.stroopoverload.audio.MusicManager
 import com.softyorch.stroopoverload.audio.MusicTrack
 import com.softyorch.stroopoverload.data.AsoDemoSeeder
+import com.softyorch.stroopoverload.core.AndroidStringResolver
 import com.softyorch.stroopoverload.data.AuthService
+import com.softyorch.stroopoverload.data.FirebaseMultiplayerRepository
 import com.softyorch.stroopoverload.data.FirebaseGameRepository
+import com.softyorch.stroopoverload.data.repairedForSession
 import com.softyorch.stroopoverload.domain.Achievement
 import com.softyorch.stroopoverload.domain.GameMode
 import com.softyorch.stroopoverload.domain.GameResult
 import com.softyorch.stroopoverload.domain.UserProfile
 import com.softyorch.stroopoverload.domain.XpBreakdown
 import com.softyorch.stroopoverload.domain.XpSystem
-import com.softyorch.stroopoverload.game.GameState
 import com.softyorch.stroopoverload.game.GameViewModel
 import com.softyorch.stroopoverload.ui.screen.GameModeSelectScreen
 import com.softyorch.stroopoverload.ui.screen.GameOverScreen
@@ -41,6 +46,8 @@ import com.softyorch.stroopoverload.ui.screen.profile.ProfileScreen
 import com.softyorch.stroopoverload.ui.screen.profile.ProfileViewModel
 import com.softyorch.stroopoverload.ui.components.AnonymousGateDialog
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 private const val ROUTE_AUTH = "auth"
 private const val ROUTE_HOME = "home"
@@ -82,12 +89,17 @@ fun StroopNavGraph() {
     // Activity before Android actually stops it, so this is the earliest
     // reliable hook to cut music instead of leaving it playing behind a
     // locked screen.
+    // ON_RESUME (app start included) is also when solo runs still waiting for the server
+    // are retried -- the usual moment a connection that dropped has come back.
     val lifecycleOwner = LocalLifecycleOwner.current
     DisposableEffect(lifecycleOwner, musicManager) {
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
                 Lifecycle.Event.ON_PAUSE -> musicManager.pause()
-                Lifecycle.Event.ON_RESUME -> musicManager.resume()
+                Lifecycle.Event.ON_RESUME -> {
+                    musicManager.resume()
+                    repository.flushPendingRuns()
+                }
                 else -> Unit
             }
         }
@@ -110,22 +122,37 @@ fun StroopNavGraph() {
     }
 
     var currentProfile by remember { mutableStateOf(UserProfile()) }
-    var previousHighScore by remember { mutableIntStateOf(0) }
-    var selectedGameMode by remember { mutableStateOf(GameMode.ENDLESS) }
+    // Saveable: after the process is killed mid-run the game route is restored, and plain
+    // remember used to restart it in ENDLESS with a high score of 0.
+    var previousHighScore by rememberSaveable { mutableIntStateOf(0) }
+    var selectedGameMode by rememberSaveable { mutableStateOf(GameMode.ENDLESS) }
     var lastResult by remember { mutableStateOf<GameResult?>(null) }
     var lastXpBreakdown by remember { mutableStateOf<XpBreakdown?>(null) }
     var lastNewAchievements by remember { mutableStateOf<List<Achievement>>(emptyList()) }
     var showAnonymousGateDialog by remember { mutableStateOf(false) }
 
     val startRoute = remember {
-        AsoDemoSeeder.seedIfNeeded(context)
         val isDemoShowcaseBuild = BuildConfig.FLAVOR == "demo"
         if (authService.currentUid == null && !isDemoShowcaseBuild) ROUTE_AUTH else ROUTE_HOME
     }
 
+    // Seeding and profile loading both touch SharedPreferences and SQLite. They used
+    // to run inside remember {}, i.e. during composition, which Compose may enter,
+    // discard and re-run -- and which blocks the first frame on disk I/O. An effect
+    // on the IO dispatcher is where this belongs.
     LaunchedEffect(navController) {
-        currentProfile = repository.getProfile()
-        previousHighScore = currentProfile.highScore
+        val profile = withContext(Dispatchers.IO) {
+            AsoDemoSeeder.seedIfNeeded(context)
+            // A signed-in session starts straight at Home and never passes through
+            // AuthViewModel's sync, so a guest profile saved as registered by an older build
+            // is repaired here.
+            val stored = repository.getProfile()
+            stored.repairedForSession(authService.currentUid, authService.isAnonymousSession)
+                ?.also { repository.updateProfile(it) }
+                ?: stored
+        }
+        currentProfile = profile
+        previousHighScore = profile.highScore
     }
 
     NavHost(navController = navController, startDestination = startRoute) {
@@ -167,7 +194,7 @@ fun StroopNavGraph() {
                     // FirebaseGameRepository.updateProfile), so a guest could join a
                     // room but could never actually be scored -- block the whole
                     // flow up front instead of letting them play for nothing.
-                    if (authService.currentUser?.isAnonymous == true) {
+                    if (authService.isAnonymousSession == true) {
                         showAnonymousGateDialog = true
                     } else {
                         navController.navigate(ROUTE_MULTIPLAYER)
@@ -187,32 +214,42 @@ fun StroopNavGraph() {
         }
         composable(ROUTE_GAME) {
             val gameVm: GameViewModel = viewModel()
-            val gameState by gameVm.state.collectAsState()
             LaunchedEffect(Unit) { gameVm.startGame(selectedGameMode, previousHighScore) }
 
-            GameScreen(
-                viewModel = gameVm,
-                isAdFree = currentProfile.isAdFree || currentProfile.isPremium,
-                onGameOver = { result ->
-                    val playingState = gameState as? GameState.Playing
-                    val streak = playingState?.currentStreak ?: 0
-                    lastResult = result
-                    scope.launch {
-                        val prof = repository.getProfile()
-                        val xpBreakdown = XpSystem.calculateGameXp(result, prof.dailyStreak, streak)
-                        val newAch = repository.recordGameResult(result, xpBreakdown.total)
-                        lastXpBreakdown = xpBreakdown
-                        lastNewAchievements = newAch
-                        currentProfile = repository.getProfile()
-                        previousHighScore = currentProfile.highScore
-                        navController.navigate(ROUTE_GAME_OVER) {
-                            popUpTo(ROUTE_HOME)
+            LimitFontScale(max = GAME_BOARD_FONT_SCALE) {
+                GameScreen(
+                    viewModel = gameVm,
+                    isAdFree = currentProfile.isAdFree || currentProfile.isPremium,
+                    onLeaveMatch = { navController.popBackStack() },
+                    onGameOver = { result, streak ->
+                        lastResult = result
+                        scope.launch {
+                            val prof = repository.getProfile()
+                            val xpBreakdown = XpSystem.calculateGameXp(result, prof.dailyStreak, streak)
+                            val newAch = repository.recordGameResult(result, xpBreakdown.total, streak)
+                            lastXpBreakdown = xpBreakdown
+                            lastNewAchievements = newAch
+                            currentProfile = repository.getProfile()
+                            previousHighScore = currentProfile.highScore
+                            navController.navigate(ROUTE_GAME_OVER) {
+                                popUpTo(ROUTE_HOME)
+                            }
                         }
-                    }
-                },
-            )
+                    },
+                )
+            }
         }
         composable(ROUTE_GAME_OVER) {
+            // lastResult lives in plain `remember`: after the process is killed in the background
+            // the back stack restores this route but the result is gone, which used to leave a
+            // blank screen. The run was already recorded, so there is nothing to show -- go home.
+            if (lastResult == null) {
+                LaunchedEffect(Unit) {
+                    navController.navigate(ROUTE_HOME) {
+                        popUpTo(navController.graph.id) { inclusive = true }
+                    }
+                }
+            }
             lastResult?.let { result ->
                 GameOverScreen(
                     result = result,
@@ -235,8 +272,17 @@ fun StroopNavGraph() {
             LeaderboardScreen(onBack = { navController.popBackStack() })
         }
         composable(ROUTE_MULTIPLAYER) {
+            val myUid = authService.currentUid
+            if (myUid == null) {
+                // Only reachable if the session ended on the way here. Online play needs a
+                // real Firebase uid -- the backend identifies players by it -- so go back
+                // rather than join with a made-up one.
+                LaunchedEffect(Unit) { navController.popBackStack() }
+                return@composable
+            }
             MultiplayerScreen(
-                myUid = authService.currentUid ?: "guest_local_0001",
+                myUid = myUid,
+                onLeaveMatch = { navController.popBackStack() },
                 myNickname = currentProfile.displayName,
                 repository = repository,
                 interstitialAdManager = interstitialAdManager,
@@ -270,13 +316,22 @@ fun StroopNavGraph() {
 private class AuthViewModelFactory(private val application: Application) : androidx.lifecycle.ViewModelProvider.Factory {
     override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
         @Suppress("UNCHECKED_CAST")
-        return AuthViewModel(application) as T
+        return AuthViewModel(
+            authService = AuthService(),
+            repository = FirebaseGameRepository.getInstance(application),
+            strings = AndroidStringResolver(application),
+        ) as T
     }
 }
 
 private class ProfileViewModelFactory(private val application: Application) : androidx.lifecycle.ViewModelProvider.Factory {
     override fun <T : androidx.lifecycle.ViewModel> create(modelClass: Class<T>): T {
         @Suppress("UNCHECKED_CAST")
-        return ProfileViewModel(application) as T
+        return ProfileViewModel(
+            repository = FirebaseGameRepository.getInstance(application),
+            authService = AuthService(),
+            multiplayerRepository = FirebaseMultiplayerRepository(),
+            strings = AndroidStringResolver(application),
+        ) as T
     }
 }
