@@ -1456,8 +1456,7 @@ placement mismatch (MEDIUM) · #1, #2, #3, #7 confirmed live.
 ## >>> RESUME HERE (updated 2026-09-25) <<<
 
 **Branch** `refactor/audit-hardening`, NOT pushed (no PR yet). Everything below is committed except the items in
-"Uncommitted". **Prod (`stroopoverload-softyorch`) runs exactly the committed backend**: rules + all functions incl.
-`submitSoloRun` runId dedupe and `leaveRoom` were deployed 2026-09-24. App Check enforcement still OFF.
+"Uncommitted". **Prod (`stroopoverload-softyorch`) runs exactly the committed backend** (last deploy 2026-09-25: index + functions). App Check enforcement still OFF.
 
 ### Done this session (commits after c1b52a9)
 | Commit | What |
@@ -1496,7 +1495,10 @@ Tests at the end: functions 225/225 (emulator), Kotlin 171/171, debug + release 
   - ServerClock (RTDB `.info/serverTimeOffset`) for DeadlineTimerBar + starting countdown; backend stamps
     `finishedAtMs` on every finish path, MatchFinishedOverlay uses it (restore showed 0:22 for a ~6 s match).
   - The bot's DEADLINE_EXCEEDED in the live test was legit: first turn is 3000 ms, bot answered at ~4 s.
-  - Tests: functions 227/227, Kotlin 176/176, debug build OK. NOT DEPLOYED.
+  - Tests: functions 227/227, Kotlin 176/176, debug build OK.
+  - **DEPLOYED 2026-09-25** in order: index (CREATING -> READY in ~4 min, checked via Firestore Admin API with
+    the CLI's auth: scratch script, firebase-tools lib/requireAuth + apiv2), then all 15 functions. Prod smoke
+    37/37; sweepStuckRooms runs clean after deploy (no FAILED_PRECONDITION). Prod = committed backend again.
   - **Deploy order (reviewer MEDIUM)**: `firebase deploy --only firestore:indexes`, wait until the index is READY
     (`firebase firestore:indexes` / console), THEN `--only functions`. Otherwise sweepStuckRooms fails with
     FAILED_PRECONDITION every minute until the build ends. Old clients ignore finishedAtMs (safe).
@@ -1507,7 +1509,7 @@ Tests at the end: functions 225/225 (emulator), Kotlin 171/171, debug + release 
 
 ### Next steps, in order
 1. ~~Decide on QuadrantBox and functions/e2e~~ -- both committed 2026-09-25.
-2. ~~#10 lows~~ done; deploy backend (index first, see above) -- ask user.
+2. ~~#10 lows~~ done and deployed 2026-09-25.
 3. Human checklist on a device (release build, sound/timer feel, real registration emails, ads, other locales).
 4. Push branch + PR; before Play: bump versionCode, register App Check debug token + Play Integrity, then
    `ENFORCE_APP_CHECK = true` once the installed base runs the new client.
