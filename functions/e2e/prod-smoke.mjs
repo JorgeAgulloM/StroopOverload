@@ -12,6 +12,7 @@
 //
 // Groups: rules, solo, mistake, hotpotato, survival, leave.
 
+import { randomUUID } from "node:crypto";
 import { readFileSync } from "node:fs";
 import { createRequire } from "node:module";
 
@@ -68,7 +69,9 @@ async function newAccount(kind) {
       ? await identity("accounts:signUp", { returnSecureToken: true })
       : await identity("accounts:signUp", {
           email: `e2e+${RUN_ID}-${n}@stroopoverload.test`,
-          password: `e2e-${RUN_ID}-pw`,
+          // Random per account: these are live production accounts while the run lasts, so a
+          // password derivable from the run timestamp would let anyone sign in to them.
+          password: randomUUID(),
           returnSecureToken: true,
         });
   const account = { uid: json.localId, token: json.idToken, kind, name: `E2E_${n}` };
