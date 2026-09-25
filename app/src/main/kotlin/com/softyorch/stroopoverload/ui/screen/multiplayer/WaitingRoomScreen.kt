@@ -137,7 +137,12 @@ fun WaitingRoomScreen(
 
             Spacer(Modifier.height(16.dp))
 
+            SignalScanner(
+                label = stringResource(if (isHost) R.string.mp_waiting_scanning_host else R.string.mp_waiting_scanning_guest),
+            )
+
             if (isHost) {
+                Spacer(Modifier.height(20.dp))
                 Button(
                     onClick = onStartGame,
                     enabled = !isStartingGame && room.players.size in 2..MAX_PLAYERS,
@@ -173,12 +178,7 @@ fun WaitingRoomScreen(
                         modifier = Modifier.fillMaxWidth(),
                     )
                 }
-                Spacer(Modifier.height(20.dp))
             }
-
-            SignalScanner(
-                label = stringResource(if (isHost) R.string.mp_waiting_scanning_host else R.string.mp_waiting_scanning_guest),
-            )
         }
     }
 }
@@ -237,6 +237,8 @@ private fun EmptyPlayerSlot() {
 }
 
 /** Cyberpunk "scanning for signal" equalizer-style loading indicator. */
+private val ScannerBarMaxHeight = 28.dp
+
 @Composable
 internal fun SignalScanner(label: String) {
     val barCount = 7
@@ -246,7 +248,10 @@ internal fun SignalScanner(label: String) {
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
+        // Fixed height: sized by its tallest bar, the row grew and shrank with the animation
+        // and pushed whatever sat next to it (the Start button) up and down.
         Row(
+            modifier = Modifier.height(ScannerBarMaxHeight),
             horizontalArrangement = Arrangement.spacedBy(6.dp),
             verticalAlignment = Alignment.Bottom,
         ) {
@@ -264,7 +269,7 @@ internal fun SignalScanner(label: String) {
                 Box(
                     modifier = Modifier
                         .width(6.dp)
-                        .height((28 * heightFraction).dp)
+                        .height(ScannerBarMaxHeight * heightFraction)
                         .background(TechAccent.copy(alpha = 0.4f + 0.6f * heightFraction), RoundedCornerShape(3.dp))
                 )
             }
