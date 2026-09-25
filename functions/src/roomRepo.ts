@@ -41,6 +41,12 @@ export async function findJoinableRoomByCode(code: string) {
  * than trusting generateRoomCode()'s output blindly -- codes are short
  * (5 chars from a 32-char alphabet) so collisions against the small set
  * of concurrently-open rooms are rare but not impossible.
+ *
+ * Check-then-write, not atomic: two createRoom calls drawing the same code
+ * within the same instant would both pass. Accepted -- that is about 1 in
+ * 33.5M per concurrent pair, and the worst case is some joiners landing in
+ * the other waiting room. A transactional roomCodes/{code} reservation would
+ * cost extra writes and cleanup on every room for that.
  */
 export async function generateUniqueRoomCode(): Promise<string> {
   for (let attempt = 0; attempt < MAX_CODE_GENERATION_ATTEMPTS; attempt++) {

@@ -3,7 +3,7 @@ import { readFileSync } from "fs";
 import * as path from "path";
 import { getApps, initializeApp } from "firebase-admin/app";
 import { DocumentData } from "firebase-admin/firestore";
-import { purgeExpiredRooms, ROOM_TTL_MS, sweepStuckRooms, WATCHDOG_GRACE_MS } from "./roomWatchdog";
+import { deletePlayerRooms, purgeExpiredRooms, ROOM_TTL_MS, sweepStuckRooms, WATCHDOG_GRACE_MS } from "./roomWatchdog";
 import { scheduleBombExplosion, scheduleTimeoutCheck } from "./taskQueue";
 
 // Same reasoning as resolveRound.test.ts: no Cloud Tasks emulator here, so the
@@ -105,6 +105,19 @@ async function getBomb(roomId: string): Promise<DocumentData | undefined> {
 }
 
 describe("sweepStuckRooms", () => {
+  test("a bounded sweep repairs the oldest live rooms first, where stuck rooms end up", async () => {
+    // A stuck room stays live while healthy ones finish within minutes, so it drifts to the
+    // front of an oldest-first scan instead of being starved behind newer rooms.
+    await seedRoom("newer", { deadlineAtMs: Date.now() - OVERDUE, createdAtMs: Date.now() - 1_000 });
+    await seedRoom("older", { deadlineAtMs: Date.now() - OVERDUE, createdAtMs: Date.now() - 60_000 });
+
+    const repaired = await sweepStuckRooms(Date.now(), 1);
+
+    expect(repaired).toBe(1);
+    expect((await getRoom("older"))!.round).toBe(2);
+    expect((await getRoom("newer"))!.round).toBe(1);
+  });
+
   test("starts a 'starting' room whose beginRound task never ran", async () => {
     await seedRoom("room-1", {
       status: "starting",
@@ -258,5 +271,21 @@ describe("purgeExpiredRooms", () => {
     expect(await getBomb("room-old")).toBeUndefined();
     expect(await getRoom("room-new")).toBeDefined();
     expect(mockDbRemove).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("deletePlayerRooms", () => {
+  test("deletes every room of the player page by page, with their private data, and leaves other rooms alone", async () => {
+    for (let i = 0; i < 5; i++) await seedRoom(`mine-${i}`);
+    await seedBomb("mine-0", Date.now() + 10_000);
+    await seedRoom("theirs", { players: { z: { ...TWO_PLAYERS.a, uid: "z" } }, turnOrder: ["z"] });
+
+    const deleted = await deletePlayerRooms("a", 2);
+
+    expect(deleted).toBe(5);
+    for (let i = 0; i < 5; i++) expect(await getRoom(`mine-${i}`)).toBeUndefined();
+    expect(await getBomb("mine-0")).toBeUndefined();
+    expect(await getRoom("theirs")).toBeDefined();
+    expect(mockDbRemove).toHaveBeenCalledTimes(5);
   });
 });

@@ -19,6 +19,10 @@ export const WATCHDOG_GRACE_MS = 15_000;
 // watchdog couldn't save) and is deleted along with its private data and presence.
 export const ROOM_TTL_MS = 6 * 60 * 60 * 1000;
 const PURGE_BATCH_LIMIT = 300;
+// Live rooms looked at per sweep. Oldest first: a stuck room stays live while healthy ones
+// finish within minutes, so it reaches the front of the scan instead of being starved.
+const SWEEP_BATCH_LIMIT = 300;
+const DELETE_PAGE_SIZE = 100;
 
 function isOverdue(atMs: number | null | undefined, nowMs: number): boolean {
   return atMs != null && atMs + WATCHDOG_GRACE_MS < nowMs;
@@ -33,8 +37,13 @@ function isOverdue(atMs: number | null | undefined, nowMs: number): boolean {
  *
  * @returns how many rooms were repaired.
  */
-export async function sweepStuckRooms(nowMs: number = Date.now()): Promise<number> {
-  const snap = await roomsCol().where("status", "in", ["starting", "playing"]).get();
+export async function sweepStuckRooms(nowMs: number = Date.now(), batchLimit: number = SWEEP_BATCH_LIMIT): Promise<number> {
+  // Needs the (status, createdAtMs) composite index in firestore.indexes.json.
+  const snap = await roomsCol()
+    .where("status", "in", ["starting", "playing"])
+    .orderBy("createdAtMs")
+    .limit(batchLimit)
+    .get();
   const results = await Promise.allSettled(snap.docs.map((doc) => repairRoom(doc.id, doc.data(), nowMs)));
 
   let repaired = 0;
@@ -122,4 +131,33 @@ export async function purgeExpiredRooms(nowMs: number = Date.now()): Promise<num
     })
   );
   return snap.size;
+}
+
+/**
+ * Deletes every room [uid] is a player in (host or guest -- createRoom seeds the host into
+ * `players` too), including rooms/{id}/private/** and the room's presence node. A plain
+ * delete() would orphan the private subcollection, which no later query could ever find.
+ * Paged so a long history can't blow up one query; deleted rooms drop out of the next page.
+ *
+ * @returns how many rooms were deleted.
+ */
+export async function deletePlayerRooms(uid: string, pageSize: number = DELETE_PAGE_SIZE): Promise<number> {
+  const db = getFirestore();
+  const presence = getDatabase();
+  let deleted = 0;
+  for (;;) {
+    const snap = await roomsCol().where(`players.${uid}.uid`, "==", uid).limit(pageSize).get();
+    await Promise.all(
+      snap.docs.map(async (doc) => {
+        await db.recursiveDelete(doc.ref);
+        try {
+          await presence.ref(`presence/${doc.id}`).remove();
+        } catch (err) {
+          console.error(`deletePlayerRooms: failed to remove presence for room ${doc.id}`, err);
+        }
+      })
+    );
+    deleted += snap.size;
+    if (snap.size < pageSize) return deleted;
+  }
 }

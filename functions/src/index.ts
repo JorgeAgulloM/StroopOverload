@@ -1,6 +1,5 @@
 import { initializeApp } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
-import { getDatabase } from "firebase-admin/database";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { onTaskDispatched } from "firebase-functions/v2/tasks";
 import { onValueWritten } from "firebase-functions/v2/database";
@@ -14,7 +13,7 @@ import { applySoloAnswer, finishSoloSurvivalSession, resolveSoloAnswer, schedule
 import { judgeAnswer, parseAnsweredRound } from "./answerJudge";
 import { beginMatch } from "./matchStart";
 import { leaveWaitingRoom } from "./roomLeave";
-import { purgeExpiredRooms as purgeExpiredRoomsFn, sweepStuckRooms as sweepStuckRoomsFn } from "./roomWatchdog";
+import { deletePlayerRooms, purgeExpiredRooms as purgeExpiredRoomsFn, sweepStuckRooms as sweepStuckRoomsFn } from "./roomWatchdog";
 import { scheduleGameStart } from "./taskQueue";
 import {
   assertWithinRateLimit,
@@ -366,19 +365,7 @@ export const deleteMyMultiplayerData = onCall(CALLABLE_OPTIONS, async (request) 
   if (!uid) throw new HttpsError("unauthenticated", "Debes iniciar sesión.");
 
   try {
-    const snap = await roomsCol().where(`players.${uid}.uid`, "==", uid).get();
-    const db = getDatabase();
-    await Promise.all(
-      snap.docs.map(async (doc) => {
-        await doc.ref.delete();
-        try {
-          await db.ref(`presence/${doc.id}`).remove();
-        } catch (err) {
-          console.error(`deleteMyMultiplayerData: failed to remove presence for room ${doc.id}`, err);
-        }
-      })
-    );
-    return { roomsDeleted: snap.size };
+    return { roomsDeleted: await deletePlayerRooms(uid) };
   } catch (err) {
     console.error(`deleteMyMultiplayerData failed for uid ${uid}`, err);
     throw new HttpsError("internal", "No se pudieron eliminar los datos multijugador.");
