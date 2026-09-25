@@ -15,6 +15,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -213,7 +214,7 @@ fun GameOverScreen(
                         shape = RoundedCornerShape(4.dp),
                         modifier = Modifier.weight(1f).heightIn(min = 48.dp)
                     ) {
-                        Text(stringResource(R.string.game_over_share_score), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(stringResource(R.string.game_over_share_score), maxLines = 2, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center)
                     }
                     OutlinedButton(
                         onClick = onMenu,
@@ -222,7 +223,7 @@ fun GameOverScreen(
                         shape = RoundedCornerShape(4.dp),
                         modifier = Modifier.weight(1f).heightIn(min = 48.dp)
                     ) {
-                        Text(stringResource(R.string.game_over_main_menu), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        Text(stringResource(R.string.game_over_main_menu), maxLines = 2, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center)
                     }
                 }
                 Spacer(modifier = Modifier.height(24.dp))
