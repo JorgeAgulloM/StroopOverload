@@ -1,5 +1,6 @@
 package com.softyorch.stroopoverload.ui.screen.multiplayer
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.softyorch.stroopoverload.core.StroopColor
@@ -18,6 +19,10 @@ import kotlinx.coroutines.launch
 
 class MultiplayerViewModel(
     private val repository: MultiplayerRepository = FirebaseMultiplayerRepository(),
+    // Survives process death, unlike everything else here. Holds the room the player is
+    // seated in so a restored screen can reattach to it instead of dropping them in the lobby
+    // with no word about the match they were in.
+    private val savedState: SavedStateHandle = SavedStateHandle(),
 ) : ViewModel() {
 
     private val _state = MutableStateFlow<MultiplayerUiState>(MultiplayerUiState.Idle)
@@ -35,6 +40,20 @@ class MultiplayerViewModel(
 
     /** (roomId, round) of the last answer sent and not rejected; see [submitAnswer]. */
     private var answeredTarget: Pair<String, Int>? = null
+
+    init {
+        val savedRoomId = savedState.get<String>(KEY_ROOM_ID)
+        val savedUid = savedState.get<String>(KEY_UID)
+        if (savedRoomId != null && savedUid != null) {
+            // The process died with the player in a room. Presence went offline with it, so in
+            // "mistake" and solo_survival the backend has already eliminated them; reattaching
+            // shows them that and the final result. In hot_potato a disconnect eliminates no
+            // one, and they can carry on playing.
+            myUid = savedUid
+            _state.value = MultiplayerUiState.Connecting
+            observeRoom(savedRoomId)
+        }
+    }
 
     fun createRoom(uid: String, displayName: String, mode: RoomMode = RoomMode.MISTAKE) {
         if (_state.value !is MultiplayerUiState.Idle && _state.value !is MultiplayerUiState.Error) return
@@ -93,7 +112,13 @@ class MultiplayerViewModel(
         leavePresence()
         observeRoomJob?.cancel()
         observeRoomJob = null
+        forgetSavedRoom()
         _state.value = MultiplayerUiState.Idle
+    }
+
+    private fun forgetSavedRoom() {
+        savedState.remove<String>(KEY_ROOM_ID)
+        savedState.remove<String>(KEY_UID)
     }
 
     /**
@@ -143,6 +168,8 @@ class MultiplayerViewModel(
         repository.trackPresence(roomId, myUid)
         presenceRoomId = roomId
         seatedRoomId = roomId
+        savedState[KEY_ROOM_ID] = roomId
+        savedState[KEY_UID] = myUid
         lastKnownStatus = RoomStatus.WAITING
         observeRoomJob = viewModelScope.launch {
             try {
@@ -167,5 +194,10 @@ class MultiplayerViewModel(
         leavePresence()
         observeRoomJob?.cancel()
         super.onCleared()
+    }
+
+    private companion object {
+        const val KEY_ROOM_ID = "multiplayer.roomId"
+        const val KEY_UID = "multiplayer.uid"
     }
 }

@@ -14,7 +14,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import com.softyorch.stroopoverload.R
 import com.softyorch.stroopoverload.ads.InterstitialAdManager
 import com.softyorch.stroopoverload.audio.AudioPlayer
@@ -22,6 +25,7 @@ import com.softyorch.stroopoverload.audio.GameSfx
 import com.softyorch.stroopoverload.audio.MusicManager
 import com.softyorch.stroopoverload.audio.MusicTrack
 import com.softyorch.stroopoverload.data.FirebaseGameRepository
+import com.softyorch.stroopoverload.data.FirebaseMultiplayerRepository
 import com.softyorch.stroopoverload.domain.multiplayer.MultiplayerRoom
 import com.softyorch.stroopoverload.domain.multiplayer.RoomMode
 import com.softyorch.stroopoverload.domain.multiplayer.RoomStatus
@@ -42,7 +46,10 @@ fun MultiplayerScreen(
     isAdFree: Boolean,
     musicManager: MusicManager,
 ) {
-    val viewModel: MultiplayerViewModel = viewModel()
+    // Explicit factory: the default one would call the no-arg constructor and hand the
+    // ViewModel a blank SavedStateHandle, so a match interrupted by process death would
+    // never be reattached.
+    val viewModel: MultiplayerViewModel = viewModel(factory = MultiplayerViewModelFactory)
     val state by viewModel.state.collectAsStateWithLifecycle()
     val activity = LocalActivity.current
     val context = LocalContext.current
@@ -205,4 +212,8 @@ private fun MultiplayerStartingScreen(room: MultiplayerRoom, audioPlayer: AudioP
             StartingPhase.LOADING, StartingPhase.BRIDGING -> PreloadWaitingRoom(room)
         }
     }
+}
+
+private val MultiplayerViewModelFactory = viewModelFactory {
+    initializer { MultiplayerViewModel(FirebaseMultiplayerRepository(), createSavedStateHandle()) }
 }

@@ -1,5 +1,6 @@
 package com.softyorch.stroopoverload.ui.screen.multiplayer
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModelStore
 import app.cash.turbine.test
 import com.softyorch.stroopoverload.core.StroopColor
@@ -707,5 +708,57 @@ class MultiplayerViewModelTest {
         store.clear()
 
         assertEquals(listOf("room-1"), fake.leftRooms)
+    }
+
+    @Test
+    fun `after process death the restored ViewModel reattaches to the room it was in`() = runTest {
+        // The SavedStateHandle is what survives the process; the repository and its
+        // listeners do not, so the restored ViewModel gets a fresh one.
+        val savedState = SavedStateHandle()
+        val before = MultiplayerViewModel(FakeMultiplayerRepository(), savedState)
+        before.createRoom(uid = "player-1", displayName = "Neo")
+        dispatcher.scheduler.advanceUntilIdle()
+
+        val fake = FakeMultiplayerRepository()
+        val restored = MultiplayerViewModel(fake, savedState)
+        assertEquals(MultiplayerUiState.Connecting, restored.state.value)
+        dispatcher.scheduler.advanceUntilIdle()
+        emitRoomWithStatus(fake, RoomStatus.PLAYING)
+
+        val inRoom = restored.state.value as MultiplayerUiState.InRoom
+        assertEquals("room-1", inRoom.room.roomId)
+        assertEquals("player-1", inRoom.myUid)
+        assertTrue(fake.presenceTracked)
+    }
+
+    @Test
+    fun `a room the player left is not reattached after process death`() = runTest {
+        val savedState = SavedStateHandle()
+        val before = MultiplayerViewModel(FakeMultiplayerRepository(), savedState)
+        before.createRoom(uid = "player-1", displayName = "Neo")
+        dispatcher.scheduler.advanceUntilIdle()
+        before.exitRoom()
+
+        val fake = FakeMultiplayerRepository()
+        val restored = MultiplayerViewModel(fake, savedState)
+        dispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(MultiplayerUiState.Idle, restored.state.value)
+        assertTrue(!fake.presenceTracked)
+    }
+
+    @Test
+    fun `reattaching to a room that no longer exists reports the connection as lost`() = runTest {
+        val savedState = SavedStateHandle()
+        val before = MultiplayerViewModel(FakeMultiplayerRepository(), savedState)
+        before.joinRoom(uid = "player-2", code = "ABCDE", displayName = "Trinity")
+        dispatcher.scheduler.advanceUntilIdle()
+
+        val fake = FakeMultiplayerRepository()
+        fake.observeRoomFlow = flow { throw IllegalStateException("room deleted") }
+        val restored = MultiplayerViewModel(fake, savedState)
+        dispatcher.scheduler.advanceUntilIdle()
+
+        assertEquals(MultiplayerUiState.Error(MultiplayerErrorReason.ConnectionLost), restored.state.value)
     }
 }
