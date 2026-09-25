@@ -131,7 +131,7 @@ fun WaitingRoomScreen(
                 verticalArrangement = Arrangement.spacedBy(10.dp),
                 contentPadding = PaddingValues(vertical = 8.dp),
             ) {
-                items(room.players) { player -> PlayerSlot(player, room.hostUid) }
+                items(room.players, key = { it.uid }) { player -> PlayerSlot(player, room.hostUid) }
                 items(MAX_PLAYERS - room.players.size) { EmptyPlayerSlot() }
             }
 

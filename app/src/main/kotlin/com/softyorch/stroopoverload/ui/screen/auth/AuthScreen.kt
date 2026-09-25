@@ -166,17 +166,17 @@ fun AuthScreen(
                         modifier = Modifier.fillMaxWidth()
                     )
                     Spacer(modifier = Modifier.height(20.dp))
-                    if (state.errorMessage != null) {
+                    state.errorMessage?.let { message ->
                         Text(
-                            text = state.errorMessage!!,
+                            text = message,
                             color = MaterialTheme.colorScheme.error,
                             style = MaterialTheme.typography.bodySmall,
                             modifier = Modifier.padding(bottom = 12.dp)
                         )
                     }
-                    if (state.successMessage != null) {
+                    state.successMessage?.let { message ->
                         Text(
-                            text = state.successMessage!!,
+                            text = message,
                             color = MaterialTheme.colorScheme.tertiary,
                             style = MaterialTheme.typography.bodySmall,
                             modifier = Modifier.padding(bottom = 12.dp)
@@ -312,17 +312,17 @@ fun AuthScreen(
 
                     Spacer(modifier = Modifier.height(24.dp))
 
-                    if (state.errorMessage != null) {
+                    state.errorMessage?.let { message ->
                         Text(
-                            text = state.errorMessage!!,
+                            text = message,
                             color = MaterialTheme.colorScheme.error,
                             style = MaterialTheme.typography.bodySmall,
                             modifier = Modifier.padding(bottom = 12.dp)
                         )
                     }
-                    if (state.successMessage != null) {
+                    state.successMessage?.let { message ->
                         Text(
-                            text = state.successMessage!!,
+                            text = message,
                             color = MaterialTheme.colorScheme.tertiary,
                             style = MaterialTheme.typography.bodySmall,
                             modifier = Modifier.padding(bottom = 12.dp)
