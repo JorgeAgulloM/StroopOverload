@@ -1487,9 +1487,19 @@ Tests at the end: functions 225/225 (emulator), Kotlin 171/171, debug + release 
 - NOTE: flavors are gone; fresh APK is `app/build/outputs/apk/debug/app-debug.apk` (apk/dev/ is stale July).
 
 ### Still open (parked findings)
-- **#10 lows**: DeadlineTimerBar uses device clock (no server offset); room code uniqueness is query-then-write;
-  unbounded queries in sweepStuckRooms / deleteMyMultiplayerData; `WaitingRoomScreen` LazyColumn items without `key`;
-  `!!` after null checks in AuthScreen.
+- ~~#10 lows~~ done 2026-09-25 (9e0c0c6, f9b469b, 434e3e1), reviewed (no CRITICAL/HIGH):
+  - WaitingRoom keys by uid; AuthScreen `!!` -> `?.let`.
+  - sweepStuckRooms: oldest-first `orderBy(createdAtMs).limit(300)` + composite index (status, createdAtMs).
+  - deleteMyMultiplayerData -> roomWatchdog.deletePlayerRooms: paged + recursiveDelete (plain delete() orphaned
+    rooms/{id}/private/bomb forever).
+  - Room code race: ACCEPTED, documented in roomRepo.ts (~1 in 33.5M per concurrent pair).
+  - ServerClock (RTDB `.info/serverTimeOffset`) for DeadlineTimerBar + starting countdown; backend stamps
+    `finishedAtMs` on every finish path, MatchFinishedOverlay uses it (restore showed 0:22 for a ~6 s match).
+  - The bot's DEADLINE_EXCEEDED in the live test was legit: first turn is 3000 ms, bot answered at ~4 s.
+  - Tests: functions 227/227, Kotlin 176/176, debug build OK. NOT DEPLOYED.
+  - **Deploy order (reviewer MEDIUM)**: `firebase deploy --only firestore:indexes`, wait until the index is READY
+    (`firebase firestore:indexes` / console), THEN `--only functions`. Otherwise sweepStuckRooms fails with
+    FAILED_PRECONDITION every minute until the build ends. Old clients ignore finishedAtMs (safe).
 - Product questions for the user: reward the run's BEST streak instead of the end streak (end streak is ~always 0)?
   Keep "offline runs rank later" (new behaviour since 7b9ae61) or add an age limit for queued runs?
 - Accepted limits: game-over screen shows provisional local numbers; recreation exactly at game over goes Home;
@@ -1497,7 +1507,7 @@ Tests at the end: functions 225/225 (emulator), Kotlin 171/171, debug + release 
 
 ### Next steps, in order
 1. ~~Decide on QuadrantBox and functions/e2e~~ -- both committed 2026-09-25.
-2. #10 lows (#8 online done 75ef95f).
+2. ~~#10 lows~~ done; deploy backend (index first, see above) -- ask user.
 3. Human checklist on a device (release build, sound/timer feel, real registration emails, ads, other locales).
 4. Push branch + PR; before Play: bump versionCode, register App Check debug token + Play Integrity, then
    `ENFORCE_APP_CHECK = true` once the installed base runs the new client.
