@@ -18,6 +18,7 @@ import kotlinx.coroutines.launch
 
 class GameViewModel(
     private val engine: IncongruenceEngine = IncongruenceEngine(),
+    private val clock: () -> Long = { System.nanoTime() / 1_000_000L },
 ) : ViewModel() {
 
     private val _state = MutableStateFlow<GameState>(GameState.Menu)
@@ -34,6 +35,8 @@ class GameViewModel(
     private var previousHighScore = 0
     private var pendingMode = GameMode.ENDLESS
     private var gameOverClaimed = false
+    private var runStartMs = 0L
+    private var frozenMs = 0L
 
     /**
      * Starts a run from the menu. Ignored once a run has started: the game screen calls this
@@ -51,6 +54,8 @@ class GameViewModel(
     fun beginRound() {
         if (_state.value !is GameState.Countdown) return
         val mode = pendingMode
+        runStartMs = clock()
+        frozenMs = 0L
         _state.value = GameState.Playing(
             mode = mode,
             livesRemaining = if (mode == GameMode.LIVES) GameConfig.LIVES_MODE_STARTING_LIVES else 0,
@@ -68,13 +73,13 @@ class GameViewModel(
         timerJob?.cancel()
 
         if (tapped == current.correctAnswer) {
-            handleCorrect(playing)
+            handleCorrect(playing, tapped)
         } else {
-            handleMiss(playing, current.correctAnswer)
+            handleMiss(playing, current.correctAnswer, tapped)
         }
     }
 
-    private fun handleCorrect(playing: GameState.Playing) {
+    private fun handleCorrect(playing: GameState.Playing, tapped: StroopColor) {
         val newHits = playing.correctHits + 1
         val newRounds = playing.totalRounds + 1
         val newStreak = playing.currentStreak + 1
@@ -87,31 +92,40 @@ class GameViewModel(
             correctHits = newHits,
             totalRounds = newRounds,
             currentStreak = newStreak,
+            lastTap = TapFeedback(tapped, isCorrect = true, round = newRounds),
         )
         nextStimulus()
     }
 
     // The miss counts as a played round (but not a correct hit) so that accuracy/won/isFlawless
     // reflect what actually happened, instead of only ever counting correct taps.
-    private fun handleMiss(playing: GameState.Playing, correctColor: StroopColor) {
+    // [tapped] is null when the stimulus timed out instead.
+    private fun handleMiss(playing: GameState.Playing, correctColor: StroopColor, tapped: StroopColor? = null) {
         timerJob?.cancel()
-        val missed = playing.copy(totalRounds = playing.totalRounds + 1, currentStreak = 0)
+        val newRounds = playing.totalRounds + 1
+        val missed = playing.copy(
+            totalRounds = newRounds,
+            currentStreak = 0,
+            lastTap = tapped?.let { TapFeedback(it, isCorrect = false, round = newRounds) } ?: playing.lastTap,
+        )
 
         when (missed.mode) {
-            GameMode.ENDLESS -> endGame(missed)
+            GameMode.ENDLESS -> endGame(missed.copy(missFlashColor = correctColor))
 
             GameMode.LIVES -> {
                 val newLives = missed.livesRemaining - 1
+                if (newLives <= 0) {
+                    endGame(missed.copy(livesRemaining = 0, missFlashColor = correctColor))
+                    return
+                }
                 _state.value = missed.copy(livesRemaining = newLives, missFlashColor = correctColor, isFrozen = true)
+                val freezeStartMs = clock()
                 viewModelScope.launch {
                     delay(GameConfig.LIVES_MODE_FREEZE_MS)
+                    frozenMs += clock() - freezeStartMs
                     val frozen = _state.value as? GameState.Playing ?: return@launch
-                    if (newLives <= 0) {
-                        endGame(frozen)
-                    } else {
-                        _state.value = frozen.copy(missFlashColor = null, isFrozen = false)
-                        nextStimulus()
-                    }
+                    _state.value = frozen.copy(missFlashColor = null, isFrozen = false)
+                    nextStimulus()
                 }
             }
 
@@ -143,18 +157,18 @@ class GameViewModel(
 
     private fun startPerStimulusTimer(playing: GameState.Playing) {
         val limitMs = timeLimitMs(playing.level)
-        val startMs = System.currentTimeMillis()
+        val startMs = clock()
 
         timerJob = viewModelScope.launch {
             while (true) {
                 delay(16L)
-                val elapsed = System.currentTimeMillis() - startMs
+                val elapsed = clock() - startMs
                 val progress = 1f - (elapsed.toFloat() / limitMs)
                 _timerProgress.value = progress.coerceIn(0f, 1f)
 
                 val currentPlaying = _state.value as? GameState.Playing
                 if (currentPlaying != null && !currentPlaying.isFrozen) {
-                    _state.value = currentPlaying.copy(survivalMs = currentPlaying.survivalMs + 16L)
+                    _state.value = currentPlaying.copy(survivalMs = playedMs(currentPlaying.mode))
                 }
 
                 if (elapsed >= limitMs) {
@@ -169,18 +183,18 @@ class GameViewModel(
 
     private fun startSessionTimer() {
         val limitMs = GameConfig.TIME_MODE_DURATION_MS
-        val startMs = System.currentTimeMillis()
+        val startMs = clock()
 
         sessionTimerJob = viewModelScope.launch {
             while (true) {
                 delay(16L)
-                val elapsed = System.currentTimeMillis() - startMs
+                val elapsed = clock() - startMs
                 val remaining = (limitMs - elapsed).coerceAtLeast(0L)
                 _timerProgress.value = (remaining.toFloat() / limitMs).coerceIn(0f, 1f)
 
                 val currentPlaying = _state.value as? GameState.Playing
                 if (currentPlaying != null) {
-                    _state.value = currentPlaying.copy(survivalMs = currentPlaying.survivalMs + 16L, timeRemainingMs = remaining)
+                    _state.value = currentPlaying.copy(survivalMs = playedMs(GameMode.TIME), timeRemainingMs = remaining)
                 }
 
                 if (remaining <= 0L) {
@@ -203,9 +217,20 @@ class GameViewModel(
         return true
     }
 
-    private fun endGame(playing: GameState.Playing) {
+    /**
+     * Time actually played: clock time since the run began, minus the freezes after LIVES
+     * misses. Counting a fixed 16 ms per timer frame undercounted, since real frames run
+     * longer -- a 60 s TIME run came out as ~57 s.
+     */
+    private fun playedMs(mode: GameMode): Long {
+        val played = clock() - runStartMs - frozenMs
+        return if (mode == GameMode.TIME) played.coerceAtMost(GameConfig.TIME_MODE_DURATION_MS) else played
+    }
+
+    private fun endGame(lastPlaying: GameState.Playing) {
         timerJob?.cancel()
         sessionTimerJob?.cancel()
+        val playing = lastPlaying.copy(survivalMs = playedMs(lastPlaying.mode))
         val won = playing.score > 0 && (playing.totalRounds >= 5 && (playing.correctHits.toFloat() / playing.totalRounds) >= 0.7f)
         _state.value = GameState.GameOver(
             GameResult(
@@ -222,6 +247,7 @@ class GameViewModel(
                 mode = playing.mode,
             ),
             endStreak = playing.currentStreak,
+            finalBoard = playing,
         )
     }
 

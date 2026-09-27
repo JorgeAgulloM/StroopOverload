@@ -61,10 +61,14 @@ fun GameScreen(
     }
 
     val playingState = state as? GameState.Playing
+    // What the board shows: the live run, or -- once it is over, while the screen holds
+    // for a moment before the game-over screen -- the board as the run ended.
+    val board = playingState ?: (state as? GameState.GameOver)?.finalBoard
 
     // Back during a live run used to abandon it silently: no score recorded, no
     // warning. Only guarded while actually playing -- menus and the game-over
-    // screen keep the normal back behaviour.
+    // screen keep the normal back behaviour. Leaving during the final-board hold is
+    // harmless: NavGraph records the run and opens the game-over screen regardless.
     var showLeaveConfirmation by remember { mutableStateOf(false) }
     BackHandler(enabled = playingState != null) { showLeaveConfirmation = true }
     if (showLeaveConfirmation) {
@@ -121,13 +125,13 @@ fun GameScreen(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(stringResource(R.string.game_hud_score), style = MaterialTheme.typography.bodySmall, color = Muted, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text(playingState?.score?.toString() ?: "0", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Black)
+                    Text(board?.score?.toString() ?: "0", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Black)
                 }
                 Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                    if (playingState?.mode == GameMode.LIVES) {
+                    if (board?.mode == GameMode.LIVES) {
                         Text(stringResource(R.string.game_hud_lives), style = MaterialTheme.typography.bodySmall, color = Muted, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         AnimatedContent(
-                            targetState = playingState.livesRemaining,
+                            targetState = board.livesRemaining,
                             transitionSpec = {
                                 (scaleIn(initialScale = 1.6f) + fadeIn()) togetherWith (scaleOut(targetScale = 0.4f) + fadeOut())
                             },
@@ -137,22 +141,22 @@ fun GameScreen(
                         }
                     } else {
                         Text(stringResource(R.string.game_hud_streak), style = MaterialTheme.typography.bodySmall, color = Muted, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        val streak = playingState?.currentStreak ?: 0
+                        val streak = board?.currentStreak ?: 0
                         Text("$streak 🔥", style = MaterialTheme.typography.titleMedium, color = if (streak >= 5) NeonYellow else MaterialTheme.colorScheme.onBackground)
                     }
                 }
                 Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                    if (playingState?.mode == GameMode.TIME) {
+                    if (board?.mode == GameMode.TIME) {
                         Text(stringResource(R.string.game_hud_time), style = MaterialTheme.typography.bodySmall, color = Muted, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        Text(formatMillisAsClock(playingState.timeRemainingMs), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
+                        Text(formatMillisAsClock(board.timeRemainingMs), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
                     } else {
                         Text(stringResource(R.string.game_hud_round), style = MaterialTheme.typography.bodySmall, color = Muted, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        Text(playingState?.totalRounds?.toString() ?: "0", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
+                        Text(board?.totalRounds?.toString() ?: "0", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
                     }
                 }
                 Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.End) {
                     Text(stringResource(R.string.game_hud_level), style = MaterialTheme.typography.bodySmall, color = Muted, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text(stringResource(R.string.game_hud_level_value, playingState?.level ?: 1), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.secondary, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(stringResource(R.string.game_hud_level_value, board?.level ?: 1), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.secondary, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
             }
 
@@ -256,24 +260,25 @@ fun GameScreen(
             Spacer(modifier = Modifier.height(10.dp))
 
             // Cyber Quadrant Pad Grid
-            val missFlashColor = playingState?.missFlashColor
+            val missFlashColor = board?.missFlashColor
+            val lastTap = board?.lastTap
             Column(
                 modifier = Modifier.weight(1.2f).fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 Row(modifier = Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    QuadrantBox(color = StroopColor.RED, isFlashing = missFlashColor == StroopColor.RED, modifier = Modifier.weight(1f).fillMaxHeight()) {
+                    QuadrantBox(color = StroopColor.RED, isFlashing = missFlashColor == StroopColor.RED, modifier = Modifier.weight(1f).fillMaxHeight(), tapFeedback = lastTap) {
                         viewModel.onColorTapped(StroopColor.RED)
                     }
-                    QuadrantBox(color = StroopColor.GREEN, isFlashing = missFlashColor == StroopColor.GREEN, modifier = Modifier.weight(1f).fillMaxHeight()) {
+                    QuadrantBox(color = StroopColor.GREEN, isFlashing = missFlashColor == StroopColor.GREEN, modifier = Modifier.weight(1f).fillMaxHeight(), tapFeedback = lastTap) {
                         viewModel.onColorTapped(StroopColor.GREEN)
                     }
                 }
                 Row(modifier = Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    QuadrantBox(color = StroopColor.BLUE, isFlashing = missFlashColor == StroopColor.BLUE, modifier = Modifier.weight(1f).fillMaxHeight()) {
+                    QuadrantBox(color = StroopColor.BLUE, isFlashing = missFlashColor == StroopColor.BLUE, modifier = Modifier.weight(1f).fillMaxHeight(), tapFeedback = lastTap) {
                         viewModel.onColorTapped(StroopColor.BLUE)
                     }
-                    QuadrantBox(color = StroopColor.YELLOW, isFlashing = missFlashColor == StroopColor.YELLOW, modifier = Modifier.weight(1f).fillMaxHeight()) {
+                    QuadrantBox(color = StroopColor.YELLOW, isFlashing = missFlashColor == StroopColor.YELLOW, modifier = Modifier.weight(1f).fillMaxHeight(), tapFeedback = lastTap) {
                         viewModel.onColorTapped(StroopColor.YELLOW)
                     }
                 }

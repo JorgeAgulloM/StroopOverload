@@ -45,6 +45,7 @@ import com.softyorch.stroopoverload.ui.screen.auth.AuthViewModel
 import com.softyorch.stroopoverload.ui.screen.profile.ProfileScreen
 import com.softyorch.stroopoverload.ui.screen.profile.ProfileViewModel
 import com.softyorch.stroopoverload.ui.components.AnonymousGateDialog
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -72,6 +73,10 @@ val GAMEPLAY_MUSIC_TRACKS = listOf(
 // Every screen outside a match (and outside the waiting room, which has its own
 // track) plays this one, so moving between menus never restarts it.
 val MENU_MUSIC = MusicTrack.Loop(R.raw.music_dashboard)
+
+// How long the final board stays on screen before the game-over screen, so the
+// player sees the tap that ended the run. The run is recorded meanwhile.
+private const val GAME_OVER_HOLD_MS = 700L
 
 @Composable
 fun StroopNavGraph() {
@@ -230,6 +235,7 @@ fun StroopNavGraph() {
                     onGameOver = { result, streak ->
                         lastResult = result
                         scope.launch {
+                            val hold = launch { delay(GAME_OVER_HOLD_MS) }
                             val prof = repository.getProfile()
                             val xpBreakdown = XpSystem.calculateGameXp(result, prof.dailyStreak, streak)
                             val newAch = repository.recordGameResult(result, xpBreakdown.total, streak)
@@ -237,6 +243,7 @@ fun StroopNavGraph() {
                             lastNewAchievements = newAch
                             currentProfile = repository.getProfile()
                             previousHighScore = currentProfile.highScore
+                            hold.join()
                             navController.navigate(ROUTE_GAME_OVER) {
                                 popUpTo(ROUTE_HOME)
                             }
