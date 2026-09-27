@@ -61,6 +61,10 @@ describe("calculateRunXp (mirrors XpSystem.calculateGameXp)", () => {
     expect(calculateRunXp({ ...run, mode: "TIME" }, 0, 0, false)).toBe(10 * 15 + 50);
   });
 
+  test("OVERTIME gets no survival bonus either: its first 30 s are handed out", () => {
+    expect(calculateRunXp({ ...run, mode: "OVERTIME" }, 0, 0, false)).toBe(10 * 15 + 50);
+  });
+
   test("daily streak and win streak bonuses are capped", () => {
     const base = 10 * 15 + 50 + 100;
     expect(calculateRunXp(run, 100, 0, false)).toBe(base + 200); // daily capped at 200
@@ -152,6 +156,14 @@ describe("validateSoloRun", () => {
     expect(validateSoloRun({ ...valid, survivalMs: 12 * 3000 + 60_000 })).toBe("survivalMs too long for totalRounds");
     // TIME mode is a fixed 60s clock.
     expect(validateSoloRun({ ...valid, mode: "TIME", survivalMs: 120_000 })).toBe("survivalMs too long for mode");
+  });
+
+  test("OVERTIME is bounded by its 30 s start plus at most 1 s per right answer", () => {
+    const overtime = { ...valid, mode: "OVERTIME" as const };
+    expect(validateSoloRun({ ...overtime, survivalMs: 45_000 })).toBeNull();
+    // 10 right answers: 30 s + 10 s + 30 s slack.
+    expect(validateSoloRun({ ...overtime, survivalMs: 70_000 })).toBeNull();
+    expect(validateSoloRun({ ...overtime, survivalMs: 70_001 })).toBe("survivalMs too long for mode");
   });
 
   test("rejects negative or absurd counts", () => {

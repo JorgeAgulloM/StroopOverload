@@ -10,7 +10,7 @@
  * first time the server recomputed it -- profileScoring.test.ts pins the values.
  */
 
-export type SoloMode = "ENDLESS" | "LIVES" | "TIME";
+export type SoloMode = "ENDLESS" | "LIVES" | "TIME" | "OVERTIME";
 
 export interface SoloRunReport {
   mode: SoloMode;
@@ -24,6 +24,17 @@ export interface SoloRunReport {
 const POINTS_PER_CORRECT = 100;
 const INITIAL_TIME_LIMIT_MS = 3000;
 const TIME_MODE_DURATION_MS = 60_000;
+// OVERTIME starts with this clock and a right answer adds at most OVERTIME_MAX_BONUS_MS
+// (GameConfig.OVERTIME_BONUS_START_MS; it only shrinks with the level).
+const OVERTIME_START_MS = 30_000;
+const OVERTIME_MAX_BONUS_MS = 1_000;
+
+const SOLO_MODES: readonly SoloMode[] = ["ENDLESS", "LIVES", "TIME", "OVERTIME"];
+
+/** TIME and OVERTIME run on one session clock handed out up front, not per stimulus. */
+function hasSessionClock(mode: SoloMode): boolean {
+  return mode === "TIME" || mode === "OVERTIME";
+}
 
 // Bounds for a single submitted run. Generous on purpose: they exist to reject
 // the impossible, not to second-guess a good player.
@@ -76,9 +87,9 @@ export function calculateRunXp(
   const won = isWon(run);
   const base = won ? run.correctHits * 15 + 50 : run.correctHits * 5;
   const perfectBonus = isFlawless(run) ? 100 : 0;
-  // TIME mode's survivalMs is a fixed countdown, not a skill signal.
+  // In the session-clock modes survivalMs is mostly clock handed out up front, not a skill signal.
   const timeBonus =
-    run.mode === "TIME" ? 0 : run.survivalMs >= 20_000 ? 100 : run.survivalMs >= 10_000 ? 50 : 0;
+    hasSessionClock(run.mode) ? 0 : run.survivalMs >= 20_000 ? 100 : run.survivalMs >= 10_000 ? 50 : 0;
   const streakBonus = Math.min(currentWinStreak * 15, 150);
   const dailyBonus = Math.min(dailyStreak * 20, 200);
 
@@ -164,7 +175,7 @@ export function clampWinStreak(claimed: number, correctHits: number): number {
  * Returns null when the run is acceptable, or a short reason when it is not.
  */
 export function validateSoloRun(run: SoloRunReport): string | null {
-  if (run.mode !== "ENDLESS" && run.mode !== "LIVES" && run.mode !== "TIME") return "unknown mode";
+  if (!SOLO_MODES.includes(run.mode)) return "unknown mode";
   if (!Number.isInteger(run.correctHits) || run.correctHits < 0) return "invalid correctHits";
   if (!Number.isInteger(run.totalRounds) || run.totalRounds < 0) return "invalid totalRounds";
   if (!Number.isInteger(run.finalScore) || run.finalScore < 0) return "invalid finalScore";
@@ -177,6 +188,9 @@ export function validateSoloRun(run: SoloRunReport): string | null {
   if (run.survivalMs < run.totalRounds * MIN_MS_PER_ROUND) return "survivalMs too short for totalRounds";
   if (run.mode === "TIME") {
     if (run.survivalMs > TIME_MODE_DURATION_MS + DURATION_SLACK_MS) return "survivalMs too long for mode";
+  } else if (run.mode === "OVERTIME") {
+    const longest = OVERTIME_START_MS + run.correctHits * OVERTIME_MAX_BONUS_MS + DURATION_SLACK_MS;
+    if (run.survivalMs > longest) return "survivalMs too long for mode";
   } else if (run.survivalMs > run.totalRounds * INITIAL_TIME_LIMIT_MS + DURATION_SLACK_MS) {
     return "survivalMs too long for totalRounds";
   }
