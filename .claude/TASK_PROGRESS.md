@@ -1653,3 +1653,10 @@ Verified test accounts are created with `firebase auth:import` (HMAC_SHA256) —
   miss 7.7 s -> recreation -> game over at 11.2 s (before the hold's end at 12.7 s), stays there, run counted once
   (matches_played 4 -> 5). The re-opened game over has no XP/achievements block (breakdown lost with the old
   composition; the run itself is recorded). Normal 700 ms build reinstalled, emulator night mode back to "no".
+- Review of batch 2 (kotlin-reviewer): HIGH fixed 0948320 -- the XP breakdown/new achievements lived in NavGraph
+  composition, so a game over re-opened after recreation showed no XP card and shared "0 XP"; now RecordedRun in
+  GameViewModel, the re-open path waits for it. Verified with the temp 5 s-hold build: "XP SYNTHESIS +35 XP" after
+  recreation, run counted once (5 -> 6). MEDIUM fixed 298003d: `released` flag so a late sample decode never plays on
+  a released SoundPool. LOW accepted: the result sting can be skipped if recreation lands in its 150 ms delay.
+- Kotlin 183, lint 0 errors / 49 warnings (same count as before this branch). Functions 229.
+- Still open: deploy onPresenceChanged (needs the user's OK), then push + PR.
