@@ -39,6 +39,7 @@ import com.softyorch.stroopoverload.ui.theme.*
 import com.softyorch.stroopoverload.ui.components.TimerBarHost
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.activity.compose.BackHandler
+import kotlinx.coroutines.delay
 import com.softyorch.stroopoverload.ui.components.ExitMatchDialog
 
 @Composable
@@ -86,20 +87,23 @@ fun GameScreen(
     // (monotonic increment / flash-then-clear), so keying LaunchedEffect on
     // them fires the matching SFX exactly once per event -- including misses
     // caused by a timeout, not just a wrong tap, since both go through the
-    // same ViewModel state transition.
-    LaunchedEffect(playingState?.correctHits) {
-        if ((playingState?.correctHits ?: 0) > 0) audioPlayer.play(GameSfx.TAP_CORRECT)
+    // same ViewModel state transition. Keyed on the board rather than the live run so
+    // the miss that ends a run sounds too: its final board carries the flash.
+    LaunchedEffect(board?.correctHits) {
+        if ((board?.correctHits ?: 0) > 0) audioPlayer.play(GameSfx.TAP_CORRECT)
     }
-    LaunchedEffect(playingState?.missFlashColor) {
-        if (playingState?.missFlashColor != null) audioPlayer.play(GameSfx.TAP_WRONG)
+    LaunchedEffect(board?.missFlashColor) {
+        if (board?.missFlashColor != null) audioPlayer.play(GameSfx.TAP_WRONG)
     }
 
     when (val s = state) {
         is GameState.GameOver -> {
             LaunchedEffect(s) {
                 if (!viewModel.claimGameOver()) return@LaunchedEffect
-                audioPlayer.play(if (s.result.won) GameSfx.MATCH_WIN else GameSfx.MATCH_LOSE)
                 onGameOver(s.result, s.endStreak)
+                // Let the last tap's sound finish before the result sting.
+                delay(RESULT_SFX_DELAY_MS)
+                audioPlayer.play(if (s.result.won) GameSfx.MATCH_WIN else GameSfx.MATCH_LOSE)
             }
         }
         else -> Unit
@@ -301,6 +305,9 @@ fun GameScreen(
         }
     }
 }
+
+// sfx_tap_wrong lasts 0.14 s.
+private const val RESULT_SFX_DELAY_MS = 150L
 
 private fun formatMillisAsClock(millis: Long): String {
     val totalSeconds = (millis / 1000L).coerceAtLeast(0L)

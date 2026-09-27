@@ -3,6 +3,8 @@ package com.softyorch.stroopoverload.audio
 import android.content.Context
 import android.media.AudioAttributes
 import android.media.SoundPool
+import android.os.Handler
+import android.os.Looper
 import com.softyorch.stroopoverload.core.StroopColor
 
 /**
@@ -14,6 +16,9 @@ import com.softyorch.stroopoverload.core.StroopColor
  * load finishes is queued and fires exactly once as soon as it becomes
  * ready, instead of being dropped.
  */
+// Longer than the longest sample (sfx_result_defeat, 0.77 s).
+private const val RELEASE_GRACE_MS = 1_000L
+
 class AudioPlayer(context: Context) {
 
     private val settings = AudioSettingsStore(context)
@@ -69,5 +74,11 @@ class AudioPlayer(context: Context) {
         }
     }
 
-    fun release() = pool.release()
+    /**
+     * Lets whatever is already playing finish first: the game screen releases its player
+     * as it closes, right after the result sting starts, and releasing at once cut it off.
+     */
+    fun release() {
+        Handler(Looper.getMainLooper()).postDelayed({ pool.release() }, RELEASE_GRACE_MS)
+    }
 }
