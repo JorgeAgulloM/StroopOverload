@@ -69,6 +69,10 @@ val GAMEPLAY_MUSIC_TRACKS = listOf(
     R.raw.music_gameplay_05,
 )
 
+// Every screen outside a match (and outside the waiting room, which has its own
+// track) plays this one, so moving between menus never restarts it.
+val MENU_MUSIC = MusicTrack.Loop(R.raw.music_dashboard)
+
 @Composable
 fun StroopNavGraph() {
     val context = LocalContext.current
@@ -111,14 +115,15 @@ fun StroopNavGraph() {
     // Single source of truth for route-level music. ROUTE_MULTIPLAYER is
     // deliberately excluded -- it owns its own music switching internally
     // across its lobby/waiting/gameplay sub-states (see MultiplayerScreen).
+    // null (the start destination before the back stack is ready) leaves the
+    // music alone.
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
     LaunchedEffect(currentRoute) {
         when (currentRoute) {
-            ROUTE_HOME -> musicManager.setTrack(MusicTrack.Loop(R.raw.music_dashboard))
+            null, ROUTE_MULTIPLAYER -> Unit
             ROUTE_GAME -> musicManager.setTrack(MusicTrack.Playlist(GAMEPLAY_MUSIC_TRACKS))
-            ROUTE_MULTIPLAYER -> Unit
-            else -> musicManager.setTrack(null)
+            else -> musicManager.setTrack(MENU_MUSIC)
         }
     }
 

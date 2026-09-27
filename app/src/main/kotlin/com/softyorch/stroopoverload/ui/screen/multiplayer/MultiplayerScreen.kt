@@ -33,6 +33,7 @@ import com.softyorch.stroopoverload.domain.multiplayer.MultiplayerRoom
 import com.softyorch.stroopoverload.domain.multiplayer.RoomMode
 import com.softyorch.stroopoverload.domain.multiplayer.RoomStatus
 import com.softyorch.stroopoverload.ui.GAMEPLAY_MUSIC_TRACKS
+import com.softyorch.stroopoverload.ui.MENU_MUSIC
 import com.softyorch.stroopoverload.ui.components.CountdownOverlay
 import kotlinx.coroutines.delay
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -86,7 +87,8 @@ fun MultiplayerScreen(
     val musicTrack = when (roomStatus) {
         RoomStatus.WAITING, RoomStatus.STARTING -> MusicTrack.Loop(R.raw.music_waiting_room)
         RoomStatus.PLAYING, RoomStatus.FINISHED -> MusicTrack.Playlist(GAMEPLAY_MUSIC_TRACKS)
-        null -> null
+        // Lobby: still the menu music, carried over from Home without a restart.
+        null -> MENU_MUSIC
     }
     LaunchedEffect(musicTrack) { musicManager.setTrack(musicTrack) }
 
