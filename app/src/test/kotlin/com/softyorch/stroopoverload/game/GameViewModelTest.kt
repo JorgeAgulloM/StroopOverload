@@ -4,6 +4,7 @@ import app.cash.turbine.test
 import com.softyorch.stroopoverload.core.GameConfig
 import com.softyorch.stroopoverload.core.StroopColor
 import com.softyorch.stroopoverload.domain.GameMode
+import com.softyorch.stroopoverload.domain.XpBreakdown
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -219,5 +220,138 @@ class GameViewModelTest {
         val viewModel = endedEndlessRun()
 
         assertEquals(0, (viewModel.state.value as GameState.GameOver).endStreak)
+    }
+
+    @Test
+    fun `the recorded outcome outlives the screen and is cleared by the next run`() = runTest {
+        // Kept here, not in the game screen: an Activity recreated during the final-board hold
+        // re-opens the game-over screen and needs the XP it already earned.
+        val viewModel = endedEndlessRun()
+        assertNull(viewModel.recordedRun.value)
+
+        val recorded = RecordedRun(XpBreakdown(0, 10, 0, 0, 0, 0, 1.0, 10), emptyList())
+        viewModel.onRunRecorded(recorded)
+        assertEquals(recorded, viewModel.recordedRun.value)
+
+        viewModel.returnToMenu()
+        viewModel.startGame()
+        assertNull(viewModel.recordedRun.value)
+    }
+
+    // Virtual time plus whatever a test adds to simulate frames that ran late.
+    private var clockLagMs = 0L
+
+    private fun viewModelOnTestClock() =
+        GameViewModel(clock = { dispatcher.scheduler.currentTime + clockLagMs })
+
+    private fun tapWrong(viewModel: GameViewModel) {
+        val correct = viewModel.stimulus.value!!.correctAnswer
+        viewModel.onColorTapped(StroopColor.entries.first { it != correct })
+    }
+
+    @Test
+    fun `a TIME run records the full minute even when frames run late`() = runTest {
+        // Every frame used to add a fixed 16 ms, but real frames take longer, so a 60 s run
+        // was recorded as ~57 s.
+        val viewModel = viewModelOnTestClock()
+        viewModel.startGame(mode = GameMode.TIME)
+        viewModel.beginRound()
+
+        dispatcher.scheduler.advanceTimeBy(30_000)
+        clockLagMs = 3_000 // the main thread stalled for 3 s that no frame saw
+        dispatcher.scheduler.advanceTimeBy(30_000)
+        dispatcher.scheduler.runCurrent()
+
+        val over = viewModel.state.value as GameState.GameOver
+        assertEquals(GameConfig.TIME_MODE_DURATION_MS, over.result.survivalMs)
+    }
+
+    @Test
+    fun `an ENDLESS run records the real time played`() = runTest {
+        val viewModel = viewModelOnTestClock()
+        viewModel.startGame(mode = GameMode.ENDLESS)
+        viewModel.beginRound()
+
+        dispatcher.scheduler.advanceTimeBy(1_000)
+        clockLagMs = 500
+        tapWrong(viewModel)
+
+        assertEquals(1_500L, (viewModel.state.value as GameState.GameOver).result.survivalMs)
+    }
+
+    @Test
+    fun `LIVES survival time leaves out the freeze after each miss`() = runTest {
+        val viewModel = viewModelOnTestClock()
+        viewModel.startGame(mode = GameMode.LIVES)
+        viewModel.beginRound()
+
+        dispatcher.scheduler.advanceTimeBy(1_000)
+        tapWrong(viewModel)
+        dispatcher.scheduler.advanceTimeBy(GameConfig.LIVES_MODE_FREEZE_MS)
+        dispatcher.scheduler.runCurrent()
+        dispatcher.scheduler.advanceTimeBy(200)
+        tapWrong(viewModel)
+        dispatcher.scheduler.advanceTimeBy(GameConfig.LIVES_MODE_FREEZE_MS)
+        dispatcher.scheduler.runCurrent()
+        dispatcher.scheduler.advanceTimeBy(300)
+        tapWrong(viewModel)
+
+        assertEquals(1_500L, (viewModel.state.value as GameState.GameOver).result.survivalMs)
+    }
+
+    @Test
+    fun `LIVES mode ends the run at once on the last life`() = runTest {
+        // The game-over hold shows the last miss, so it no longer waits out a freeze first.
+        val viewModel = GameViewModel()
+        viewModel.startGame(mode = GameMode.LIVES)
+        viewModel.beginRound()
+
+        repeat(GameConfig.LIVES_MODE_STARTING_LIVES - 1) {
+            tapWrong(viewModel)
+            dispatcher.scheduler.advanceTimeBy(GameConfig.LIVES_MODE_FREEZE_MS + 50)
+            dispatcher.scheduler.runCurrent()
+        }
+        tapWrong(viewModel)
+
+        assertTrue(viewModel.state.value is GameState.GameOver)
+    }
+
+    @Test
+    fun `every answer tap is reported with its quadrant and whether it was right`() = runTest {
+        val viewModel = GameViewModel()
+        viewModel.startGame(mode = GameMode.TIME)
+        viewModel.beginRound()
+
+        val correct = viewModel.stimulus.value!!.correctAnswer
+        viewModel.onColorTapped(correct)
+        assertEquals(
+            TapFeedback(correct, isCorrect = true, seq = 1),
+            (viewModel.state.value as GameState.Playing).lastTap,
+        )
+
+        val nextCorrect = viewModel.stimulus.value!!.correctAnswer
+        val wrong = StroopColor.entries.first { it != nextCorrect }
+        viewModel.onColorTapped(wrong)
+        assertEquals(
+            TapFeedback(wrong, isCorrect = false, seq = 2),
+            (viewModel.state.value as GameState.Playing).lastTap,
+        )
+    }
+
+    @Test
+    fun `the board that ended the run shows the wrong tap and the right answer`() = runTest {
+        // ENDLESS ends on the first miss; the screen holds this board for a moment so the
+        // player sees what went wrong.
+        val viewModel = GameViewModel()
+        viewModel.startGame(mode = GameMode.ENDLESS)
+        viewModel.beginRound()
+        val correct = viewModel.stimulus.value!!.correctAnswer
+        val wrong = StroopColor.entries.first { it != correct }
+
+        viewModel.onColorTapped(wrong)
+
+        val board = (viewModel.state.value as GameState.GameOver).finalBoard!!
+        assertEquals(TapFeedback(wrong, isCorrect = false, seq = 1), board.lastTap)
+        assertEquals(correct, board.missFlashColor)
     }
 }

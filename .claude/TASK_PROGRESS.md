@@ -1470,6 +1470,88 @@ placement mismatch (MEDIUM) · #1, #2, #3, #7 confirmed live.
 - Remaining before Play: real AdMob ids (blocker), human checks (emails, sound/timer feel, online interstitial),
   versionCode bump, App Check registration then enforcement. Open product questions unchanged.
 
+### fix/ux-polish (2026-09-27, DONE locally -- not pushed, no PR yet) -- items 1-6 below
+- Branch `fix/ux-polish` from develop 904ce78; backlog note committed 9480992.
+- User 2026-09-27: **do NOT use the physical Samsung (busy) -- test on the emulator only** (it stays attached to
+  adb: always pass `-s emulator-5554`).
+- Commits: 8f1afa4 (#6 bars), dc743e2 (#2 footer), 3a1a51d (#1 menu music), 57c6163 (#3 hint),
+  7e81b44 (#5 survival time + #4 tap feedback/hold). Kotlin 176 -> 182, debug build OK, lintDebug 0 errors.
+- Emulator (Pixel_9_Pro_API_36, light system theme, guest): bars light-on-dark OK; footer "SYS_VER: 0.0.3";
+  menu music same MediaPlayer across Home/Leaderboard/Mode select, gameplay track in match, menu track at game over;
+  hint at top; time attack -> "TIME ELAPSED 60s"; correct tap pops/glows; wrong tap dims+shakes (measured in
+  screenrecord frames); endless hold ~770 ms then "TIME ELAPSED 2s".
+- NOT verified on device: online lobby music + online hint (guest can't go online; needs a registered account).
+- Follow-ups the user asked for (2026-09-27): 53dda29 final miss plays TAP_WRONG (SFX keyed on board), result
+  sting 150 ms later; AudioPlayer.release() deferred 1 s (was cutting MATCH_LOSE when the screen closed -- likely
+  part of backlog #10 "random SFX"). d7d0cca tap feedback in MultiplayerGameScreen + SoloSurvivalGameScreen
+  (key(color) per quadrant), TapFeedback.round -> seq. Kotlin 182, lint 0 errors. Emulator: SoundPool released
+  after the grace (dumpsys), SFX order not measurable there. Survival +5 %: thresholds deliberately unchanged.
+- Online check on the emulator (user OK'd throwaway PROD accounts, 2026-09-27): verified accounts via
+  `firebase auth:import` (HMAC_SHA256, no salt) + a scratch bot (prod-smoke helpers) hosting rooms and driving the
+  emulator's taps over adb. Verified: lobby keeps the Home MediaPlayer (was silent), hint pinned top in
+  MultiplayerGameScreen + SoloSurvivalGameScreen, right-tap glow / wrong-tap dim+shake online.
+  Found + fixed 5be8148: a quadrant composed afresh (tapped colour moved rows on reshuffle) replayed the flash.
+- Cleanup verified: 0 e2e auth accounts, users/{uid} absent for all 5 test uids, no recent rooms, 4 orphan
+  presence/{roomId} entries removed (see note below).
+- Harness gotchas: uiautomator dump ~3.4 s on the board (too slow for a 3 s turn) -> fixed slot coords or pixel
+  locator; accounts:delete needs a fresh sign-in (>5 min token -> CREDENTIAL_TOO_OLD_LOGIN_AGAIN); set
+  PYTHONIOENCODING=utf-8 for ui.sh output with "…"; BACK with no keyboard open leaves the lobby.
+- Pre-existing, minor, NOT fixed: a client's RTDB onDisconnect writes presence/{roomId}/{uid} "offline" after the
+  room is already deleted, leaving orphan presence nodes forever (seen for all 4 test rooms). Candidate for the
+  room purge job.
+- Review (kotlin-reviewer): HIGH fixed before commit -- back was swallowed during the hold, which could strand the
+  player if the Activity was recreated mid-hold (claimGameOver already consumed). Back behaves as before now.
+  MEDIUM rejected: server bound is totalRounds*3000+30000 ms; real per-round time is <= its limit (3000 decaying to
+  800) + one frame, LIVES freezes excluded, nanoTime doesn't advance in deep sleep.
+- Tip: `uiautomator dump` waits for idle and the board's infinite animations delay it by seconds -- sample ink
+  pixels from screencap instead when a tap must land inside a round.
+- Emulator app is now the debug build (release was uninstalled; its data was test-only).
+- What was done per item:
+  1. MENU_MUSIC (NavGraph) for every route except ROUTE_GAME/ROUTE_MULTIPLAYER; lobby (roomStatus null) too.
+  2. home_footer `%1$s` = BuildConfig.VERSION_NAME (6 locales) -> shows "0.0.3" (not "2.0").
+  3. Hint `align(TopCenter)` in GameScreen + MultiplayerGameScreen + SoloSurvivalGameScreen.
+  4. `TapFeedback(color,isCorrect,round)` in Playing.lastTap; QuadrantBox pop+glow (right) / shake+dim (wrong);
+     GameOver.finalBoard kept on screen GAME_OVER_HOLD_MS=700 (NavGraph records meanwhile, then navigates);
+     back swallowed during the hold; LIVES last life now ends at once (no 1.5 s freeze first). Local play only.
+  5. survivalMs = clock() - runStart - frozenMs (injected clock, nanoTime); TIME capped at 60000. TDD: RED showed 57008.
+  6. enableEdgeToEdge(SystemBarStyle.dark(TRANSPARENT)) for both bars.
+- Pending: emulator check (light system theme, footer, feedback, time attack 60 s), review, commit(s), PR.
+
+### Backlog from the user (2026-09-25) -- not started
+
+**Next branch: minor fixes** (suggested name `fix/ux-polish`)
+1. Menu music: `music_dashboard` must keep playing across every menu screen (home, mode select, leaderboard,
+   profile, game over, online lobby); it only changes when entering a match or the waiting room (which has its own
+   track). Today NavGraph.kt sets it only for ROUTE_HOME and `null` for everything else; the online lobby is silent.
+2. Home footer `home_footer` = "SYS_VER: 2.0 // ..." hardcodes 2.0 in all 6 locales -> show the real app version
+   (BuildConfig.VERSION_NAME) via a format arg in the 6 strings.
+3. Game screen: the "[ OBJETIVO SINÁPTICO // ... ]" hint floats mid-card; pin it to the top of the stimulus card
+   with a margin (GameScreen.kt ~line 225; check MultiplayerGameScreen/SoloSurvival for the same layout).
+4. Game screen: visual feedback on every correct tap and every wrong tap (today only a miss flash on the quadrant
+   in lives/time modes; nothing on a correct tap).
+5. Time attack shows ~57 s at the end. ROOT CAUSE (verified in code): not the 3-2-1 -- the session timer starts after
+   it. GameViewModel adds a fixed 16 ms per `delay(16)` loop (lines ~157 and ~183) while each loop really takes
+   longer, so survivalMs undercounts ~5 % (60 s -> ~57 s). Fix: derive survivalMs from elapsed wall time
+   (start timestamp, pausing during isFrozen), not by accumulation. Also affects endless mode and the survivalMs
+   sent to submitSoloRun (server validates it with DURATION_SLACK_MS -- recheck the numbers after the fix).
+   User wants the 60 s to start when the board is shown -- already true; confirm on device after the fix.
+6. Light system theme: status/navigation bars adapt to light and look wrong on the dark app. MainActivity calls
+   plain `enableEdgeToEdge()` (auto style) -> use `SystemBarStyle.dark(Color.TRANSPARENT)` for both bars.
+
+**Branch after that: improvements** (suggested `feat/game-feel`)
+7. Timer bar "beats" (pulse) when <= 20 % time remains.
+8. Stimulus card border: rotating strobe light effect (light seems to spin behind the card).
+9. Time attack: +1 s per correct tap? ADVISOR NOTE: that turns it into an "extend" mode with a different
+   leaderboard meaning, and the server validates time runs against TIME_MODE_DURATION_MS = 60 s
+   (functions/src/profileScoring.ts) -- it needs server changes. Prefer a new mode over changing TIME.
+10. SFX feel "random". Correct/wrong SFX ARE tied to the events (GameScreen.kt:85-90). Likely cause: from difficulty
+    level 2 the game speaks a distractor colour name (`stimulus.audioColor`, GameScreen.kt:60) -- that is the Stroop
+    audio distractor by design. Also endless ends on a miss with no TAP_WRONG. Confirm with the user what they hear
+    before changing anything.
+11. Profile: "TROFEOS SINÁPTI..." truncated (also fr/de) -> smaller title and move the "x / 30" counter below it.
+12. Achievements: tap -> dialog with details (how to get it, unlocked or not, date if available); locked ones
+    rendered greyed out (today: outline border + dark bg + "LOCKED" label, but title/icon not greyed).
+
 ### Done this session (commits after c1b52a9)
 | Commit | What |
 |---|---|
@@ -1557,3 +1639,24 @@ Device helpers (session temp, may be gone): `$TEMP/ui.sh <serial>` (UI text+coor
 (auto-players by ink-colour sampling; play3 handles shuffled online quadrants). Phone: Samsung SM-A165F over adb wifi
 (`adb-R58Y8113L3N-…`), logged in as the user's YorchDebug account. AVD `Pixel_9_Pro_API_36` (closes under memory pressure).
 Verified test accounts are created with `firebase auth:import` (HMAC_SHA256) — ask the user first each time.
+
+### 2026-09-27 late (session hit usage limit mid-verification)
+- Committed: onPresenceChanged removes offline presence for deleted rooms (functions 229/229, tsc+eslint clean) --
+  **NOT DEPLOYED** (ask first: `firebase deploy --only functions:onPresenceChanged`).
+- Committed: game-over hold survives Activity recreation (record in NonCancellable; recreated GameScreen re-opens
+  game over with record=false). Kotlin tests + debug build green, installed on emulator. Emulator: 3 runs with a
+  theme toggle each counted exactly once (matches_played 1->2->3), but the toggle landed after the hold every time
+  (recreation lags `cmd uimode` by >1 s), so the new re-open path is NOT yet seen on device. The pre-fix freeze WAS
+  reproduced once. Next: time the toggle via logcat `wm_on_create_called` and re-test; then push/PR (user's call).
+- VERIFIED (2026-09-27): `cmd uimode` -> recreation latency varies 0.3-3.5 s while the board animates, so 700 ms
+  can't be hit reliably. Used a temporary local build with GAME_OVER_HOLD_MS = 5000 (reverted, never committed):
+  miss 7.7 s -> recreation -> game over at 11.2 s (before the hold's end at 12.7 s), stays there, run counted once
+  (matches_played 4 -> 5). The re-opened game over has no XP/achievements block (breakdown lost with the old
+  composition; the run itself is recorded). Normal 700 ms build reinstalled, emulator night mode back to "no".
+- Review of batch 2 (kotlin-reviewer): HIGH fixed 0948320 -- the XP breakdown/new achievements lived in NavGraph
+  composition, so a game over re-opened after recreation showed no XP card and shared "0 XP"; now RecordedRun in
+  GameViewModel, the re-open path waits for it. Verified with the temp 5 s-hold build: "XP SYNTHESIS +35 XP" after
+  recreation, run counted once (5 -> 6). MEDIUM fixed 298003d: `released` flag so a late sample decode never plays on
+  a released SoundPool. LOW accepted: the result sting can be skipped if recreation lands in its 150 ms delay.
+- Kotlin 183, lint 0 errors / 49 warnings (same count as before this branch). Functions 229.
+- Still open: deploy onPresenceChanged (needs the user's OK), then push + PR.

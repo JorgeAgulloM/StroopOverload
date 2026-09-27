@@ -39,13 +39,18 @@ import com.softyorch.stroopoverload.ui.theme.*
 import com.softyorch.stroopoverload.ui.components.TimerBarHost
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.activity.compose.BackHandler
+import kotlinx.coroutines.delay
 import com.softyorch.stroopoverload.ui.components.ExitMatchDialog
 
 @Composable
 fun GameScreen(
     viewModel: GameViewModel,
-    /** Called once per finished run with its result and the streak it ended on. */
-    onGameOver: (result: GameResult, endStreak: Int) -> Unit,
+    /**
+     * Called with each finished run, its end streak and whether to [record] it: false when the
+     * Activity was recreated during the final-board hold -- the run was already recorded, but
+     * the navigation to the game-over screen died with the old screen and must happen again.
+     */
+    onGameOver: (result: GameResult, endStreak: Int, record: Boolean) -> Unit,
     onLeaveMatch: () -> Unit,
     isAdFree: Boolean = false,
 ) {
@@ -61,10 +66,14 @@ fun GameScreen(
     }
 
     val playingState = state as? GameState.Playing
+    // What the board shows: the live run, or -- once it is over, while the screen holds
+    // for a moment before the game-over screen -- the board as the run ended.
+    val board = playingState ?: (state as? GameState.GameOver)?.finalBoard
 
     // Back during a live run used to abandon it silently: no score recorded, no
     // warning. Only guarded while actually playing -- menus and the game-over
-    // screen keep the normal back behaviour.
+    // screen keep the normal back behaviour. Leaving during the final-board hold is
+    // harmless: NavGraph records the run and opens the game-over screen regardless.
     var showLeaveConfirmation by remember { mutableStateOf(false) }
     BackHandler(enabled = playingState != null) { showLeaveConfirmation = true }
     if (showLeaveConfirmation) {
@@ -82,20 +91,24 @@ fun GameScreen(
     // (monotonic increment / flash-then-clear), so keying LaunchedEffect on
     // them fires the matching SFX exactly once per event -- including misses
     // caused by a timeout, not just a wrong tap, since both go through the
-    // same ViewModel state transition.
-    LaunchedEffect(playingState?.correctHits) {
-        if ((playingState?.correctHits ?: 0) > 0) audioPlayer.play(GameSfx.TAP_CORRECT)
+    // same ViewModel state transition. Keyed on the board rather than the live run so
+    // the miss that ends a run sounds too: its final board carries the flash.
+    LaunchedEffect(board?.correctHits) {
+        if ((board?.correctHits ?: 0) > 0) audioPlayer.play(GameSfx.TAP_CORRECT)
     }
-    LaunchedEffect(playingState?.missFlashColor) {
-        if (playingState?.missFlashColor != null) audioPlayer.play(GameSfx.TAP_WRONG)
+    LaunchedEffect(board?.missFlashColor) {
+        if (board?.missFlashColor != null) audioPlayer.play(GameSfx.TAP_WRONG)
     }
 
     when (val s = state) {
         is GameState.GameOver -> {
             LaunchedEffect(s) {
-                if (!viewModel.claimGameOver()) return@LaunchedEffect
+                val isFirstClaim = viewModel.claimGameOver()
+                onGameOver(s.result, s.endStreak, isFirstClaim)
+                if (!isFirstClaim) return@LaunchedEffect
+                // Let the last tap's sound finish before the result sting.
+                delay(RESULT_SFX_DELAY_MS)
                 audioPlayer.play(if (s.result.won) GameSfx.MATCH_WIN else GameSfx.MATCH_LOSE)
-                onGameOver(s.result, s.endStreak)
             }
         }
         else -> Unit
@@ -121,13 +134,13 @@ fun GameScreen(
             ) {
                 Column(modifier = Modifier.weight(1f)) {
                     Text(stringResource(R.string.game_hud_score), style = MaterialTheme.typography.bodySmall, color = Muted, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text(playingState?.score?.toString() ?: "0", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Black)
+                    Text(board?.score?.toString() ?: "0", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Black)
                 }
                 Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                    if (playingState?.mode == GameMode.LIVES) {
+                    if (board?.mode == GameMode.LIVES) {
                         Text(stringResource(R.string.game_hud_lives), style = MaterialTheme.typography.bodySmall, color = Muted, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         AnimatedContent(
-                            targetState = playingState.livesRemaining,
+                            targetState = board.livesRemaining,
                             transitionSpec = {
                                 (scaleIn(initialScale = 1.6f) + fadeIn()) togetherWith (scaleOut(targetScale = 0.4f) + fadeOut())
                             },
@@ -137,22 +150,22 @@ fun GameScreen(
                         }
                     } else {
                         Text(stringResource(R.string.game_hud_streak), style = MaterialTheme.typography.bodySmall, color = Muted, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        val streak = playingState?.currentStreak ?: 0
+                        val streak = board?.currentStreak ?: 0
                         Text("$streak 🔥", style = MaterialTheme.typography.titleMedium, color = if (streak >= 5) NeonYellow else MaterialTheme.colorScheme.onBackground)
                     }
                 }
                 Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                    if (playingState?.mode == GameMode.TIME) {
+                    if (board?.mode == GameMode.TIME) {
                         Text(stringResource(R.string.game_hud_time), style = MaterialTheme.typography.bodySmall, color = Muted, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        Text(formatMillisAsClock(playingState.timeRemainingMs), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
+                        Text(formatMillisAsClock(board.timeRemainingMs), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
                     } else {
                         Text(stringResource(R.string.game_hud_round), style = MaterialTheme.typography.bodySmall, color = Muted, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        Text(playingState?.totalRounds?.toString() ?: "0", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
+                        Text(board?.totalRounds?.toString() ?: "0", style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
                     }
                 }
                 Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.End) {
                     Text(stringResource(R.string.game_hud_level), style = MaterialTheme.typography.bodySmall, color = Muted, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                    Text(stringResource(R.string.game_hud_level_value, playingState?.level ?: 1), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.secondary, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(stringResource(R.string.game_hud_level_value, board?.level ?: 1), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.secondary, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
             }
 
@@ -221,61 +234,60 @@ fun GameScreen(
                 }
 
                 stimulus?.let { s ->
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        // Cartel holográfico de pista (Hint)
-                        Box(
-                            modifier = Modifier
-                                .background(
-                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
-                                    RoundedCornerShape(4.dp)
-                                )
-                                .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f), RoundedCornerShape(4.dp))
-                                .padding(horizontal = 16.dp, vertical = 6.dp)
-                        ) {
-                            Text(
-                                text = stringResource(R.string.game_stimulus_hint),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.primary,
-                                letterSpacing = 3.sp,
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold
+                    // Hint pinned to the top of the card; the word stays centred in it.
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopCenter)
+                            .padding(top = 16.dp)
+                            .background(
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                                RoundedCornerShape(4.dp)
                             )
-                        }
-                        
-                        Spacer(modifier = Modifier.height(28.dp))
-                        
-                        StimulusWord(
-                            text = stringResource(s.wordLabel.displayNameRes),
-                            color = s.inkColor.composeColor,
-                            maxFontSize = 64.sp,
-                            letterSpacing = 8.sp,
-                            glow = true,
+                            .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f), RoundedCornerShape(4.dp))
+                            .padding(horizontal = 16.dp, vertical = 6.dp)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.game_stimulus_hint),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            letterSpacing = 3.sp,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold
                         )
                     }
+
+                    StimulusWord(
+                        text = stringResource(s.wordLabel.displayNameRes),
+                        color = s.inkColor.composeColor,
+                        maxFontSize = 64.sp,
+                        letterSpacing = 8.sp,
+                        glow = true,
+                    )
                 }
             }
 
             Spacer(modifier = Modifier.height(10.dp))
 
             // Cyber Quadrant Pad Grid
-            val missFlashColor = playingState?.missFlashColor
+            val missFlashColor = board?.missFlashColor
+            val lastTap = board?.lastTap
             Column(
                 modifier = Modifier.weight(1.2f).fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
                 Row(modifier = Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    QuadrantBox(color = StroopColor.RED, isFlashing = missFlashColor == StroopColor.RED, modifier = Modifier.weight(1f).fillMaxHeight()) {
+                    QuadrantBox(color = StroopColor.RED, isFlashing = missFlashColor == StroopColor.RED, modifier = Modifier.weight(1f).fillMaxHeight(), tapFeedback = lastTap) {
                         viewModel.onColorTapped(StroopColor.RED)
                     }
-                    QuadrantBox(color = StroopColor.GREEN, isFlashing = missFlashColor == StroopColor.GREEN, modifier = Modifier.weight(1f).fillMaxHeight()) {
+                    QuadrantBox(color = StroopColor.GREEN, isFlashing = missFlashColor == StroopColor.GREEN, modifier = Modifier.weight(1f).fillMaxHeight(), tapFeedback = lastTap) {
                         viewModel.onColorTapped(StroopColor.GREEN)
                     }
                 }
                 Row(modifier = Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    QuadrantBox(color = StroopColor.BLUE, isFlashing = missFlashColor == StroopColor.BLUE, modifier = Modifier.weight(1f).fillMaxHeight()) {
+                    QuadrantBox(color = StroopColor.BLUE, isFlashing = missFlashColor == StroopColor.BLUE, modifier = Modifier.weight(1f).fillMaxHeight(), tapFeedback = lastTap) {
                         viewModel.onColorTapped(StroopColor.BLUE)
                     }
-                    QuadrantBox(color = StroopColor.YELLOW, isFlashing = missFlashColor == StroopColor.YELLOW, modifier = Modifier.weight(1f).fillMaxHeight()) {
+                    QuadrantBox(color = StroopColor.YELLOW, isFlashing = missFlashColor == StroopColor.YELLOW, modifier = Modifier.weight(1f).fillMaxHeight(), tapFeedback = lastTap) {
                         viewModel.onColorTapped(StroopColor.YELLOW)
                     }
                 }
@@ -298,6 +310,9 @@ fun GameScreen(
         }
     }
 }
+
+// sfx_tap_wrong lasts 0.14 s.
+private const val RESULT_SFX_DELAY_MS = 150L
 
 private fun formatMillisAsClock(millis: Long): String {
     val totalSeconds = (millis / 1000L).coerceAtLeast(0L)

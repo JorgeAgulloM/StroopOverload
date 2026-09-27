@@ -1,6 +1,8 @@
 package com.softyorch.stroopoverload.ui.components
 
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.keyframes
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
@@ -17,7 +19,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -28,6 +32,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.softyorch.stroopoverload.core.StroopColor
+import com.softyorch.stroopoverload.game.TapFeedback
+import kotlinx.coroutines.launch
 import androidx.compose.ui.tooling.preview.Preview
 import com.softyorch.stroopoverload.ui.theme.StroopTheme
 import androidx.compose.foundation.layout.Row
@@ -46,10 +52,18 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.TextStyle
 
+private const val TAP_GLOW_MS = 280
+private const val TAP_SHAKE_MS = 320
+private const val TAP_POP_SCALE = 0.06f
+
 /**
  * One answer quadrant of the 2x2 board, shared by local play and every online
  * mode. Flashes white on a miss; dims and stops taking taps while [enabled] is
  * false (someone else holds the turn).
+ *
+ * [tapFeedback] is the board's latest answer tap: when it names this quadrant,
+ * a right answer pops and glows, a wrong one shakes and dims. Motion and
+ * brightness, not red/green -- colour words are what the player is judging.
  */
 @Composable
 fun QuadrantBox(
@@ -57,10 +71,49 @@ fun QuadrantBox(
     enabled: Boolean = true,
     isFlashing: Boolean = false,
     modifier: Modifier = Modifier,
+    tapFeedback: TapFeedback? = null,
     onTap: () -> Unit,
 ) {
     val neon = color.composeColor
     val shape = RoundedCornerShape(14.dp)
+    // ── Per-tap feedback ──
+    // Run in a scope of their own: the next tap on another quadrant changes
+    // tapFeedback for every quadrant, and a LaunchedEffect-bound animation would
+    // be cancelled half way, leaving the glow stuck.
+    val tapGlow = remember { Animatable(0f) }
+    val tapDim = remember { Animatable(0f) }
+    val tapShakeDp = remember { Animatable(0f) }
+    val feedbackScope = rememberCoroutineScope()
+    // A quadrant composed afresh (online options move to the other row when a round
+    // reshuffles them) would otherwise replay the tap that was already on the board.
+    val tapAtFirstComposition = remember { tapFeedback }
+    LaunchedEffect(tapFeedback) {
+        val tap = tapFeedback?.takeIf { it.color == color && it != tapAtFirstComposition } ?: return@LaunchedEffect
+        if (tap.isCorrect) {
+            feedbackScope.launch {
+                tapGlow.snapTo(1f)
+                tapGlow.animateTo(0f, tween(TAP_GLOW_MS))
+            }
+        } else {
+            feedbackScope.launch {
+                tapDim.snapTo(1f)
+                tapDim.animateTo(0f, tween(TAP_SHAKE_MS))
+            }
+            feedbackScope.launch {
+                tapShakeDp.animateTo(
+                    targetValue = 0f,
+                    animationSpec = keyframes {
+                        durationMillis = TAP_SHAKE_MS
+                        -10f at 40
+                        10f at 100
+                        -7f at 160
+                        7f at 220
+                        -3f at 280
+                    },
+                )
+            }
+        }
+    }
     // ── Flash on miss ──
     val flashAlpha by animateFloatAsState(
         targetValue = if (isFlashing) 0.85f else 0f,
@@ -89,8 +142,10 @@ fun QuadrantBox(
     Box(
         modifier = modifier
             .graphicsLayer {
-                scaleX = scale
-                scaleY = scale
+                val pop = 1f + TAP_POP_SCALE * tapGlow.value
+                scaleX = scale * pop
+                scaleY = scale * pop
+                translationX = tapShakeDp.value.dp.toPx()
             }
             .clip(shape)
             // Outer neon glow border (pulsating)
@@ -164,6 +219,28 @@ fun QuadrantBox(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
+        // ── Tap feedback overlays ──
+        if (tapGlow.value > 0f) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.radialGradient(
+                            colors = listOf(
+                                neon.copy(alpha = 0.6f * tapGlow.value),
+                                neon.copy(alpha = 0.15f * tapGlow.value),
+                            )
+                        )
+                    )
+            )
+        }
+        if (tapDim.value > 0f) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(Color.Black.copy(alpha = 0.6f * tapDim.value))
+            )
+        }
         // ── Miss flash overlay (tinted with neon for cohesion) ──
         if (flashAlpha > 0f) {
             Box(

@@ -34,6 +34,7 @@ import com.softyorch.stroopoverload.domain.UserProfile
 import com.softyorch.stroopoverload.domain.XpBreakdown
 import com.softyorch.stroopoverload.domain.XpSystem
 import com.softyorch.stroopoverload.game.GameViewModel
+import com.softyorch.stroopoverload.game.RecordedRun
 import com.softyorch.stroopoverload.ui.screen.GameModeSelectScreen
 import com.softyorch.stroopoverload.ui.screen.GameOverScreen
 import com.softyorch.stroopoverload.ui.screen.GameScreen
@@ -45,6 +46,10 @@ import com.softyorch.stroopoverload.ui.screen.auth.AuthViewModel
 import com.softyorch.stroopoverload.ui.screen.profile.ProfileScreen
 import com.softyorch.stroopoverload.ui.screen.profile.ProfileViewModel
 import com.softyorch.stroopoverload.ui.components.AnonymousGateDialog
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -68,6 +73,14 @@ val GAMEPLAY_MUSIC_TRACKS = listOf(
     R.raw.music_gameplay_04,
     R.raw.music_gameplay_05,
 )
+
+// Every screen outside a match (and outside the waiting room, which has its own
+// track) plays this one, so moving between menus never restarts it.
+val MENU_MUSIC = MusicTrack.Loop(R.raw.music_dashboard)
+
+// How long the final board stays on screen before the game-over screen, so the
+// player sees the tap that ended the run. The run is recorded meanwhile.
+private const val GAME_OVER_HOLD_MS = 700L
 
 @Composable
 fun StroopNavGraph() {
@@ -111,14 +124,15 @@ fun StroopNavGraph() {
     // Single source of truth for route-level music. ROUTE_MULTIPLAYER is
     // deliberately excluded -- it owns its own music switching internally
     // across its lobby/waiting/gameplay sub-states (see MultiplayerScreen).
+    // null (the start destination before the back stack is ready) leaves the
+    // music alone.
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.route
     LaunchedEffect(currentRoute) {
         when (currentRoute) {
-            ROUTE_HOME -> musicManager.setTrack(MusicTrack.Loop(R.raw.music_dashboard))
+            null, ROUTE_MULTIPLAYER -> Unit
             ROUTE_GAME -> musicManager.setTrack(MusicTrack.Playlist(GAMEPLAY_MUSIC_TRACKS))
-            ROUTE_MULTIPLAYER -> Unit
-            else -> musicManager.setTrack(null)
+            else -> musicManager.setTrack(MENU_MUSIC)
         }
     }
 
@@ -222,16 +236,28 @@ fun StroopNavGraph() {
                     viewModel = gameVm,
                     isAdFree = currentProfile.isAdFree || currentProfile.isPremium,
                     onLeaveMatch = { navController.popBackStack() },
-                    onGameOver = { result, streak ->
+                    onGameOver = { result, streak, record ->
                         lastResult = result
                         scope.launch {
-                            val prof = repository.getProfile()
-                            val xpBreakdown = XpSystem.calculateGameXp(result, prof.dailyStreak, streak)
-                            val newAch = repository.recordGameResult(result, xpBreakdown.total, streak)
-                            lastXpBreakdown = xpBreakdown
-                            lastNewAchievements = newAch
+                            val hold = if (record) launch { delay(GAME_OVER_HOLD_MS) } else null
+                            if (record) {
+                                // Recreating the Activity during the hold cancels this scope.
+                                // The run must still be recorded whole, not half applied.
+                                withContext(NonCancellable) {
+                                    val prof = repository.getProfile()
+                                    val xpBreakdown = XpSystem.calculateGameXp(result, prof.dailyStreak, streak)
+                                    val newAch = repository.recordGameResult(result, xpBreakdown.total, streak)
+                                    gameVm.onRunRecorded(RecordedRun(xpBreakdown, newAch))
+                                }
+                            }
+                            // After a recreation mid-hold the old screen may still be recording:
+                            // wait for its outcome instead of showing the run without its XP.
+                            val recorded = gameVm.recordedRun.filterNotNull().first()
+                            lastXpBreakdown = recorded.xpBreakdown
+                            lastNewAchievements = recorded.newAchievements
                             currentProfile = repository.getProfile()
                             previousHighScore = currentProfile.highScore
+                            hold?.join()
                             navController.navigate(ROUTE_GAME_OVER) {
                                 popUpTo(ROUTE_HOME)
                             }

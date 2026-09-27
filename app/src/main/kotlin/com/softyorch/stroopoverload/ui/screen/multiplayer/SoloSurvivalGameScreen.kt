@@ -7,6 +7,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.*
+import com.softyorch.stroopoverload.game.TapFeedback
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -174,15 +175,16 @@ private fun ColumnScope.PlayingContent(me: RoomPlayer?, onColorTapped: (StroopCo
             .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)),
         contentAlignment = Alignment.Center,
     ) {
+        // Hint pinned to the top of the card, as in local play; the word stays centred.
+        Text(
+            text = stringResource(R.string.game_stimulus_hint),
+            modifier = Modifier.align(Alignment.TopCenter).padding(top = 12.dp),
+            style = MaterialTheme.typography.bodySmall,
+            color = Muted,
+            letterSpacing = 2.sp,
+            fontSize = 11.sp,
+        )
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = stringResource(R.string.game_stimulus_hint),
-                style = MaterialTheme.typography.bodySmall,
-                color = Muted,
-                letterSpacing = 2.sp,
-                fontSize = 11.sp,
-            )
-            Spacer(modifier = Modifier.height(12.dp))
             StimulusWord(
                 text = stringResource(stimulus.wordLabel.displayNameRes),
                 color = stimulus.inkColor.composeColor,
@@ -194,7 +196,11 @@ private fun ColumnScope.PlayingContent(me: RoomPlayer?, onColorTapped: (StroopCo
 
     Spacer(modifier = Modifier.height(10.dp))
 
+    // Per-tap pop/shake on the tapped quadrant, same as local play (cosmetic; the server
+    // judges the answer).
+    var lastTap by remember { mutableStateOf<TapFeedback?>(null) }
     val handleTap: (StroopColor) -> Unit = { tapped ->
+        lastTap = TapFeedback(tapped, tapped == stimulus.correctAnswer, (lastTap?.seq ?: 0) + 1)
         audioPlayer.play(if (tapped == stimulus.correctAnswer) GameSfx.TAP_CORRECT else GameSfx.TAP_WRONG)
         onColorTapped(tapped)
     }
@@ -203,13 +209,15 @@ private fun ColumnScope.PlayingContent(me: RoomPlayer?, onColorTapped: (StroopCo
     // online modes' MultiplayerGameScreen (shared QuadrantBox).
     val options = stimulus.options
     Column(modifier = Modifier.weight(1.2f).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        // Keyed by colour: options are reshuffled every round, and a tap's flash must not
+        // carry over to whichever colour lands in that slot next.
         Row(modifier = Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            options.getOrNull(0)?.let { QuadrantBox(it, true, false, Modifier.weight(1f).fillMaxHeight()) { handleTap(it) } }
-            options.getOrNull(1)?.let { QuadrantBox(it, true, false, Modifier.weight(1f).fillMaxHeight()) { handleTap(it) } }
+            options.getOrNull(0)?.let { key(it) { QuadrantBox(it, true, false, Modifier.weight(1f).fillMaxHeight(), lastTap) { handleTap(it) } } }
+            options.getOrNull(1)?.let { key(it) { QuadrantBox(it, true, false, Modifier.weight(1f).fillMaxHeight(), lastTap) { handleTap(it) } } }
         }
         Row(modifier = Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            options.getOrNull(2)?.let { QuadrantBox(it, true, false, Modifier.weight(1f).fillMaxHeight()) { handleTap(it) } }
-            options.getOrNull(3)?.let { QuadrantBox(it, true, false, Modifier.weight(1f).fillMaxHeight()) { handleTap(it) } }
+            options.getOrNull(2)?.let { key(it) { QuadrantBox(it, true, false, Modifier.weight(1f).fillMaxHeight(), lastTap) { handleTap(it) } } }
+            options.getOrNull(3)?.let { key(it) { QuadrantBox(it, true, false, Modifier.weight(1f).fillMaxHeight(), lastTap) { handleTap(it) } } }
         }
     }
 }

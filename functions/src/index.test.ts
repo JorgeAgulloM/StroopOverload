@@ -31,8 +31,9 @@ import { CREATE_ROOM_LIMIT, JOIN_ROOM_LIMIT, LEAVE_ROOM_LIMIT } from "./rateLimi
 // above -- this suite exercises the Firestore query/delete logic, not RTDB
 // infrastructure that isn't under test.
 const mockDbRemove = jest.fn().mockResolvedValue(undefined);
+const mockDbRef = jest.fn((_path: string) => ({ remove: mockDbRemove }));
 jest.mock("firebase-admin/database", () => ({
-  getDatabase: () => ({ ref: () => ({ remove: mockDbRemove }) }),
+  getDatabase: () => ({ ref: mockDbRef }),
 }));
 
 // startGame() and (via resolveRound()) submitAnswer()/resolveTimeout()/
@@ -963,6 +964,23 @@ describe("onPresenceChanged", () => {
     expect(room.players.b.alive).toBe(true);
     expect(room.status).toBe("finished"); // "b" is the sole survivor
     expect(room.winnerUid).toBe("b");
+  });
+
+  test("removes an offline presence node whose room no longer exists", async () => {
+    // A client's onDisconnect hook fires after the room was already deleted (purged,
+    // emptied, or wiped with the player's data) and would leave this node behind forever.
+    await onPresenceChanged.run(buildPresenceEvent("gone-room", "a", { state: "offline" }));
+
+    expect(mockDbRef).toHaveBeenCalledWith("presence/gone-room/a");
+    expect(mockDbRemove).toHaveBeenCalledTimes(1);
+  });
+
+  test("keeps the presence node of a room that still exists", async () => {
+    await seedPlayingRoom({ status: "finished" });
+
+    await onPresenceChanged.run(buildPresenceEvent("room-1", "c", { state: "offline" }));
+
+    expect(mockDbRemove).not.toHaveBeenCalled();
   });
 
   test("swallows and logs when resolveRound throws instead of rejecting", async () => {
