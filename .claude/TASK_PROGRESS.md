@@ -1470,6 +1470,35 @@ placement mismatch (MEDIUM) · #1, #2, #3, #7 confirmed live.
 - Remaining before Play: real AdMob ids (blocker), human checks (emails, sound/timer feel, online interstitial),
   versionCode bump, App Check registration then enforcement. Open product questions unchanged.
 
+### fix/ux-polish (2026-09-27, DONE locally -- not pushed, no PR yet) -- items 1-6 below
+- Branch `fix/ux-polish` from develop 904ce78; backlog note committed 9480992.
+- User 2026-09-27: **do NOT use the physical Samsung (busy) -- test on the emulator only** (it stays attached to
+  adb: always pass `-s emulator-5554`).
+- Commits: 8f1afa4 (#6 bars), dc743e2 (#2 footer), 3a1a51d (#1 menu music), 57c6163 (#3 hint),
+  7e81b44 (#5 survival time + #4 tap feedback/hold). Kotlin 176 -> 182, debug build OK, lintDebug 0 errors.
+- Emulator (Pixel_9_Pro_API_36, light system theme, guest): bars light-on-dark OK; footer "SYS_VER: 0.0.3";
+  menu music same MediaPlayer across Home/Leaderboard/Mode select, gameplay track in match, menu track at game over;
+  hint at top; time attack -> "TIME ELAPSED 60s"; correct tap pops/glows; wrong tap dims+shakes (measured in
+  screenrecord frames); endless hold ~770 ms then "TIME ELAPSED 2s".
+- NOT verified on device: online lobby music + online hint (guest can't go online; needs a registered account).
+- Review (kotlin-reviewer): HIGH fixed before commit -- back was swallowed during the hold, which could strand the
+  player if the Activity was recreated mid-hold (claimGameOver already consumed). Back behaves as before now.
+  MEDIUM rejected: server bound is totalRounds*3000+30000 ms; real per-round time is <= its limit (3000 decaying to
+  800) + one frame, LIVES freezes excluded, nanoTime doesn't advance in deep sleep.
+- Tip: `uiautomator dump` waits for idle and the board's infinite animations delay it by seconds -- sample ink
+  pixels from screencap instead when a tap must land inside a round.
+- Emulator app is now the debug build (release was uninstalled; its data was test-only).
+- What was done per item:
+  1. MENU_MUSIC (NavGraph) for every route except ROUTE_GAME/ROUTE_MULTIPLAYER; lobby (roomStatus null) too.
+  2. home_footer `%1$s` = BuildConfig.VERSION_NAME (6 locales) -> shows "0.0.3" (not "2.0").
+  3. Hint `align(TopCenter)` in GameScreen + MultiplayerGameScreen + SoloSurvivalGameScreen.
+  4. `TapFeedback(color,isCorrect,round)` in Playing.lastTap; QuadrantBox pop+glow (right) / shake+dim (wrong);
+     GameOver.finalBoard kept on screen GAME_OVER_HOLD_MS=700 (NavGraph records meanwhile, then navigates);
+     back swallowed during the hold; LIVES last life now ends at once (no 1.5 s freeze first). Local play only.
+  5. survivalMs = clock() - runStart - frozenMs (injected clock, nanoTime); TIME capped at 60000. TDD: RED showed 57008.
+  6. enableEdgeToEdge(SystemBarStyle.dark(TRANSPARENT)) for both bars.
+- Pending: emulator check (light system theme, footer, feedback, time attack 60 s), review, commit(s), PR.
+
 ### Backlog from the user (2026-09-25) -- not started
 
 **Next branch: minor fixes** (suggested name `fix/ux-polish`)
