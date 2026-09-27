@@ -3,6 +3,7 @@ import { getFirestore } from "firebase-admin/firestore";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
 import { onTaskDispatched } from "firebase-functions/v2/tasks";
 import { onValueWritten } from "firebase-functions/v2/database";
+import { getDatabase } from "firebase-admin/database";
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { onDocumentUpdated } from "firebase-functions/v2/firestore";
 import { generateUniqueRoomCode, findJoinableRoomByCode, roomsCol } from "./roomRepo";
@@ -456,7 +457,13 @@ export const onPresenceChanged = onValueWritten(
 
     const roomRef = roomsCol().doc(roomId);
     const doc = await roomRef.get();
-    if (!doc.exists) return;
+    if (!doc.exists) {
+      // The client leaves its onDisconnect hook armed on purpose, so it can fire after
+      // the room was deleted -- recreating a presence node that nothing would ever
+      // remove. Removing it re-triggers this handler with no value, which returns above.
+      await getDatabase().ref(`presence/${roomId}/${uid}`).remove();
+      return;
+    }
     const room = doc.data() as RoomDoc;
     if (room.status !== "playing" || !room.players[uid]?.alive) return;
     // Patata Caliente's only elimination path is the hidden bomb -- a
