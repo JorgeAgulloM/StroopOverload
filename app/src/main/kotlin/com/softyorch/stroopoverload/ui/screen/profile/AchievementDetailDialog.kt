@@ -19,14 +19,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawWithContent
-import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.draw.drawWithCache
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.ColorMatrix
-import androidx.compose.ui.graphics.Paint
 import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.layer.drawLayer
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -44,21 +42,23 @@ import java.util.Date
 
 private const val LOCKED_ALPHA = 0.55f
 
-private val GREYSCALE_PAINT = Paint().apply {
-    colorFilter = ColorFilter.colorMatrix(ColorMatrix().apply { setToSaturation(0f) })
-    alpha = LOCKED_ALPHA
-}
+private val GREYSCALE = ColorFilter.colorMatrix(ColorMatrix().apply { setToSaturation(0f) })
 
 /**
- * Draws its content in faded greys: a locked trophy. A layer with a saturation filter,
- * rather than RenderEffect, so it works below API 31 and on emoji too.
+ * Draws its content in faded greys: a locked trophy. A graphics layer with a saturation
+ * filter, rather than RenderEffect, so it works below API 31 and on emoji too. The layer is
+ * the card's own render node, so scrolling the trophy list only moves it instead of
+ * re-rendering an offscreen layer per card per frame.
  */
 internal fun Modifier.lockedLook(isLocked: Boolean): Modifier =
-    if (!isLocked) this else drawWithContent {
-        drawIntoCanvas { canvas ->
-            canvas.saveLayer(Rect(0f, 0f, size.width, size.height), GREYSCALE_PAINT)
-            drawContent()
-            canvas.restore()
+    if (!isLocked) this else drawWithCache {
+        val layer = obtainGraphicsLayer().apply {
+            colorFilter = GREYSCALE
+            alpha = LOCKED_ALPHA
+        }
+        onDrawWithContent {
+            layer.record { this@onDrawWithContent.drawContent() }
+            drawLayer(layer)
         }
     }
 
