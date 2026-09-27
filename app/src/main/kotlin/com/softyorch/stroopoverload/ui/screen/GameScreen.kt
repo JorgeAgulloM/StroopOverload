@@ -35,6 +35,8 @@ import com.softyorch.stroopoverload.game.GameViewModel
 import com.softyorch.stroopoverload.ui.components.StimulusWord
 import com.softyorch.stroopoverload.ui.components.CountdownOverlay
 import com.softyorch.stroopoverload.ui.components.QuadrantBox
+import com.softyorch.stroopoverload.ui.components.rememberStrobeAngle
+import com.softyorch.stroopoverload.ui.components.strobeBorder
 import com.softyorch.stroopoverload.ui.theme.*
 import com.softyorch.stroopoverload.ui.components.TimerBarHost
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -185,20 +187,23 @@ fun GameScreen(
             Spacer(modifier = Modifier.height(10.dp))
 
             // Central Neural Word Terminal
+            val strobeAngle = rememberStrobeAngle()
             Box(
                 modifier = Modifier
                     .weight(1.0f)
                     .fillMaxWidth()
-                    .border(
-                        width = 2.dp, 
-                        brush = androidx.compose.ui.graphics.Brush.linearGradient(
+                    .strobeBorder(
+                        width = 2.dp,
+                        cornerRadius = 16.dp,
+                        baseBrush = androidx.compose.ui.graphics.Brush.linearGradient(
                             colors = listOf(
-                                NeonYellow.copy(alpha = 0.4f), 
-                                MaterialTheme.colorScheme.primary.copy(alpha = 0.8f), 
-                                MaterialTheme.colorScheme.secondary.copy(alpha = 0.4f)
+                                NeonYellow.copy(alpha = 0.25f),
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.45f),
+                                MaterialTheme.colorScheme.secondary.copy(alpha = 0.25f)
                             )
-                        ), 
-                        shape = RoundedCornerShape(16.dp)
+                        ),
+                        lightColor = MaterialTheme.colorScheme.primary,
+                        angle = strobeAngle,
                     )
                     .background(
                         brush = androidx.compose.ui.graphics.Brush.verticalGradient(
