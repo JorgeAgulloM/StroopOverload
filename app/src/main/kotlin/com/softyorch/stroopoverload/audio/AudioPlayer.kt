@@ -33,12 +33,16 @@ class AudioPlayer(context: Context) {
         )
         .build()
 
+    // Set once the pool is really gone: a sample that finishes decoding after that must not
+    // reach play() on a released SoundPool.
+    private var released = false
+
     private val loadedSampleIds = mutableSetOf<Int>()
     private val pendingOnLoad = mutableMapOf<Int, MutableList<() -> Unit>>()
 
     init {
         pool.setOnLoadCompleteListener { _, sampleId, status ->
-            if (status == 0) {
+            if (status == 0 && !released) {
                 loadedSampleIds += sampleId
                 pendingOnLoad.remove(sampleId)?.forEach { it() }
             }
@@ -64,7 +68,7 @@ class AudioPlayer(context: Context) {
     fun play(sfx: GameSfx) = playSample(sfxSampleIds[sfx])
 
     private fun playSample(sampleId: Int?) {
-        if (sampleId == null) return
+        if (sampleId == null || released) return
         if (sampleId in loadedSampleIds) {
             if (settings.sfxEnabled.value) pool.play(sampleId, 1f, 1f, 0, 0, 1f)
         } else {
@@ -79,6 +83,9 @@ class AudioPlayer(context: Context) {
      * as it closes, right after the result sting starts, and releasing at once cut it off.
      */
     fun release() {
-        Handler(Looper.getMainLooper()).postDelayed({ pool.release() }, RELEASE_GRACE_MS)
+        Handler(Looper.getMainLooper()).postDelayed({
+            released = true
+            pool.release()
+        }, RELEASE_GRACE_MS)
     }
 }
