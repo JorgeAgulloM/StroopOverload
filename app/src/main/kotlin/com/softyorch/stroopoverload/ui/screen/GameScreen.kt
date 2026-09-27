@@ -45,8 +45,12 @@ import com.softyorch.stroopoverload.ui.components.ExitMatchDialog
 @Composable
 fun GameScreen(
     viewModel: GameViewModel,
-    /** Called once per finished run with its result and the streak it ended on. */
-    onGameOver: (result: GameResult, endStreak: Int) -> Unit,
+    /**
+     * Called with each finished run, its end streak and whether to [record] it: false when the
+     * Activity was recreated during the final-board hold -- the run was already recorded, but
+     * the navigation to the game-over screen died with the old screen and must happen again.
+     */
+    onGameOver: (result: GameResult, endStreak: Int, record: Boolean) -> Unit,
     onLeaveMatch: () -> Unit,
     isAdFree: Boolean = false,
 ) {
@@ -99,8 +103,9 @@ fun GameScreen(
     when (val s = state) {
         is GameState.GameOver -> {
             LaunchedEffect(s) {
-                if (!viewModel.claimGameOver()) return@LaunchedEffect
-                onGameOver(s.result, s.endStreak)
+                val isFirstClaim = viewModel.claimGameOver()
+                onGameOver(s.result, s.endStreak, isFirstClaim)
+                if (!isFirstClaim) return@LaunchedEffect
                 // Let the last tap's sound finish before the result sting.
                 delay(RESULT_SFX_DELAY_MS)
                 audioPlayer.play(if (s.result.won) GameSfx.MATCH_WIN else GameSfx.MATCH_LOSE)

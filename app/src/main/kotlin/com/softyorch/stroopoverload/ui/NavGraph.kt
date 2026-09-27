@@ -45,6 +45,7 @@ import com.softyorch.stroopoverload.ui.screen.auth.AuthViewModel
 import com.softyorch.stroopoverload.ui.screen.profile.ProfileScreen
 import com.softyorch.stroopoverload.ui.screen.profile.ProfileViewModel
 import com.softyorch.stroopoverload.ui.components.AnonymousGateDialog
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
@@ -232,18 +233,24 @@ fun StroopNavGraph() {
                     viewModel = gameVm,
                     isAdFree = currentProfile.isAdFree || currentProfile.isPremium,
                     onLeaveMatch = { navController.popBackStack() },
-                    onGameOver = { result, streak ->
+                    onGameOver = { result, streak, record ->
                         lastResult = result
                         scope.launch {
-                            val hold = launch { delay(GAME_OVER_HOLD_MS) }
-                            val prof = repository.getProfile()
-                            val xpBreakdown = XpSystem.calculateGameXp(result, prof.dailyStreak, streak)
-                            val newAch = repository.recordGameResult(result, xpBreakdown.total, streak)
-                            lastXpBreakdown = xpBreakdown
-                            lastNewAchievements = newAch
+                            val hold = if (record) launch { delay(GAME_OVER_HOLD_MS) } else null
+                            if (record) {
+                                // Recreating the Activity during the hold cancels this scope.
+                                // The run must still be recorded whole, not half applied.
+                                withContext(NonCancellable) {
+                                    val prof = repository.getProfile()
+                                    val xpBreakdown = XpSystem.calculateGameXp(result, prof.dailyStreak, streak)
+                                    val newAch = repository.recordGameResult(result, xpBreakdown.total, streak)
+                                    lastXpBreakdown = xpBreakdown
+                                    lastNewAchievements = newAch
+                                }
+                            }
                             currentProfile = repository.getProfile()
                             previousHighScore = currentProfile.highScore
-                            hold.join()
+                            hold?.join()
                             navController.navigate(ROUTE_GAME_OVER) {
                                 popUpTo(ROUTE_HOME)
                             }
