@@ -84,8 +84,11 @@ fun QuadrantBox(
     val tapDim = remember { Animatable(0f) }
     val tapShakeDp = remember { Animatable(0f) }
     val feedbackScope = rememberCoroutineScope()
+    // A quadrant composed afresh (online options move to the other row when a round
+    // reshuffles them) would otherwise replay the tap that was already on the board.
+    val tapAtFirstComposition = remember { tapFeedback }
     LaunchedEffect(tapFeedback) {
-        val tap = tapFeedback?.takeIf { it.color == color } ?: return@LaunchedEffect
+        val tap = tapFeedback?.takeIf { it.color == color && it != tapAtFirstComposition } ?: return@LaunchedEffect
         if (tap.isCorrect) {
             feedbackScope.launch {
                 tapGlow.snapTo(1f)
