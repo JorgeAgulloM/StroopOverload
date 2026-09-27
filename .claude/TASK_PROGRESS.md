@@ -1639,3 +1639,12 @@ Device helpers (session temp, may be gone): `$TEMP/ui.sh <serial>` (UI text+coor
 (auto-players by ink-colour sampling; play3 handles shuffled online quadrants). Phone: Samsung SM-A165F over adb wifi
 (`adb-R58Y8113L3N-…`), logged in as the user's YorchDebug account. AVD `Pixel_9_Pro_API_36` (closes under memory pressure).
 Verified test accounts are created with `firebase auth:import` (HMAC_SHA256) — ask the user first each time.
+
+### 2026-09-27 late (session hit usage limit mid-verification)
+- Committed: onPresenceChanged removes offline presence for deleted rooms (functions 229/229, tsc+eslint clean) --
+  **NOT DEPLOYED** (ask first: `firebase deploy --only functions:onPresenceChanged`).
+- Committed: game-over hold survives Activity recreation (record in NonCancellable; recreated GameScreen re-opens
+  game over with record=false). Kotlin tests + debug build green, installed on emulator. Emulator: 3 runs with a
+  theme toggle each counted exactly once (matches_played 1->2->3), but the toggle landed after the hold every time
+  (recreation lags `cmd uimode` by >1 s), so the new re-open path is NOT yet seen on device. The pre-fix freeze WAS
+  reproduced once. Next: time the toggle via logcat `wm_on_create_called` and re-test; then push/PR (user's call).
