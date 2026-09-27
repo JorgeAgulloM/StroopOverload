@@ -1648,3 +1648,8 @@ Verified test accounts are created with `firebase auth:import` (HMAC_SHA256) —
   theme toggle each counted exactly once (matches_played 1->2->3), but the toggle landed after the hold every time
   (recreation lags `cmd uimode` by >1 s), so the new re-open path is NOT yet seen on device. The pre-fix freeze WAS
   reproduced once. Next: time the toggle via logcat `wm_on_create_called` and re-test; then push/PR (user's call).
+- VERIFIED (2026-09-27): `cmd uimode` -> recreation latency varies 0.3-3.5 s while the board animates, so 700 ms
+  can't be hit reliably. Used a temporary local build with GAME_OVER_HOLD_MS = 5000 (reverted, never committed):
+  miss 7.7 s -> recreation -> game over at 11.2 s (before the hold's end at 12.7 s), stays there, run counted once
+  (matches_played 4 -> 5). The re-opened game over has no XP/achievements block (breakdown lost with the old
+  composition; the run itself is recorded). Normal 700 ms build reinstalled, emulator night mode back to "no".
