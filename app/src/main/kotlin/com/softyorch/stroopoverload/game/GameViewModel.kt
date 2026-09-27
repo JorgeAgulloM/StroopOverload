@@ -92,7 +92,7 @@ class GameViewModel(
             correctHits = newHits,
             totalRounds = newRounds,
             currentStreak = newStreak,
-            lastTap = TapFeedback(tapped, isCorrect = true, round = newRounds),
+            lastTap = TapFeedback(tapped, isCorrect = true, seq = newRounds),
         )
         nextStimulus()
     }
@@ -106,7 +106,7 @@ class GameViewModel(
         val missed = playing.copy(
             totalRounds = newRounds,
             currentStreak = 0,
-            lastTap = tapped?.let { TapFeedback(it, isCorrect = false, round = newRounds) } ?: playing.lastTap,
+            lastTap = tapped?.let { TapFeedback(it, isCorrect = false, seq = newRounds) } ?: playing.lastTap,
         )
 
         when (missed.mode) {

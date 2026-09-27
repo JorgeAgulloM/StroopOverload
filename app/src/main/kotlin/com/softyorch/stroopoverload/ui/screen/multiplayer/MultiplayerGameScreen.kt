@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import com.softyorch.stroopoverload.game.TapFeedback
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -151,7 +152,10 @@ private fun ColumnScope.PlayingContent(room: MultiplayerRoom, myTurn: Boolean, o
     // room.round: every resolution (correct OR wrong) advances the round with
     // a fresh stimulus, so the flash naturally clears once that arrives.
     var missFlashColor by remember(room.round) { mutableStateOf<StroopColor?>(null) }
+    // Per-tap pop/shake on the tapped quadrant, same as local play; also cosmetic.
+    var lastTap by remember { mutableStateOf<TapFeedback?>(null) }
     val handleTap: (StroopColor) -> Unit = { tapped ->
+        lastTap = TapFeedback(tapped, tapped == stimulus.correctAnswer, (lastTap?.seq ?: 0) + 1)
         if (tapped == stimulus.correctAnswer) {
             audioPlayer.play(GameSfx.TAP_CORRECT)
         } else {
@@ -213,13 +217,15 @@ private fun ColumnScope.PlayingContent(room: MultiplayerRoom, myTurn: Boolean, o
     // pre-shuffled from the backend, so the grid position is randomized too).
     val options = stimulus.options
     Column(modifier = Modifier.weight(1.2f).fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        // Keyed by colour: options are reshuffled every round, and a tap's flash must not
+        // carry over to whichever colour lands in that slot next.
         Row(modifier = Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            options.getOrNull(0)?.let { QuadrantBox(it, myTurn, it == missFlashColor, Modifier.weight(1f).fillMaxHeight()) { handleTap(it) } }
-            options.getOrNull(1)?.let { QuadrantBox(it, myTurn, it == missFlashColor, Modifier.weight(1f).fillMaxHeight()) { handleTap(it) } }
+            options.getOrNull(0)?.let { key(it) { QuadrantBox(it, myTurn, it == missFlashColor, Modifier.weight(1f).fillMaxHeight(), lastTap) { handleTap(it) } } }
+            options.getOrNull(1)?.let { key(it) { QuadrantBox(it, myTurn, it == missFlashColor, Modifier.weight(1f).fillMaxHeight(), lastTap) { handleTap(it) } } }
         }
         Row(modifier = Modifier.weight(1f).fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            options.getOrNull(2)?.let { QuadrantBox(it, myTurn, it == missFlashColor, Modifier.weight(1f).fillMaxHeight()) { handleTap(it) } }
-            options.getOrNull(3)?.let { QuadrantBox(it, myTurn, it == missFlashColor, Modifier.weight(1f).fillMaxHeight()) { handleTap(it) } }
+            options.getOrNull(2)?.let { key(it) { QuadrantBox(it, myTurn, it == missFlashColor, Modifier.weight(1f).fillMaxHeight(), lastTap) { handleTap(it) } } }
+            options.getOrNull(3)?.let { key(it) { QuadrantBox(it, myTurn, it == missFlashColor, Modifier.weight(1f).fillMaxHeight(), lastTap) { handleTap(it) } } }
         }
     }
 }

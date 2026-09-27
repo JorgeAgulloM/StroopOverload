@@ -308,7 +308,7 @@ class GameViewModelTest {
         val correct = viewModel.stimulus.value!!.correctAnswer
         viewModel.onColorTapped(correct)
         assertEquals(
-            TapFeedback(correct, isCorrect = true, round = 1),
+            TapFeedback(correct, isCorrect = true, seq = 1),
             (viewModel.state.value as GameState.Playing).lastTap,
         )
 
@@ -316,7 +316,7 @@ class GameViewModelTest {
         val wrong = StroopColor.entries.first { it != nextCorrect }
         viewModel.onColorTapped(wrong)
         assertEquals(
-            TapFeedback(wrong, isCorrect = false, round = 2),
+            TapFeedback(wrong, isCorrect = false, seq = 2),
             (viewModel.state.value as GameState.Playing).lastTap,
         )
     }
@@ -334,7 +334,7 @@ class GameViewModelTest {
         viewModel.onColorTapped(wrong)
 
         val board = (viewModel.state.value as GameState.GameOver).finalBoard!!
-        assertEquals(TapFeedback(wrong, isCorrect = false, round = 1), board.lastTap)
+        assertEquals(TapFeedback(wrong, isCorrect = false, seq = 1), board.lastTap)
         assertEquals(correct, board.missFlashColor)
     }
 }

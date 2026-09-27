@@ -33,5 +33,8 @@ sealed interface GameState {
     ) : GameState
 }
 
-/** One answer tap, for the board's per-tap flash. [round] tells two taps on the same quadrant apart. */
-data class TapFeedback(val color: StroopColor, val isCorrect: Boolean, val round: Int)
+/**
+ * One answer tap, for the board's per-tap flash. [seq] changes with every tap so two taps on
+ * the same quadrant both flash (local play uses the run's round number).
+ */
+data class TapFeedback(val color: StroopColor, val isCorrect: Boolean, val seq: Int)
