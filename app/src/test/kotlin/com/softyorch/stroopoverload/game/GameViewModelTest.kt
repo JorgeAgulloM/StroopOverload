@@ -238,6 +238,23 @@ class GameViewModelTest {
         assertNull(viewModel.recordedRun.value)
     }
 
+    @Test
+    fun `the spoken distractor colour only starts at level 15`() = runTest {
+        // It used to start at level 5, early enough to feel like random noise.
+        // Level 15 comes with the 70th right answer (a level every 5 rounds).
+        val viewModel = GameViewModel()
+        viewModel.startGame(mode = GameMode.TIME)
+        viewModel.beginRound()
+
+        repeat(70) {
+            assertNull("no voice before level 15 (answer ${it + 1})", viewModel.stimulus.value!!.audioColor)
+            viewModel.onColorTapped(viewModel.stimulus.value!!.correctAnswer)
+        }
+
+        assertEquals(15, (viewModel.state.value as GameState.Playing).level)
+        assertTrue(viewModel.stimulus.value!!.audioColor != null)
+    }
+
     // Virtual time plus whatever a test adds to simulate frames that ran late.
     private var clockLagMs = 0L
 

@@ -149,11 +149,9 @@ class GameViewModel(
 
     private fun nextStimulus() {
         val playing = _state.value as? GameState.Playing ?: return
-        val difficultyTier = when {
-            playing.level >= 10 -> 3
-            playing.level >= 5 -> 2
-            else -> 1
-        }
+        // Tier 2 adds the spoken distractor colour. Tier 3's background distractor is never
+        // drawn anywhere, so it isn't requested.
+        val difficultyTier = if (playing.level >= GameConfig.AUDIO_DISTRACTOR_MIN_LEVEL) 2 else 1
         _stimulus.value = engine.generate(difficultyTier)
         if (playing.mode != GameMode.TIME) {
             _timerProgress.value = 1f
