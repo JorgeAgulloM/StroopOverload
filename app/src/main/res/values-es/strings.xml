@@ -181,6 +181,11 @@
     <string name="profile_guest_sign_out_cancel">QUEDARME</string>
     <string name="profile_achievement_hidden_title">\?\?\?</string>
     <string name="profile_achievement_hidden_desc">Trofeo Sináptico Confidencial</string>
+    <string name="achievement_detail_unlocked_on">Desbloqueado el %1$s</string>
+    <string name="achievement_detail_progress">Progreso: %1$d / %2$d</string>
+    <string name="achievement_detail_reward">Recompensa: +%1$d XP</string>
+    <string name="achievement_detail_hidden_hint">Sigue jugando para descubrirlo.</string>
+    <string name="achievement_detail_open">Ver detalles del trofeo</string>
 
     <!-- Auth screen -->
     <string name="auth_brand">[ STROOP // OVERLOAD ]</string>

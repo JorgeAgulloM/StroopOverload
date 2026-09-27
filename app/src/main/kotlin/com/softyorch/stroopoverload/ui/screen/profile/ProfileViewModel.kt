@@ -13,6 +13,8 @@ import com.softyorch.stroopoverload.data.DeleteAccountException
 import com.softyorch.stroopoverload.data.GameRepository
 import com.softyorch.stroopoverload.data.MultiplayerRepository
 import com.softyorch.stroopoverload.domain.Achievement
+import com.softyorch.stroopoverload.domain.AchievementEngine
+import com.softyorch.stroopoverload.domain.AchievementProgress
 import com.softyorch.stroopoverload.domain.CareerStats
 import com.softyorch.stroopoverload.domain.UserProfile
 import com.softyorch.stroopoverload.domain.XpSystem
@@ -38,7 +40,14 @@ data class ProfileUiState(
     val showGuestSignOutConfirmation: Boolean = false,
 ) {
     val hasUnsavedChanges: Boolean get() = isEditing && editSnapshot != null && profile != editSnapshot
+
+    /** How far the career stats are towards [achievement], for its detail dialog. */
+    fun progressOf(achievement: Achievement): AchievementProgress =
+        PROGRESS_ENGINE.progressFor(achievement.id, careerStats)
 }
+
+// Stateless: only its progress rules are used here.
+private val PROGRESS_ENGINE = AchievementEngine()
 
 class ProfileViewModel(
     private val repository: GameRepository,
