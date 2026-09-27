@@ -1481,6 +1481,24 @@ placement mismatch (MEDIUM) · #1, #2, #3, #7 confirmed live.
   hint at top; time attack -> "TIME ELAPSED 60s"; correct tap pops/glows; wrong tap dims+shakes (measured in
   screenrecord frames); endless hold ~770 ms then "TIME ELAPSED 2s".
 - NOT verified on device: online lobby music + online hint (guest can't go online; needs a registered account).
+- Follow-ups the user asked for (2026-09-27): 53dda29 final miss plays TAP_WRONG (SFX keyed on board), result
+  sting 150 ms later; AudioPlayer.release() deferred 1 s (was cutting MATCH_LOSE when the screen closed -- likely
+  part of backlog #10 "random SFX"). d7d0cca tap feedback in MultiplayerGameScreen + SoloSurvivalGameScreen
+  (key(color) per quadrant), TapFeedback.round -> seq. Kotlin 182, lint 0 errors. Emulator: SoundPool released
+  after the grace (dumpsys), SFX order not measurable there. Survival +5 %: thresholds deliberately unchanged.
+- Online check on the emulator (user OK'd throwaway PROD accounts, 2026-09-27): verified accounts via
+  `firebase auth:import` (HMAC_SHA256, no salt) + a scratch bot (prod-smoke helpers) hosting rooms and driving the
+  emulator's taps over adb. Verified: lobby keeps the Home MediaPlayer (was silent), hint pinned top in
+  MultiplayerGameScreen + SoloSurvivalGameScreen, right-tap glow / wrong-tap dim+shake online.
+  Found + fixed 5be8148: a quadrant composed afresh (tapped colour moved rows on reshuffle) replayed the flash.
+- Cleanup verified: 0 e2e auth accounts, users/{uid} absent for all 5 test uids, no recent rooms, 4 orphan
+  presence/{roomId} entries removed (see note below).
+- Harness gotchas: uiautomator dump ~3.4 s on the board (too slow for a 3 s turn) -> fixed slot coords or pixel
+  locator; accounts:delete needs a fresh sign-in (>5 min token -> CREDENTIAL_TOO_OLD_LOGIN_AGAIN); set
+  PYTHONIOENCODING=utf-8 for ui.sh output with "…"; BACK with no keyboard open leaves the lobby.
+- Pre-existing, minor, NOT fixed: a client's RTDB onDisconnect writes presence/{roomId}/{uid} "offline" after the
+  room is already deleted, leaving orphan presence nodes forever (seen for all 4 test rooms). Candidate for the
+  room purge job.
 - Review (kotlin-reviewer): HIGH fixed before commit -- back was swallowed during the hold, which could strand the
   player if the Activity was recreated mid-hold (claimGameOver already consumed). Back behaves as before now.
   MEDIUM rejected: server bound is totalRounds*3000+30000 ms; real per-round time is <= its limit (3000 decaying to
