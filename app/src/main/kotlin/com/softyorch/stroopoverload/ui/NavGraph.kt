@@ -34,6 +34,7 @@ import com.softyorch.stroopoverload.domain.UserProfile
 import com.softyorch.stroopoverload.domain.XpBreakdown
 import com.softyorch.stroopoverload.domain.XpSystem
 import com.softyorch.stroopoverload.game.GameViewModel
+import com.softyorch.stroopoverload.game.RecordedRun
 import com.softyorch.stroopoverload.ui.screen.GameModeSelectScreen
 import com.softyorch.stroopoverload.ui.screen.GameOverScreen
 import com.softyorch.stroopoverload.ui.screen.GameScreen
@@ -47,6 +48,8 @@ import com.softyorch.stroopoverload.ui.screen.profile.ProfileViewModel
 import com.softyorch.stroopoverload.ui.components.AnonymousGateDialog
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -244,10 +247,14 @@ fun StroopNavGraph() {
                                     val prof = repository.getProfile()
                                     val xpBreakdown = XpSystem.calculateGameXp(result, prof.dailyStreak, streak)
                                     val newAch = repository.recordGameResult(result, xpBreakdown.total, streak)
-                                    lastXpBreakdown = xpBreakdown
-                                    lastNewAchievements = newAch
+                                    gameVm.onRunRecorded(RecordedRun(xpBreakdown, newAch))
                                 }
                             }
+                            // After a recreation mid-hold the old screen may still be recording:
+                            // wait for its outcome instead of showing the run without its XP.
+                            val recorded = gameVm.recordedRun.filterNotNull().first()
+                            lastXpBreakdown = recorded.xpBreakdown
+                            lastNewAchievements = recorded.newAchievements
                             currentProfile = repository.getProfile()
                             previousHighScore = currentProfile.highScore
                             hold?.join()

@@ -27,6 +27,11 @@ class GameViewModel(
     private val _stimulus = MutableStateFlow<StroopStimulus?>(null)
     val stimulus: StateFlow<StroopStimulus?> = _stimulus.asStateFlow()
 
+    // Kept here rather than in the game screen: an Activity recreated during the final-board
+    // hold re-opens the game-over screen and needs what the recording already produced.
+    private val _recordedRun = MutableStateFlow<RecordedRun?>(null)
+    val recordedRun: StateFlow<RecordedRun?> = _recordedRun.asStateFlow()
+
     private val _timerProgress = MutableStateFlow(1f)
     val timerProgress: StateFlow<Float> = _timerProgress.asStateFlow()
 
@@ -46,6 +51,7 @@ class GameViewModel(
     fun startGame(mode: GameMode = GameMode.ENDLESS, previousHigh: Int = 0) {
         if (_state.value != GameState.Menu) return
         gameOverClaimed = false
+        _recordedRun.value = null
         pendingMode = mode
         previousHighScore = previousHigh
         _state.value = GameState.Countdown
@@ -249,6 +255,10 @@ class GameViewModel(
             endStreak = playing.currentStreak,
             finalBoard = playing,
         )
+    }
+
+    fun onRunRecorded(run: RecordedRun) {
+        _recordedRun.value = run
     }
 
     fun returnToMenu() {

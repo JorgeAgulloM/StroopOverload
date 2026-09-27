@@ -4,6 +4,7 @@ import app.cash.turbine.test
 import com.softyorch.stroopoverload.core.GameConfig
 import com.softyorch.stroopoverload.core.StroopColor
 import com.softyorch.stroopoverload.domain.GameMode
+import com.softyorch.stroopoverload.domain.XpBreakdown
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -219,6 +220,22 @@ class GameViewModelTest {
         val viewModel = endedEndlessRun()
 
         assertEquals(0, (viewModel.state.value as GameState.GameOver).endStreak)
+    }
+
+    @Test
+    fun `the recorded outcome outlives the screen and is cleared by the next run`() = runTest {
+        // Kept here, not in the game screen: an Activity recreated during the final-board hold
+        // re-opens the game-over screen and needs the XP it already earned.
+        val viewModel = endedEndlessRun()
+        assertNull(viewModel.recordedRun.value)
+
+        val recorded = RecordedRun(XpBreakdown(0, 10, 0, 0, 0, 0, 1.0, 10), emptyList())
+        viewModel.onRunRecorded(recorded)
+        assertEquals(recorded, viewModel.recordedRun.value)
+
+        viewModel.returnToMenu()
+        viewModel.startGame()
+        assertNull(viewModel.recordedRun.value)
     }
 
     // Virtual time plus whatever a test adds to simulate frames that ran late.

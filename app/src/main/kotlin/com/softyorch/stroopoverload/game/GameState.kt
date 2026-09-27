@@ -2,7 +2,9 @@ package com.softyorch.stroopoverload.game
 
 import com.softyorch.stroopoverload.core.StroopColor
 import com.softyorch.stroopoverload.domain.GameMode
+import com.softyorch.stroopoverload.domain.Achievement
 import com.softyorch.stroopoverload.domain.GameResult
+import com.softyorch.stroopoverload.domain.XpBreakdown
 
 sealed interface GameState {
     data object Menu : GameState
@@ -32,6 +34,9 @@ sealed interface GameState {
         val finalBoard: Playing? = null,
     ) : GameState
 }
+
+/** What recording a finished run produced, shown on the game-over screen. */
+data class RecordedRun(val xpBreakdown: XpBreakdown, val newAchievements: List<Achievement>)
 
 /**
  * One answer tap, for the board's per-tap flash. [seq] changes with every tap so two taps on
