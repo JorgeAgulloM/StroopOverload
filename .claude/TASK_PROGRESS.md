@@ -1470,6 +1470,41 @@ placement mismatch (MEDIUM) · #1, #2, #3, #7 confirmed live.
 - Remaining before Play: real AdMob ids (blocker), human checks (emails, sound/timer feel, online interstitial),
   versionCode bump, App Check registration then enforcement. Open product questions unchanged.
 
+### Backlog from the user (2026-09-25) -- not started
+
+**Next branch: minor fixes** (suggested name `fix/ux-polish`)
+1. Menu music: `music_dashboard` must keep playing across every menu screen (home, mode select, leaderboard,
+   profile, game over, online lobby); it only changes when entering a match or the waiting room (which has its own
+   track). Today NavGraph.kt sets it only for ROUTE_HOME and `null` for everything else; the online lobby is silent.
+2. Home footer `home_footer` = "SYS_VER: 2.0 // ..." hardcodes 2.0 in all 6 locales -> show the real app version
+   (BuildConfig.VERSION_NAME) via a format arg in the 6 strings.
+3. Game screen: the "[ OBJETIVO SINÁPTICO // ... ]" hint floats mid-card; pin it to the top of the stimulus card
+   with a margin (GameScreen.kt ~line 225; check MultiplayerGameScreen/SoloSurvival for the same layout).
+4. Game screen: visual feedback on every correct tap and every wrong tap (today only a miss flash on the quadrant
+   in lives/time modes; nothing on a correct tap).
+5. Time attack shows ~57 s at the end. ROOT CAUSE (verified in code): not the 3-2-1 -- the session timer starts after
+   it. GameViewModel adds a fixed 16 ms per `delay(16)` loop (lines ~157 and ~183) while each loop really takes
+   longer, so survivalMs undercounts ~5 % (60 s -> ~57 s). Fix: derive survivalMs from elapsed wall time
+   (start timestamp, pausing during isFrozen), not by accumulation. Also affects endless mode and the survivalMs
+   sent to submitSoloRun (server validates it with DURATION_SLACK_MS -- recheck the numbers after the fix).
+   User wants the 60 s to start when the board is shown -- already true; confirm on device after the fix.
+6. Light system theme: status/navigation bars adapt to light and look wrong on the dark app. MainActivity calls
+   plain `enableEdgeToEdge()` (auto style) -> use `SystemBarStyle.dark(Color.TRANSPARENT)` for both bars.
+
+**Branch after that: improvements** (suggested `feat/game-feel`)
+7. Timer bar "beats" (pulse) when <= 20 % time remains.
+8. Stimulus card border: rotating strobe light effect (light seems to spin behind the card).
+9. Time attack: +1 s per correct tap? ADVISOR NOTE: that turns it into an "extend" mode with a different
+   leaderboard meaning, and the server validates time runs against TIME_MODE_DURATION_MS = 60 s
+   (functions/src/profileScoring.ts) -- it needs server changes. Prefer a new mode over changing TIME.
+10. SFX feel "random". Correct/wrong SFX ARE tied to the events (GameScreen.kt:85-90). Likely cause: from difficulty
+    level 2 the game speaks a distractor colour name (`stimulus.audioColor`, GameScreen.kt:60) -- that is the Stroop
+    audio distractor by design. Also endless ends on a miss with no TAP_WRONG. Confirm with the user what they hear
+    before changing anything.
+11. Profile: "TROFEOS SINÁPTI..." truncated (also fr/de) -> smaller title and move the "x / 30" counter below it.
+12. Achievements: tap -> dialog with details (how to get it, unlocked or not, date if available); locked ones
+    rendered greyed out (today: outline border + dark bg + "LOCKED" label, but title/icon not greyed).
+
 ### Done this session (commits after c1b52a9)
 | Commit | What |
 |---|---|
