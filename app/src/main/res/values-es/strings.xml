@@ -63,6 +63,8 @@
     <string name="game_mode_lives_desc">3 vidas. Un fallo destella la respuesta correcta y resta una vida.</string>
     <string name="game_mode_time_title">CONTRARRELOJ</string>
     <string name="game_mode_time_desc">60s en el reloj. Los fallos solo destellan — el tiempo no se detiene.</string>
+    <string name="game_mode_overtime_title">PRÓRROGA</string>
+    <string name="game_mode_overtime_desc">30s en el reloj. Cada acierto suma tiempo — menos cuanto más subes de nivel. Los fallos restan 2s.</string>
 
     <!-- Game screen -->
     <string name="game_hud_score">PUNTOS</string>

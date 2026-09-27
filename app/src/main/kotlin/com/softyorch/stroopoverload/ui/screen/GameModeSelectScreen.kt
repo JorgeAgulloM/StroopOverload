@@ -3,6 +3,8 @@ package com.softyorch.stroopoverload.ui.screen
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -45,10 +47,12 @@ fun GameModeSelectScreen(
         },
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
+        // Scrolls: four mode cards no longer fit every screen at large font sizes.
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
+                .verticalScroll(rememberScrollState())
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {

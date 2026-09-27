@@ -63,6 +63,8 @@
     <string name="game_mode_lives_desc">3 vies. Une erreur fait clignoter la bonne réponse et coûte une vie.</string>
     <string name="game_mode_time_title">CONTRE-LA-MONTRE</string>
     <string name="game_mode_time_desc">60s au compteur. Les erreurs clignotent seulement — le temps continue.</string>
+    <string name="game_mode_overtime_title">PROLONGATIONS</string>
+    <string name="game_mode_overtime_desc">30s au compteur. Chaque bonne réponse ajoute du temps — moins à chaque niveau. Une erreur coûte 2s.</string>
 
     <!-- Game screen -->
     <string name="game_hud_score">SCORE</string>

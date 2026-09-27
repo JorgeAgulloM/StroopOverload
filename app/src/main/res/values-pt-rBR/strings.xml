@@ -63,6 +63,8 @@
     <string name="game_mode_lives_desc">3 vidas. Um erro pisca a resposta certa e custa uma vida.</string>
     <string name="game_mode_time_title">CONTRA O TEMPO</string>
     <string name="game_mode_time_desc">60s no relógio. Erros só piscam — o tempo não para.</string>
+    <string name="game_mode_overtime_title">PRORROGAÇÃO</string>
+    <string name="game_mode_overtime_desc">30s no relógio. Acertos somam tempo — menos a cada nível. Erros custam 2s.</string>
 
     <!-- Game screen -->
     <string name="game_hud_score">PONTOS</string>

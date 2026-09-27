@@ -63,6 +63,8 @@
     <string name="game_mode_lives_desc">3 lives. A miss flashes the answer and costs one life.</string>
     <string name="game_mode_time_title">TIME ATTACK</string>
     <string name="game_mode_time_desc">60s on the clock. Misses just flash — the clock doesn\'t stop.</string>
+    <string name="game_mode_overtime_title">OVERTIME</string>
+    <string name="game_mode_overtime_desc">30s on the clock. Right answers add time — less as you level up. Misses cost 2s.</string>
 
     <!-- Game screen -->
     <string name="game_hud_score">SCORE</string>

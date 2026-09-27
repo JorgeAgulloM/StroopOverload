@@ -157,7 +157,7 @@ fun GameScreen(
                     }
                 }
                 Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.CenterHorizontally) {
-                    if (board?.mode == GameMode.TIME) {
+                    if (board?.mode?.hasSessionClock == true) {
                         Text(stringResource(R.string.game_hud_time), style = MaterialTheme.typography.bodySmall, color = Muted, fontSize = 10.sp, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         Text(formatMillisAsClock(board.timeRemainingMs), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.onBackground)
                     } else {

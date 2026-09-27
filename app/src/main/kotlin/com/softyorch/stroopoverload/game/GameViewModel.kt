@@ -42,6 +42,8 @@ class GameViewModel(
     private var gameOverClaimed = false
     private var runStartMs = 0L
     private var frozenMs = 0L
+    // When a session-clock mode's clock runs out; OVERTIME moves it with every answer.
+    private var sessionDeadlineMs = 0L
 
     /**
      * Starts a run from the menu. Ignored once a run has started: the game screen calls this
@@ -60,14 +62,16 @@ class GameViewModel(
     fun beginRound() {
         if (_state.value !is GameState.Countdown) return
         val mode = pendingMode
-        runStartMs = clock()
+        val now = clock()
+        runStartMs = now
         frozenMs = 0L
+        sessionDeadlineMs = now + sessionStartMs(mode)
         _state.value = GameState.Playing(
             mode = mode,
             livesRemaining = if (mode == GameMode.LIVES) GameConfig.LIVES_MODE_STARTING_LIVES else 0,
-            timeRemainingMs = if (mode == GameMode.TIME) GameConfig.TIME_MODE_DURATION_MS else 0L,
+            timeRemainingMs = sessionStartMs(mode),
         )
-        if (mode == GameMode.TIME) startSessionTimer()
+        if (mode.hasSessionClock) startSessionTimer(mode)
         nextStimulus()
     }
 
@@ -92,6 +96,7 @@ class GameViewModel(
         val streakBonus = (newStreak * 10).coerceAtMost(100)
         val newScore = playing.score + GameConfig.POINTS_PER_CORRECT + streakBonus
         val newLevel = (newRounds / GameConfig.LEVELS_PER_DIFFICULTY) + 1
+        if (playing.mode == GameMode.OVERTIME) sessionDeadlineMs += overtimeBonusMs(playing.level)
         _state.value = playing.copy(
             score = newScore,
             level = newLevel,
@@ -135,7 +140,8 @@ class GameViewModel(
                 }
             }
 
-            GameMode.TIME -> {
+            GameMode.TIME, GameMode.OVERTIME -> {
+                if (missed.mode == GameMode.OVERTIME) sessionDeadlineMs -= GameConfig.OVERTIME_MISS_PENALTY_MS
                 _state.value = missed.copy(missFlashColor = correctColor)
                 viewModelScope.launch {
                     delay(GameConfig.TIME_MODE_FLASH_MS)
@@ -153,7 +159,7 @@ class GameViewModel(
         // drawn anywhere, so it isn't requested.
         val difficultyTier = if (playing.level >= GameConfig.AUDIO_DISTRACTOR_MIN_LEVEL) 2 else 1
         _stimulus.value = engine.generate(difficultyTier)
-        if (playing.mode != GameMode.TIME) {
+        if (!playing.mode.hasSessionClock) {
             _timerProgress.value = 1f
             startPerStimulusTimer(playing)
         }
@@ -185,20 +191,26 @@ class GameViewModel(
         }
     }
 
-    private fun startSessionTimer() {
-        val limitMs = GameConfig.TIME_MODE_DURATION_MS
-        val startMs = clock()
+    /** How much clock a session-clock [mode] starts with; 0 for the per-stimulus modes. */
+    private fun sessionStartMs(mode: GameMode): Long = when (mode) {
+        GameMode.TIME -> GameConfig.TIME_MODE_DURATION_MS
+        GameMode.OVERTIME -> GameConfig.OVERTIME_START_MS
+        GameMode.ENDLESS, GameMode.LIVES -> 0L
+    }
+
+    private fun startSessionTimer(mode: GameMode) {
+        // The bar shows the starting clock as full; OVERTIME time banked above it keeps it full.
+        val fullBarMs = sessionStartMs(mode)
 
         sessionTimerJob = viewModelScope.launch {
             while (true) {
                 delay(16L)
-                val elapsed = clock() - startMs
-                val remaining = (limitMs - elapsed).coerceAtLeast(0L)
-                _timerProgress.value = (remaining.toFloat() / limitMs).coerceIn(0f, 1f)
+                val remaining = (sessionDeadlineMs - clock()).coerceAtLeast(0L)
+                _timerProgress.value = (remaining.toFloat() / fullBarMs).coerceIn(0f, 1f)
 
                 val currentPlaying = _state.value as? GameState.Playing
                 if (currentPlaying != null) {
-                    _state.value = currentPlaying.copy(survivalMs = playedMs(GameMode.TIME), timeRemainingMs = remaining)
+                    _state.value = currentPlaying.copy(survivalMs = playedMs(mode), timeRemainingMs = remaining)
                 }
 
                 if (remaining <= 0L) {
@@ -223,8 +235,10 @@ class GameViewModel(
 
     /**
      * Time actually played: clock time since the run began, minus the freezes after LIVES
-     * misses. Counting a fixed 16 ms per timer frame undercounted, since real frames run
-     * longer -- a 60 s TIME run came out as ~57 s.
+     * misses; TIME's is its fixed minute (its last frame lands a little after it). Counting a
+     * fixed 16 ms per timer frame undercounted, since real frames run longer -- a 60 s TIME
+     * run came out as ~57 s. OVERTIME is left uncapped: misses can move its deadline behind
+     * the run's start, which would cap it below zero.
      */
     private fun playedMs(mode: GameMode): Long {
         val played = clock() - runStartMs - frozenMs

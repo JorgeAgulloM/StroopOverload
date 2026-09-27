@@ -129,6 +129,20 @@ class AchievementEngineTest {
     }
 
     @Test
+    fun `updatedCareerStats ignores OVERTIME survivalMs too`() {
+        // OVERTIME hands out 30 s up front: idling through them must not earn survival trophies.
+        val current = CareerStats(maxSurvivalTimeMs = 5_000L)
+        val game = GameResult(
+            finalScore = 500, correctHits = 10, totalRounds = 10,
+            survivalMs = 45_000L, previousHighScore = 0, mode = GameMode.OVERTIME,
+        )
+
+        val updated = engine.updatedCareerStats(current, game)
+
+        assertEquals(5_000L, updated.maxSurvivalTimeMs)
+    }
+
+    @Test
     fun `updatedCareerStats still tracks maxSurvivalTimeMs for ENDLESS and LIVES`() {
         val current = CareerStats(maxSurvivalTimeMs = 5_000L)
         val endless = GameResult(

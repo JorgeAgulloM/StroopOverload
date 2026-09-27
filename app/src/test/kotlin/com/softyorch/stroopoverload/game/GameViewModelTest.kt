@@ -267,6 +267,60 @@ class GameViewModelTest {
     }
 
     @Test
+    fun `an OVERTIME right answer adds time to the clock`() = runTest {
+        val viewModel = viewModelOnTestClock()
+        viewModel.startGame(mode = GameMode.OVERTIME)
+        viewModel.beginRound()
+        assertEquals(30_000L, (viewModel.state.value as GameState.Playing).timeRemainingMs)
+
+        viewModel.onColorTapped(viewModel.stimulus.value!!.correctAnswer)
+        dispatcher.scheduler.advanceTimeBy(160)
+        dispatcher.scheduler.runCurrent()
+
+        assertEquals(30_000L + 1_000L - 160L, (viewModel.state.value as GameState.Playing).timeRemainingMs)
+    }
+
+    @Test
+    fun `an OVERTIME miss takes 2 s off the clock and play goes on`() = runTest {
+        val viewModel = viewModelOnTestClock()
+        viewModel.startGame(mode = GameMode.OVERTIME)
+        viewModel.beginRound()
+
+        tapWrong(viewModel)
+        dispatcher.scheduler.advanceTimeBy(160)
+        dispatcher.scheduler.runCurrent()
+
+        val playing = viewModel.state.value as GameState.Playing
+        assertEquals(30_000L - 2_000L - 160L, playing.timeRemainingMs)
+        assertEquals(1, playing.totalRounds)
+    }
+
+    @Test
+    fun `OVERTIME ends when its clock runs out and records all the time played`() = runTest {
+        // Unlike TIME's fixed minute, the run is as long as the clock lasted.
+        val viewModel = viewModelOnTestClock()
+        viewModel.startGame(mode = GameMode.OVERTIME)
+        viewModel.beginRound()
+        viewModel.onColorTapped(viewModel.stimulus.value!!.correctAnswer) // +1 s
+
+        dispatcher.scheduler.advanceTimeBy(31_100)
+        dispatcher.scheduler.runCurrent()
+
+        val over = viewModel.state.value as GameState.GameOver
+        assertEquals(GameMode.OVERTIME, over.result.mode)
+        // It ends on the first 16 ms frame past the 31 s deadline.
+        assertTrue(over.result.survivalMs in 31_000L..31_016L)
+    }
+
+    @Test
+    fun `the OVERTIME bonus shrinks with the level down to a floor`() {
+        assertEquals(1_000L, overtimeBonusMs(1))
+        assertEquals(900L, overtimeBonusMs(2))
+        assertEquals(300L, overtimeBonusMs(8))
+        assertEquals(300L, overtimeBonusMs(20))
+    }
+
+    @Test
     fun `a TIME run records the full minute even when frames run late`() = runTest {
         // Every frame used to add a fixed 16 ms, but real frames take longer, so a 60 s run
         // was recorded as ~57 s.
