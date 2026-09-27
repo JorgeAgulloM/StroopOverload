@@ -221,37 +221,35 @@ fun GameScreen(
                 }
 
                 stimulus?.let { s ->
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        // Cartel holográfico de pista (Hint)
-                        Box(
-                            modifier = Modifier
-                                .background(
-                                    MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
-                                    RoundedCornerShape(4.dp)
-                                )
-                                .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f), RoundedCornerShape(4.dp))
-                                .padding(horizontal = 16.dp, vertical = 6.dp)
-                        ) {
-                            Text(
-                                text = stringResource(R.string.game_stimulus_hint),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.primary,
-                                letterSpacing = 3.sp,
-                                fontSize = 10.sp,
-                                fontWeight = FontWeight.Bold
+                    // Hint pinned to the top of the card; the word stays centred in it.
+                    Box(
+                        modifier = Modifier
+                            .align(Alignment.TopCenter)
+                            .padding(top = 16.dp)
+                            .background(
+                                MaterialTheme.colorScheme.primary.copy(alpha = 0.15f),
+                                RoundedCornerShape(4.dp)
                             )
-                        }
-                        
-                        Spacer(modifier = Modifier.height(28.dp))
-                        
-                        StimulusWord(
-                            text = stringResource(s.wordLabel.displayNameRes),
-                            color = s.inkColor.composeColor,
-                            maxFontSize = 64.sp,
-                            letterSpacing = 8.sp,
-                            glow = true,
+                            .border(1.dp, MaterialTheme.colorScheme.primary.copy(alpha = 0.5f), RoundedCornerShape(4.dp))
+                            .padding(horizontal = 16.dp, vertical = 6.dp)
+                    ) {
+                        Text(
+                            text = stringResource(R.string.game_stimulus_hint),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.primary,
+                            letterSpacing = 3.sp,
+                            fontSize = 10.sp,
+                            fontWeight = FontWeight.Bold
                         )
                     }
+
+                    StimulusWord(
+                        text = stringResource(s.wordLabel.displayNameRes),
+                        color = s.inkColor.composeColor,
+                        maxFontSize = 64.sp,
+                        letterSpacing = 8.sp,
+                        glow = true,
+                    )
                 }
             }
 

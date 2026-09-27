@@ -174,15 +174,16 @@ private fun ColumnScope.PlayingContent(me: RoomPlayer?, onColorTapped: (StroopCo
             .background(MaterialTheme.colorScheme.surface.copy(alpha = 0.5f)),
         contentAlignment = Alignment.Center,
     ) {
+        // Hint pinned to the top of the card, as in local play; the word stays centred.
+        Text(
+            text = stringResource(R.string.game_stimulus_hint),
+            modifier = Modifier.align(Alignment.TopCenter).padding(top = 12.dp),
+            style = MaterialTheme.typography.bodySmall,
+            color = Muted,
+            letterSpacing = 2.sp,
+            fontSize = 11.sp,
+        )
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Text(
-                text = stringResource(R.string.game_stimulus_hint),
-                style = MaterialTheme.typography.bodySmall,
-                color = Muted,
-                letterSpacing = 2.sp,
-                fontSize = 11.sp,
-            )
-            Spacer(modifier = Modifier.height(12.dp))
             StimulusWord(
                 text = stringResource(stimulus.wordLabel.displayNameRes),
                 color = stimulus.inkColor.composeColor,
