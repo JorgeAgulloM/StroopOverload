@@ -1660,3 +1660,28 @@ Verified test accounts are created with `firebase auth:import` (HMAC_SHA256) —
   a released SoundPool. LOW accepted: the result sting can be skipped if recreation lands in its 150 ms delay.
 - Kotlin 183, lint 0 errors / 49 warnings (same count as before this branch). Functions 229.
 - Still open: deploy onPresenceChanged (needs the user's OK), then push + PR.
+
+## feat/game-feel (2026-09-27, IN PROGRESS) -- backlog items 7-12
+- Branch `feat/game-feel` from develop 84bafce (PR #4 merged). Emulator only (Samsung busy).
+- User decisions (2026-09-27):
+  - #9: NEW MODE, not a TIME change. Design (mine, tunable constants): OVERTIME -- 30 s clock, +1.0 s per right
+    answer at level 1, -0.1 s per level, floor 0.3 s; a miss costs 2 s. Clock-driven like TIME, so excluded from
+    survival achievements and the XP time bonus (idling 30 s would otherwise earn them). Needs functions change +
+    deploy BEFORE any client ships (old server rejects unknown mode).
+  - #10: the "random" SFX is the spoken distractor colour (by design) -> start it at level 15 instead of 5.
+    Note: bgDistractor (tier 3, level >= 10) is generated but never shown anywhere -- dead data.
+- Plan (check off):
+  - [x] #10 audio distractor from level 15 (015586e)
+  - [x] #11 profile trophies title: smaller + counter below (deed4d0; verified fr on emulator)
+  - [x] #12 detail dialog + greyed locked (deed4d0; verified: date, progress 6/10, greyscale)
+  - [x] #7 timer bar heartbeat at <= 20 % (b07b657; measured 53-128 brightness, ~520 ms)
+  - [x] #8 strobe comet round the card (bb15742; verified moving in recording)
+  - [x] #9 OVERTIME mode: client 8294142, server 9e16ebd (functions 231, Kotlin 191, lint 0 errors).
+        Emulator: auto-played run lasted 48 s from a 30 s start, 26 rounds, accuracy row shown, no survival XP row.
+        **submitSoloRun NOT deployed yet** (ask; until then prod rejects OVERTIME runs as "unknown mode").
+  - Env note: an ANR on Home right after a lint build was the emulator starved by the host (92 % CPU, 77 % kernel,
+    14 s GC of an 11 MB heap); after `gradlew --stop` it ran smoothly. Stop daemons before emulator checks.
+  - [x] review (kotlin-reviewer): HIGH = deploy order (functions before any client release) -> deploy submitSoloRun;
+        MEDIUM fixed (lockedLook: cached GraphicsLayer instead of per-frame saveLayer); LOW accepted (client/server
+        constant parity guarded by profileScoring.test.ts). Kotlin 191, lint 0 errors / 49 warnings.
+  - [ ] deploy submitSoloRun (needs the user's OK), then PR
