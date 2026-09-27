@@ -31,7 +31,7 @@
     <string name="home_play_button_loading">CALIBRAGE DU LIEN…</string>
     <string name="home_leaderboard_button">CLASSEMENT</string>
     <string name="home_multiplayer_button">PARTIE EN LIGNE</string>
-    <string name="home_footer">SYS_VER : 2.0 // HUD CYBERPUNK ACTIF</string>
+    <string name="home_footer">SYS_VER : %1$s // HUD CYBERPUNK ACTIF</string>
 
     <!-- Level tier titles, every 10 levels (1-10, 11-20, ... 191-200+) -->
     <string name="level_title_tier_01">Initié Neural</string>

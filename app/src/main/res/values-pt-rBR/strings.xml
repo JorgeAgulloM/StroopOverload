@@ -31,7 +31,7 @@
     <string name="home_play_button_loading">CALIBRANDO LINK…</string>
     <string name="home_leaderboard_button">RANKING</string>
     <string name="home_multiplayer_button">PARTIDA ONLINE</string>
-    <string name="home_footer">SYS_VER: 2.0 // HUD CYBERPUNK ATIVO</string>
+    <string name="home_footer">SYS_VER: %1$s // HUD CYBERPUNK ATIVO</string>
 
     <!-- Level tier titles, every 10 levels (1-10, 11-20, ... 191-200+) -->
     <string name="level_title_tier_01">Iniciado Neural</string>

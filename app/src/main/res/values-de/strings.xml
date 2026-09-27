@@ -31,7 +31,7 @@
     <string name="home_play_button_loading">LINK WIRD KALIBRIERT…</string>
     <string name="home_leaderboard_button">BESTENLISTE</string>
     <string name="home_multiplayer_button">ONLINE-SPIEL</string>
-    <string name="home_footer">SYS_VER: 2.0 // CYBERPUNK-HUD AKTIV</string>
+    <string name="home_footer">SYS_VER: %1$s // CYBERPUNK-HUD AKTIV</string>
 
     <!-- Level tier titles, every 10 levels (1-10, 11-20, ... 191-200+) -->
     <string name="level_title_tier_01">Neuraler Neuling</string>

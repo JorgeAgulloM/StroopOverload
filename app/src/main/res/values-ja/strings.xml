@@ -31,7 +31,7 @@
     <string name="home_play_button_loading">リンク調整中…</string>
     <string name="home_leaderboard_button">ランキング</string>
     <string name="home_multiplayer_button">オンライン対戦</string>
-    <string name="home_footer">SYS_VER: 2.0 // サイバーパンクHUD起動中</string>
+    <string name="home_footer">SYS_VER: %1$s // サイバーパンクHUD起動中</string>
 
     <!-- Level tier titles, every 10 levels (1-10, 11-20, ... 191-200+) -->
     <string name="level_title_tier_01">ニューラル・イニシエイト</string>
