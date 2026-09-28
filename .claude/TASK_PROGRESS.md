@@ -1661,7 +1661,7 @@ Verified test accounts are created with `firebase auth:import` (HMAC_SHA256) —
 - Kotlin 183, lint 0 errors / 49 warnings (same count as before this branch). Functions 229.
 - Still open: deploy onPresenceChanged (needs the user's OK), then push + PR.
 
-## feat/game-feel (2026-09-27, IN PROGRESS) -- backlog items 7-12
+## feat/game-feel (2026-09-27, PR #5 OPEN) -- backlog items 7-12
 - Branch `feat/game-feel` from develop 84bafce (PR #4 merged). Emulator only (Samsung busy).
 - User decisions (2026-09-27):
   - #9: NEW MODE, not a TIME change. Design (mine, tunable constants): OVERTIME -- 30 s clock, +1.0 s per right
@@ -1686,4 +1686,6 @@ Verified test accounts are created with `firebase auth:import` (HMAC_SHA256) —
         constant parity guarded by profileScoring.test.ts). Kotlin 191, lint 0 errors / 49 warnings.
   - [x] submitSoloRun DEPLOYED 2026-09-28 (user OK). Live check with a throwaway email account: plausible OVERTIME
         run (25/26, 48 s) accepted; 70 001 ms with 10 hits rejected INVALID_RUN; account + users doc deleted, verified.
-  - [ ] PR to develop (ask: the user only said "despliega")
+  - [x] Store listing, release notes and terms mention OVERTIME (7407e83). The hosted terms at softyorch.com must be
+        republished by hand.
+  - [x] PR #5 (feat/game-feel -> develop) opened 2026-09-28; GitGuardian passed, mergeable. Waiting for the user to merge.
