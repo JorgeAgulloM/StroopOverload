@@ -159,7 +159,7 @@ export function achievementXpFor(ids: readonly string[]): number {
 }
 
 /**
- * The client reports the win streak the run ended on, because it feeds the XP
+ * The client reports the run's best streak of correct answers, because it feeds the XP
  * bonus the player already saw on the game-over screen. It can't be verified, so
  * it is clamped: a streak can never exceed the run's correct answers, and the
  * bonus itself is capped at 150 XP in calculateRunXp anyway.

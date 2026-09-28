@@ -92,7 +92,7 @@ object XpSystem {
     fun calculateGameXp(
         result: GameResult,
         dailyStreak: Int,
-        currentWinStreak: Int = 0,
+        bestStreak: Int = 0,
     ): XpBreakdown {
         if (result.correctHits == 0 || result.finalScore <= 0) {
             return XpBreakdown(
@@ -123,7 +123,7 @@ object XpSystem {
             result.survivalMs >= 10_000L -> 50
             else -> 0
         }
-        val streakBonus = (currentWinStreak * 15).coerceAtMost(150)
+        val streakBonus = (bestStreak * 15).coerceAtMost(150)
         val dailyBonus = (dailyStreak * 20).coerceAtMost(200)
 
         val multiplier = if (result.isNewHighScore) 1.5 else 1.0

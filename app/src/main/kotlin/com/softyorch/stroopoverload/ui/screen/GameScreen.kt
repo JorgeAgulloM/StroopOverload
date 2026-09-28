@@ -52,7 +52,7 @@ fun GameScreen(
      * Activity was recreated during the final-board hold -- the run was already recorded, but
      * the navigation to the game-over screen died with the old screen and must happen again.
      */
-    onGameOver: (result: GameResult, endStreak: Int, record: Boolean) -> Unit,
+    onGameOver: (result: GameResult, bestStreak: Int, record: Boolean) -> Unit,
     onLeaveMatch: () -> Unit,
     isAdFree: Boolean = false,
 ) {
@@ -106,7 +106,7 @@ fun GameScreen(
         is GameState.GameOver -> {
             LaunchedEffect(s) {
                 val isFirstClaim = viewModel.claimGameOver()
-                onGameOver(s.result, s.endStreak, isFirstClaim)
+                onGameOver(s.result, s.bestStreak, isFirstClaim)
                 if (!isFirstClaim) return@LaunchedEffect
                 // Let the last tap's sound finish before the result sting.
                 delay(RESULT_SFX_DELAY_MS)

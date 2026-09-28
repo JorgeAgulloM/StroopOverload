@@ -17,6 +17,7 @@ sealed interface GameState {
         val totalRounds: Int = 0,
         val survivalMs: Long = 0L,
         val currentStreak: Int = 0,
+        val bestStreak: Int = 0,
         val livesRemaining: Int = 0,
         val timeRemainingMs: Long = 0L,
         val missFlashColor: StroopColor? = null,
@@ -24,13 +25,14 @@ sealed interface GameState {
         val lastTap: TapFeedback? = null,
     ) : GameState
     /**
-     * [endStreak] is the correct-answer streak the run ended on (the XP streak bonus).
+     * [bestStreak] is the run's longest streak of correct answers (the XP streak bonus). Not the
+     * streak it ended on: a miss resets that, so ENDLESS always ended on 0.
      * [finalBoard] is the board as the run ended, kept on screen for a moment before the
      * game-over screen.
      */
     data class GameOver(
         val result: GameResult,
-        val endStreak: Int = 0,
+        val bestStreak: Int = 0,
         val finalBoard: Playing? = null,
     ) : GameState
 }

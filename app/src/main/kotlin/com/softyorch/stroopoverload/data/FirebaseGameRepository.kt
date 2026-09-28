@@ -56,6 +56,7 @@ class FirebaseGameRepository private constructor(
         queue = pendingRuns,
         submitter = ::submitPendingRun,
         onScoring = { scoring -> profileStore.saveProfile(getProfile().applyServerScoring(scoring)) },
+        onResync = ::refreshScoringFromCloud,
     )
 
     private var cachedLeaderboard: List<UserProfile> = emptyList()
@@ -292,7 +293,8 @@ class FirebaseGameRepository private constructor(
     /**
      * Pulls the backend's copy of the scoring fields into the local profile. Used
      * after a multiplayer match is settled server-side (onRoomFinished), since the
-     * client no longer computes those points itself.
+     * client no longer computes those points itself, and after expired offline runs
+     * are dropped from the queue (PendingRunSync).
      */
     override suspend fun refreshScoringFromCloud(uid: String): Unit = withContext(Dispatchers.IO) {
         val collection = users ?: return@withContext

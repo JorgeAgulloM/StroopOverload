@@ -19,10 +19,10 @@ Working directory: `C:\Users\Jorge\Proyectos\StroopOverload`
 - [x] **Task 6** — Firebase: AuthService, FirebaseGameRepository (batched writes, leaderboard)
 - [x] **Task 7** — Navigation: StroopNavGraph (NavController, route constants)
 - [x] **Task 8** — Unit tests: IncongruenceEngine, StroopStimulus, GameResult
-- [ ] **Task 9** — Download gradle-wrapper.jar + run `./gradlew build` to verify compilation
-- [ ] **Task 10** — Add google-services.json from Firebase console
-- [ ] **Task 11** — Share intent (Intent.ACTION_SEND with score text)
-- [ ] **Task 12** — Audio playback (SoundPool or MediaPlayer on correct/wrong tap)
+- [x] **Task 9** — Gradle wrapper + `./gradlew build` (verified since; CI builds it on every PR)
+- [x] **Task 10** — google-services.json from Firebase console (local, gitignored)
+- [x] **Task 11** — Share intent (Intent.ACTION_SEND with score text)
+- [x] **Task 12** — Audio playback (SoundPool in `audio/AudioPlayer.kt`)
 
 ---
 
@@ -1690,7 +1690,7 @@ Verified test accounts are created with `firebase auth:import` (HMAC_SHA256) —
         republished by hand.
   - [x] PR #5 (feat/game-feel -> develop) opened 2026-09-28; GitGuardian passed, mergeable. Merged 2026-09-28 (8ee62da).
 
-## ci/pr-checks (2026-09-28, IN PROGRESS) -- GitHub Actions CI for pull requests
+## ci/pr-checks (2026-09-28, DONE — PR #6 merged, develop c4b00a8) -- GitHub Actions CI for pull requests
 - Branch `ci/pr-checks` from develop 8ee62da. Repo is public (Actions minutes free).
 - Decisions:
   - One workflow `.github/workflows/ci.yml`, two parallel jobs: `android` (testDebugUnitTest + lintDebug +
@@ -1704,11 +1704,39 @@ Verified test accounts are created with `firebase auth:import` (HMAC_SHA256) —
     (local version), emulator jar cached by that version. JDK 21 (the emulator needs it).
   - setup-gradle `cache-provider: basic` (MIT, over actions/cache) instead of the proprietary default;
     `cache-read-only` on PRs, because the action's default writes only on the GitHub default branch, which is
-    `feature/online-multiplayer`, not develop.
+    `feature/online-multiplayer` at the time (now `main`), not develop.
   - `gradlew` was committed 100644 -> made 100755, or `./gradlew` fails on Linux.
 - Verified locally: actionlint 1.7.12 clean; functions 231/231 with the demo project.
 - Verified locally: Gradle testDebugUnitTest + lintDebug + assembleDebug with the placeholder = BUILD SUCCESSFUL
   (191 tests, 0 failures, 5m14s, JDK 21).
 - Review (code-reviewer): 0 CRITICAL/HIGH. MEDIUM applied: actions pinned to commit SHAs + `.github/dependabot.yml`
   (github-actions, monthly, grouped, into develop). LOW applied: `restore-keys` on the emulator cache.
-- [ ] Push + PR (needs the user's OK); first real run on GitHub; then mark both checks required on develop.
+- [x] Pushed, PR #6; first GitHub run green (android 7m32s cold, functions 1m30s, GitGuardian pass). Merged 2026-09-28.
+- [ ] Mark both checks required on develop (checked 2026-09-28: develop has no branch protection and no rulesets). Exact names: `Android (unit tests, lint, debug build)`, `Cloud Functions (lint, build, tests)`.
+
+## Open items (2026-09-28, after PR #6)
+- [x] AdMob: PROD app id + 3 units are real, same account (`ca-app-pub-6938…`), verified 2026-09-28.
+      NATIVE_DASHBOARD and NATIVE_GAME share one ad unit id (`…/4943220932`) — not confirmed as intended.
+- [ ] versionCode bump: deferred by the user until the next release scope is decided.
+- [ ] Republish the hosted terms (OVERTIME): at the next release.
+- [ ] Human checks (registration emails, sound/timer feel, online interstitial): later.
+- [ ] App Check: SHA-256 registered in Firebase (user, 2026-09-28); enforcement still OFF.
+- [x] Product: XP streak bonus uses the run's BEST streak (user, 2026-09-28) — branch feat/best-streak-offline-age.
+- [x] Product: queued offline runs expire after 24 h (user, 2026-09-28) — same branch.
+- [ ] Mark both CI checks required on develop (still no branch protection/rulesets, checked 2026-09-28).
+- [x] Old `stash@{0}` dropped by the user (2026-09-28).
+- Done: GitHub default branch is now `main` (user); `store/` and `legal/` are committed.
+
+## feat/best-streak-offline-age (2026-09-28)
+- Branch from develop c4b00a8 (also carries the TASK_PROGRESS cleanup commit).
+- Best streak: `GameState.Playing.bestStreak` (max on each correct tap); `GameOver.endStreak` -> `bestStreak`;
+  sent as `winStreak` to submitSoloRun. Server unchanged (clampWinStreak still caps at correctHits; comment only,
+  no deploy needed). XpSystem param renamed `bestStreak`. Effect: most runs now earn the streak bonus (max 150 XP).
+- 24 h expiry: PendingRunSync drops the account's runs with `now - createdAtEpochMs > 24 h` before submitting,
+  even offline. Device clock only; the server cannot enforce it (accepted).
+- Review (kotlin-reviewer): "CRITICAL" (really MEDIUM, local numbers only) - dropping runs left the local
+  provisional profile inflated forever. Fixed: when dropped (expired) or rejected runs leave the account's queue
+  empty with no server scoring, PendingRunSync calls `onResync` = `refreshScoringFromCloud` (Firestore get; offline
+  falls back to the cached server doc, which never had those runs either). Rejected runs had the same gap before.
+  LOWs applied (helper placement, param rename).
+- Tests: Kotlin 202/202, lintDebug clean.
