@@ -23,6 +23,7 @@ You'll see a color word — but it's rendered in a different ink color. Your job
 • Endless — survive as long as you can, difficulty ramps up forever
 • Lives — three strikes, prove your focus under pressure
 • Time Attack — race the clock for your best score
+• Overtime — every right answer buys you more time, until you can't keep up
 
 ⚔️ ONLINE MULTIPLAYER
 • Hot Potato — the wrong answer passes pressure straight to your rivals, live
@@ -65,6 +66,7 @@ Verás una palabra que nombra un color... escrita con otro color de tinta. Tu ce
 • Sin Fin — sobrevive todo lo que puedas, la dificultad no para de subir
 • Vidas — tres fallos y se acabó, demuestra tu concentración bajo presión
 • Contrarreloj — compite contra el tiempo por tu mejor puntuación
+• Prórroga — cada acierto te da más tiempo, hasta que no puedas seguir el ritmo
 
 ⚔️ MULTIJUGADOR ONLINE
 • Patata Caliente — cada fallo pasa la presión directamente a tus rivales, en directo
@@ -107,6 +109,7 @@ Stroop Overload
 ・エンドレス — できるだけ長く生き残ろう。難易度はどこまでも上がり続ける
 ・ライフ — ミスは3回まで。プレッシャーの中での集中力を試される
 ・タイムアタック — 制限時間内にハイスコアを目指す
+・延長戦 — 正解するたびに時間が延びる。ついていけなくなるまで挑戦しよう
 
 ⚔️ オンライン対戦
 ・ホットポテト — 間違えるとプレッシャーがそのままライバルへ。リアルタイム対戦
@@ -149,6 +152,7 @@ Un mot désignant une couleur s'affiche à l'écran, mais son encre est d'une co
 • Sans Fin — survivez le plus longtemps possible, la difficulté grimpe sans relâche
 • Vies — trois erreurs et c'est terminé, prouvez votre concentration sous pression
 • Contre-la-Montre — battez le chrono pour votre meilleur score
+• Prolongations — chaque bonne réponse vous donne du temps, jusqu'à ce que vous décrochiez
 
 ⚔️ MULTIJOUEUR EN LIGNE
 • Patate Chaude — chaque erreur transfère la pression à vos adversaires, en direct
@@ -191,6 +195,7 @@ Du siehst ein Wort, das eine Farbe benennt – aber in einer anderen Farbe gesch
 • Endlos — überlebe so lange wie möglich, der Schwierigkeitsgrad steigt ununterbrochen
 • Leben — drei Fehler und vorbei, beweise deine Konzentration unter Druck
 • Zeitrennen — hol dir deinen Bestwert, bevor die Zeit abläuft
+• Verlängerung — jede richtige Antwort bringt dir mehr Zeit, bis du nicht mehr mithältst
 
 ⚔️ ONLINE-MULTIPLAYER
 • Heiße Kartoffel — jeder Fehler gibt den Druck live an deine Gegner weiter
@@ -233,6 +238,7 @@ Uma palavra que nomeia uma cor aparece na tela — mas escrita com outra cor de 
 • Sem Fim — sobreviva o máximo que conseguir, a dificuldade nunca para de subir
 • Vidas — três erros e acabou, prove sua concentração sob pressão
 • Contra o Tempo — corra contra o relógio pela sua melhor pontuação
+• Prorrogação — cada acerto te dá mais tempo, até você não conseguir acompanhar
 
 ⚔️ MULTIJOGADOR ONLINE
 • Batata Quente — cada erro passa a pressão direto para seus rivais, ao vivo

@@ -101,6 +101,16 @@ class XpSystemTest {
     }
 
     @Test
+    fun `calculateGameXp gives no survival time bonus in OVERTIME mode`() {
+        val res = GameResult(
+            finalScore = 1200, correctHits = 10, totalRounds = 10,
+            survivalMs = 45_000L, previousHighScore = 1000, won = true, mode = GameMode.OVERTIME,
+        )
+
+        assertEquals(0, XpSystem.calculateGameXp(res, dailyStreak = 0, currentWinStreak = 0).timeBonus)
+    }
+
+    @Test
     fun `calculateGameXp still gives the survival time bonus in ENDLESS and LIVES`() {
         val endless = GameResult(
             finalScore = 1200, correctHits = 10, totalRounds = 10,

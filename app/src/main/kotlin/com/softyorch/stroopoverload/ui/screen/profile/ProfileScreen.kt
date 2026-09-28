@@ -2,6 +2,7 @@ package com.softyorch.stroopoverload.ui.screen.profile
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -16,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -39,6 +41,7 @@ fun ProfileScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val rarity = remember(state.profile.level) { XpSystem.levelRarity(state.profile.level) }
     val achievementPairs = remember(state.achievements) { state.achievements.chunked(2) }
+    var selectedAchievement by remember { mutableStateOf<Achievement?>(null) }
     var showChangePasswordDialog by remember { mutableStateOf(false) }
     var showDeleteAccountDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
@@ -268,16 +271,15 @@ fun ProfileScreen(
 
             // Achievements Header
             item {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                // Title and counter stacked: side by side the title was cut ("TROFEOS SINÁPTI…",
+                // and in fr/de) on narrow screens.
+                Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
                         text = stringResource(R.string.profile_trophies_header),
-                        style = MaterialTheme.typography.titleMedium,
+                        style = MaterialTheme.typography.titleSmall,
                         color = MaterialTheme.colorScheme.secondary,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f, fill = false),
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
                     val unlockedCount = state.achievements.count { it.isUnlocked }
                     Box(
                         modifier = Modifier
@@ -297,9 +299,9 @@ fun ProfileScreen(
             // Achievement Cards
             items(achievementPairs) { pair ->
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
-                    AchievementCard(pair[0], Modifier.weight(1f))
+                    AchievementCard(pair[0], Modifier.weight(1f)) { selectedAchievement = pair[0] }
                     if (pair.size > 1) {
-                        AchievementCard(pair[1], Modifier.weight(1f))
+                        AchievementCard(pair[1], Modifier.weight(1f)) { selectedAchievement = pair[1] }
                     } else {
                         Spacer(modifier = Modifier.weight(1f))
                     }
@@ -384,6 +386,14 @@ fun ProfileScreen(
         )
     }
 
+    selectedAchievement?.let { achievement ->
+        AchievementDetailDialog(
+            achievement = achievement,
+            progress = state.progressOf(achievement),
+            onDismiss = { selectedAchievement = null },
+        )
+    }
+
     if (state.showGuestSignOutConfirmation) {
         GuestSignOutDialog(
             onConfirm = { viewModel.confirmGuestSignOut(onSignedOut) },
@@ -448,13 +458,19 @@ private fun StatBox(label: String, value: String, color: Color, modifier: Modifi
 }
 
 @Composable
-private fun AchievementCard(achievement: Achievement, modifier: Modifier = Modifier) {
+private fun AchievementCard(achievement: Achievement, modifier: Modifier = Modifier, onClick: () -> Unit) {
     val unlocked = achievement.isUnlocked
     val borderColor = if (unlocked) Color(achievement.rarity.composeColorArgb) else MaterialTheme.colorScheme.outline
     val bgColor = if (unlocked) Surface else CyberDark
 
     Column(
         modifier = modifier
+            .clickable(
+                onClickLabel = stringResource(R.string.achievement_detail_open),
+                role = Role.Button,
+                onClick = onClick,
+            )
+            .lockedLook(!unlocked)
             .border(1.dp, borderColor, RoundedCornerShape(6.dp))
             .background(bgColor)
             .padding(12.dp)

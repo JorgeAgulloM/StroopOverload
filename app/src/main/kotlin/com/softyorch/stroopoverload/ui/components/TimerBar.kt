@@ -1,6 +1,10 @@
 package com.softyorch.stroopoverload.ui.components
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.keyframes
+import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -14,6 +18,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.delay
@@ -30,14 +35,21 @@ import androidx.compose.ui.unit.dp
 /** How often a deadline-driven bar re-renders. Fine for a bar a few hundred pixels wide. */
 private const val TICK_MS = 100L
 
+/** At or below this much time left the bar starts beating. */
+private const val URGENT_FRACTION = 0.2f
+private const val HEARTBEAT_MS = 520
+
 /**
  * Countdown bar, drawn red at zero and shading toward the primary colour as time
- * remains. Was duplicated in GameScreen and MultiplayerGameScreen, already drifting.
+ * remains, beating like a heart in its last [URGENT_FRACTION]. Was duplicated in
+ * GameScreen and MultiplayerGameScreen, already drifting.
  */
 @Composable
 fun TimerBar(progress: Float, modifier: Modifier, trackColor: Color) {
     val barColor = lerp(MaterialTheme.colorScheme.error, MaterialTheme.colorScheme.primary, progress)
     val animatedColor by animateColorAsState(targetValue = barColor, label = "timerColor")
+
+    val beat = if (progress > 0f && progress <= URGENT_FRACTION) rememberHeartbeat() else null
 
     Box(modifier = modifier) {
         Box(modifier = Modifier.fillMaxSize().background(trackColor))
@@ -45,9 +57,32 @@ fun TimerBar(progress: Float, modifier: Modifier, trackColor: Color) {
             modifier = Modifier
                 .fillMaxHeight()
                 .fillMaxWidth(fraction = progress.coerceIn(0f, 1f))
+                .graphicsLayer { alpha = beat?.invoke() ?: 1f }
                 .background(animatedColor)
         )
     }
+}
+
+/** A double "lub-dub" beat as an alpha, read in the draw phase so it doesn't recompose. */
+@Composable
+private fun rememberHeartbeat(): () -> Float {
+    val transition = rememberInfiniteTransition(label = "timerHeartbeat")
+    val alpha by transition.animateFloat(
+        initialValue = 1f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = keyframes {
+                durationMillis = HEARTBEAT_MS
+                1f at 0
+                0.35f at 110
+                1f at 200
+                0.5f at 310
+                1f at HEARTBEAT_MS
+            },
+        ),
+        label = "timerHeartbeatAlpha",
+    )
+    return { alpha }
 }
 
 /**
@@ -101,7 +136,7 @@ private fun LaunchedTicker(enabled: Boolean, onTick: () -> Unit) {
 private fun TimerBarPreview() {
     StroopTheme {
         Column(modifier = Modifier.padding(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            for (progress in listOf(1f, 0.5f, 0.1f)) {
+            for (progress in listOf(1f, 0.5f, 0.15f)) {
                 TimerBar(progress, Modifier.fillMaxWidth().height(8.dp), MaterialTheme.colorScheme.surfaceVariant)
             }
         }

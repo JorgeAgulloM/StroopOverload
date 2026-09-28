@@ -15,7 +15,7 @@ está de acuerdo, no debe usar la App.
 2. DESCRIPCIÓN DEL SERVICIO
 
 Stroop Overload es un videojuego de reflejos y velocidad de reacción basado en el efecto
-Stroop, disponible en modos individuales (Endless, Lives, Time) y modos online
+Stroop, disponible en modos individuales (Endless, Lives, Time, Overtime) y modos online
 multijugador (Hot Potato, Solo Survival). La App incluye sistema de progreso (nivel,
 experiencia, logros), clasificaciones (leaderboard) y publicidad integrada.
 

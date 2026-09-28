@@ -63,6 +63,8 @@
     <string name="game_mode_lives_desc">ライフ3つ。ミスすると正解が点滅しライフが1つ減る。</string>
     <string name="game_mode_time_title">タイムアタック</string>
     <string name="game_mode_time_desc">制限時間60秒。ミスしても正解が点滅するだけで時間は止まらない。</string>
+    <string name="game_mode_overtime_title">延長戦</string>
+    <string name="game_mode_overtime_desc">制限時間30秒。正解で時間が増える(レベルが上がるほど少なく)。ミスは2秒減る。</string>
 
     <!-- Game screen -->
     <string name="game_hud_score">スコア</string>
@@ -181,6 +183,11 @@
     <string name="profile_guest_sign_out_cancel">とどまる</string>
     <string name="profile_achievement_hidden_title">\?\?\?</string>
     <string name="profile_achievement_hidden_desc">機密シナプストロフィー</string>
+    <string name="achievement_detail_unlocked_on">%1$sに解除</string>
+    <string name="achievement_detail_progress">進捗: %1$d / %2$d</string>
+    <string name="achievement_detail_reward">報酬: +%1$d XP</string>
+    <string name="achievement_detail_hidden_hint">プレイを続けると明らかになります。</string>
+    <string name="achievement_detail_open">トロフィーの詳細を表示</string>
 
     <!-- Auth screen -->
     <string name="auth_brand">[ STROOP // OVERLOAD ]</string>

@@ -100,7 +100,7 @@ fun GameOverScreen(
                     StatRow(stringResource(R.string.game_over_final_score), result.finalScore.toString(), MaterialTheme.colorScheme.primary)
                     // Accuracy only means something when misses don't end the run outright
                     // (ENDLESS/LIVES structurally trend toward ~100% until the run-ending miss).
-                    if (result.mode == GameMode.TIME) {
+                    if (result.mode.hasSessionClock) {
                         StatRow(stringResource(R.string.game_over_accuracy), "${result.accuracy}%", if (result.accuracy >= 80) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onBackground)
                     }
                     StatRow(stringResource(R.string.game_over_rounds_survived), result.totalRounds.toString(), MaterialTheme.colorScheme.onBackground)

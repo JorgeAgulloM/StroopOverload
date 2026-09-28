@@ -63,6 +63,8 @@
     <string name="game_mode_lives_desc">3 Leben. Ein Fehler blinkt die richtige Antwort und kostet ein Leben.</string>
     <string name="game_mode_time_title">ZEITANGRIFF</string>
     <string name="game_mode_time_desc">60s auf der Uhr. Fehler blinken nur — die Zeit läuft weiter.</string>
+    <string name="game_mode_overtime_title">VERLÄNGERUNG</string>
+    <string name="game_mode_overtime_desc">30s auf der Uhr. Richtige Antworten bringen Zeit — je höher das Level, desto weniger. Fehler kosten 2s.</string>
 
     <!-- Game screen -->
     <string name="game_hud_score">PUNKTE</string>
@@ -181,6 +183,11 @@
     <string name="profile_guest_sign_out_cancel">BLEIBEN</string>
     <string name="profile_achievement_hidden_title">\?\?\?</string>
     <string name="profile_achievement_hidden_desc">Vertrauliche synaptische Trophäe</string>
+    <string name="achievement_detail_unlocked_on">Freigeschaltet am %1$s</string>
+    <string name="achievement_detail_progress">Fortschritt: %1$d / %2$d</string>
+    <string name="achievement_detail_reward">Belohnung: +%1$d XP</string>
+    <string name="achievement_detail_hidden_hint">Spiel weiter, um sie aufzudecken.</string>
+    <string name="achievement_detail_open">Trophäendetails anzeigen</string>
 
     <!-- Auth screen -->
     <string name="auth_brand">[ STROOP // OVERLOAD ]</string>
