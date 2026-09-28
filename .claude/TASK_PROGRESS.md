@@ -19,10 +19,10 @@ Working directory: `C:\Users\Jorge\Proyectos\StroopOverload`
 - [x] **Task 6** — Firebase: AuthService, FirebaseGameRepository (batched writes, leaderboard)
 - [x] **Task 7** — Navigation: StroopNavGraph (NavController, route constants)
 - [x] **Task 8** — Unit tests: IncongruenceEngine, StroopStimulus, GameResult
-- [ ] **Task 9** — Download gradle-wrapper.jar + run `./gradlew build` to verify compilation
-- [ ] **Task 10** — Add google-services.json from Firebase console
-- [ ] **Task 11** — Share intent (Intent.ACTION_SEND with score text)
-- [ ] **Task 12** — Audio playback (SoundPool or MediaPlayer on correct/wrong tap)
+- [x] **Task 9** — Gradle wrapper + `./gradlew build` (verified since; CI builds it on every PR)
+- [x] **Task 10** — google-services.json from Firebase console (local, gitignored)
+- [x] **Task 11** — Share intent (Intent.ACTION_SEND with score text)
+- [x] **Task 12** — Audio playback (SoundPool in `audio/AudioPlayer.kt`)
 
 ---
 
@@ -1690,7 +1690,7 @@ Verified test accounts are created with `firebase auth:import` (HMAC_SHA256) —
         republished by hand.
   - [x] PR #5 (feat/game-feel -> develop) opened 2026-09-28; GitGuardian passed, mergeable. Merged 2026-09-28 (8ee62da).
 
-## ci/pr-checks (2026-09-28, IN PROGRESS) -- GitHub Actions CI for pull requests
+## ci/pr-checks (2026-09-28, DONE — PR #6 merged, develop c4b00a8) -- GitHub Actions CI for pull requests
 - Branch `ci/pr-checks` from develop 8ee62da. Repo is public (Actions minutes free).
 - Decisions:
   - One workflow `.github/workflows/ci.yml`, two parallel jobs: `android` (testDebugUnitTest + lintDebug +
@@ -1704,11 +1704,27 @@ Verified test accounts are created with `firebase auth:import` (HMAC_SHA256) —
     (local version), emulator jar cached by that version. JDK 21 (the emulator needs it).
   - setup-gradle `cache-provider: basic` (MIT, over actions/cache) instead of the proprietary default;
     `cache-read-only` on PRs, because the action's default writes only on the GitHub default branch, which is
-    `feature/online-multiplayer`, not develop.
+    `feature/online-multiplayer` at the time (now `main`), not develop.
   - `gradlew` was committed 100644 -> made 100755, or `./gradlew` fails on Linux.
 - Verified locally: actionlint 1.7.12 clean; functions 231/231 with the demo project.
 - Verified locally: Gradle testDebugUnitTest + lintDebug + assembleDebug with the placeholder = BUILD SUCCESSFUL
   (191 tests, 0 failures, 5m14s, JDK 21).
 - Review (code-reviewer): 0 CRITICAL/HIGH. MEDIUM applied: actions pinned to commit SHAs + `.github/dependabot.yml`
   (github-actions, monthly, grouped, into develop). LOW applied: `restore-keys` on the emulator cache.
-- [ ] Push + PR (needs the user's OK); first real run on GitHub; then mark both checks required on develop.
+- [x] Pushed, PR #6; first GitHub run green (android 7m32s cold, functions 1m30s, GitGuardian pass). Merged 2026-09-28.
+- [ ] Mark both checks required on develop (checked 2026-09-28: develop has no branch protection and no rulesets). Exact names: `Android (unit tests, lint, debug build)`, `Cloud Functions (lint, build, tests)`.
+
+## Open items (2026-09-28, after PR #6)
+- [ ] AdMob: the three PROD ad units are real (publisher `ca-app-pub-6938…`), but `PROD_KEY_ID_ADMOB_APP` in
+      `admob/admob.properties` is still Google's TEST app id (`ca-app-pub-3940256099942544~3347511713`). The app id
+      must be the real one from the same AdMob account, or the real units will not serve. Also NATIVE_DASHBOARD and
+      NATIVE_GAME share one ad unit id (`…/4943220932`) — confirm that is intended.
+- [ ] versionCode bump: deferred by the user until the next release scope is decided.
+- [ ] Republish the hosted terms (OVERTIME): at the next release.
+- [ ] Human checks (registration emails, sound/timer feel, online interstitial): later.
+- [ ] App Check: SHA-256 registered in Firebase (user, 2026-09-28); enforcement still OFF.
+- [ ] Product: best streak vs end streak — user said "yes" to deciding it; choice still open.
+- [ ] Product: age limit for queued offline runs — user wants one; value still open.
+- [ ] Old `stash@{0}` (feature/online-multiplayer WIP, 778ddec) — user asked to drop it; the auto-mode classifier
+      blocked `git stash drop`, left for the user.
+- Done: GitHub default branch is now `main` (user); `store/` and `legal/` are committed.
