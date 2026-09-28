@@ -1661,7 +1661,7 @@ Verified test accounts are created with `firebase auth:import` (HMAC_SHA256) —
 - Kotlin 183, lint 0 errors / 49 warnings (same count as before this branch). Functions 229.
 - Still open: deploy onPresenceChanged (needs the user's OK), then push + PR.
 
-## feat/game-feel (2026-09-27, PR #5 OPEN) -- backlog items 7-12
+## feat/game-feel (2026-09-27, MERGED via PR #5 -> develop 8ee62da) -- backlog items 7-12
 - Branch `feat/game-feel` from develop 84bafce (PR #4 merged). Emulator only (Samsung busy).
 - User decisions (2026-09-27):
   - #9: NEW MODE, not a TIME change. Design (mine, tunable constants): OVERTIME -- 30 s clock, +1.0 s per right
@@ -1688,4 +1688,27 @@ Verified test accounts are created with `firebase auth:import` (HMAC_SHA256) —
         run (25/26, 48 s) accepted; 70 001 ms with 10 hits rejected INVALID_RUN; account + users doc deleted, verified.
   - [x] Store listing, release notes and terms mention OVERTIME (7407e83). The hosted terms at softyorch.com must be
         republished by hand.
-  - [x] PR #5 (feat/game-feel -> develop) opened 2026-09-28; GitGuardian passed, mergeable. Waiting for the user to merge.
+  - [x] PR #5 (feat/game-feel -> develop) opened 2026-09-28; GitGuardian passed, mergeable. Merged 2026-09-28 (8ee62da).
+
+## ci/pr-checks (2026-09-28, IN PROGRESS) -- GitHub Actions CI for pull requests
+- Branch `ci/pr-checks` from develop 8ee62da. Repo is public (Actions minutes free).
+- Decisions:
+  - One workflow `.github/workflows/ci.yml`, two parallel jobs: `android` (testDebugUnitTest + lintDebug +
+    assembleDebug, `--continue`) and `functions` (npm ci, lint, tsc, jest on the Firestore emulator). No path filters,
+    so both checks always report (safe to mark them required later).
+  - Triggers: PRs to develop/main, pushes to develop/main (checks the merge result and writes the caches PRs read),
+    manual dispatch. Concurrency cancels superseded runs of the same PR.
+  - google-services.json is gitignored -> CI copies `.github/ci/google-services.placeholder.json` (fake ids, right
+    package). No secret needed, works for fork PRs; nothing in the unit tests talks to Firebase.
+  - Functions tests run with `--project demo-stroopoverload`: no credentials lookup. firebase-tools pinned 15.22.1
+    (local version), emulator jar cached by that version. JDK 21 (the emulator needs it).
+  - setup-gradle `cache-provider: basic` (MIT, over actions/cache) instead of the proprietary default;
+    `cache-read-only` on PRs, because the action's default writes only on the GitHub default branch, which is
+    `feature/online-multiplayer`, not develop.
+  - `gradlew` was committed 100644 -> made 100755, or `./gradlew` fails on Linux.
+- Verified locally: actionlint 1.7.12 clean; functions 231/231 with the demo project.
+- Verified locally: Gradle testDebugUnitTest + lintDebug + assembleDebug with the placeholder = BUILD SUCCESSFUL
+  (191 tests, 0 failures, 5m14s, JDK 21).
+- Review (code-reviewer): 0 CRITICAL/HIGH. MEDIUM applied: actions pinned to commit SHAs + `.github/dependabot.yml`
+  (github-actions, monthly, grouped, into develop). LOW applied: `restore-keys` on the emulator cache.
+- [ ] Push + PR (needs the user's OK); first real run on GitHub; then mark both checks required on develop.
