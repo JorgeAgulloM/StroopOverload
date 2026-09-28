@@ -20,10 +20,20 @@ class PendingRunSyncTest {
         override fun remove(runId: String) { runs.removeAll { it.runId == runId } }
     }
 
-    private fun run(id: String, uid: String = "uid-1") = PendingSoloRun(
+    private fun run(id: String, uid: String = "uid-1", createdAtEpochMs: Long = NOW) = PendingSoloRun(
         runId = id, uid = uid, mode = "ENDLESS", correctHits = 10, totalRounds = 11,
-        survivalMs = 15_000L, finalScore = 100, winStreak = 3, achievementIds = emptyList(), createdAtEpochMs = 0L,
+        survivalMs = 15_000L, finalScore = 100, winStreak = 3, achievementIds = emptyList(),
+        createdAtEpochMs = createdAtEpochMs,
     )
+
+    private fun syncOf(
+        queue: PendingRunQueue,
+        submitter: SoloRunSubmitter,
+        onScoring: (ServerScoring) -> Unit,
+        onResync: suspend (String) -> Unit = {},
+    ) = PendingRunSync(queue, submitter, onScoring, onResync, now = { NOW })
+
+    private fun staleRun(id: String) = run(id, createdAtEpochMs = NOW - MAX_PENDING_RUN_AGE_MS - 1)
 
     private val scoring = ServerScoring(
         points = 100, highScore = 100, experience = 300L, level = 2,
@@ -34,7 +44,7 @@ class PendingRunSyncTest {
     fun `accepted runs leave the queue and the last answer is applied`() = runTest {
         val queue = FakeQueue(listOf(run("a"), run("b")))
         val applied = mutableListOf<ServerScoring>()
-        val sync = PendingRunSync(queue, { r ->
+        val sync = syncOf(queue, { r ->
             SubmitOutcome.Accepted(scoring.copy(matchesPlayed = if (r.runId == "a") 1 else 2))
         }, { applied += it })
 
@@ -52,7 +62,7 @@ class PendingRunSyncTest {
         // would erase that until "b" gets through.
         val queue = FakeQueue(listOf(run("a"), run("b")))
         val applied = mutableListOf<ServerScoring>()
-        val sync = PendingRunSync(queue, { r ->
+        val sync = syncOf(queue, { r ->
             if (r.runId == "a") SubmitOutcome.Accepted(scoring) else SubmitOutcome.RetryLater
         }, { applied += it })
 
@@ -65,7 +75,7 @@ class PendingRunSyncTest {
     @Test
     fun `discarding an account drops only its runs`() = runTest {
         val queue = FakeQueue(listOf(run("mine-1"), run("theirs", uid = "uid-2"), run("mine-2")))
-        val sync = PendingRunSync(queue, { SubmitOutcome.Accepted(scoring) }, {})
+        val sync = syncOf(queue, { SubmitOutcome.Accepted(scoring) }, {})
 
         sync.discard("uid-1")
 
@@ -79,7 +89,7 @@ class PendingRunSyncTest {
         val queue = FakeQueue(listOf(run("a"), run("b")))
         val gate = CompletableDeferred<Unit>()
         val events = mutableListOf<String>()
-        val sync = PendingRunSync(queue, { r ->
+        val sync = syncOf(queue, { r ->
             events += "submit ${r.runId}"
             gate.await()
             SubmitOutcome.RetryLater
@@ -102,7 +112,7 @@ class PendingRunSyncTest {
     fun `a rejected run leaves the queue so it is not retried forever`() = runTest {
         val queue = FakeQueue(listOf(run("bad"), run("good")))
         val submitted = mutableListOf<String>()
-        val sync = PendingRunSync(queue, { r ->
+        val sync = syncOf(queue, { r ->
             submitted += r.runId
             if (r.runId == "bad") SubmitOutcome.Rejected else SubmitOutcome.Accepted(scoring)
         }, {})
@@ -117,7 +127,7 @@ class PendingRunSyncTest {
     fun `a transient failure keeps the run and stops, preserving order`() = runTest {
         val queue = FakeQueue(listOf(run("a"), run("b")))
         val submitted = mutableListOf<String>()
-        val sync = PendingRunSync(queue, { r -> submitted += r.runId; SubmitOutcome.RetryLater }, {})
+        val sync = syncOf(queue, { r -> submitted += r.runId; SubmitOutcome.RetryLater }, {})
 
         sync.flush("uid-1")
 
@@ -129,7 +139,7 @@ class PendingRunSyncTest {
     fun `another account's runs are never submitted and stay queued`() = runTest {
         val queue = FakeQueue(listOf(run("mine"), run("theirs", uid = "uid-2")))
         val submitted = mutableListOf<String>()
-        val sync = PendingRunSync(queue, { r -> submitted += r.runId; SubmitOutcome.Accepted(scoring) }, {})
+        val sync = syncOf(queue, { r -> submitted += r.runId; SubmitOutcome.Accepted(scoring) }, {})
 
         sync.flush("uid-1")
 
@@ -141,7 +151,7 @@ class PendingRunSyncTest {
     fun `an accepted run without scoring in the answer still leaves the queue`() = runTest {
         val queue = FakeQueue(listOf(run("a")))
         val applied = mutableListOf<ServerScoring>()
-        val sync = PendingRunSync(queue, { SubmitOutcome.Accepted(null) }, { applied += it })
+        val sync = syncOf(queue, { SubmitOutcome.Accepted(null) }, { applied += it })
 
         sync.flush("uid-1")
 
@@ -154,7 +164,7 @@ class PendingRunSyncTest {
         val queue = FakeQueue(listOf(run("a")))
         val gate = CompletableDeferred<Unit>()
         var calls = 0
-        val sync = PendingRunSync(queue, {
+        val sync = syncOf(queue, {
             calls++
             gate.await()
             SubmitOutcome.Accepted(scoring)
@@ -168,5 +178,126 @@ class PendingRunSyncTest {
 
         assertEquals(1, calls)
         assertTrue(queue.runs.isEmpty())
+    }
+
+    @Test
+    fun `a run queued more than 24 hours ago is dropped without being submitted`() = runTest {
+        // An offline run only counts if it reaches the server within a day of being played.
+        val queue = FakeQueue(listOf(run("stale", createdAtEpochMs = NOW - MAX_PENDING_RUN_AGE_MS - 1), run("fresh")))
+        val submitted = mutableListOf<String>()
+        val sync = syncOf(queue, { r -> submitted += r.runId; SubmitOutcome.Accepted(scoring) }, {})
+
+        sync.flush("uid-1")
+
+        assertEquals(listOf("fresh"), submitted)
+        assertTrue(queue.runs.isEmpty())
+    }
+
+    @Test
+    fun `a run exactly 24 hours old is still submitted`() = runTest {
+        val queue = FakeQueue(listOf(run("edge", createdAtEpochMs = NOW - MAX_PENDING_RUN_AGE_MS)))
+        val submitted = mutableListOf<String>()
+        val sync = syncOf(queue, { r -> submitted += r.runId; SubmitOutcome.Accepted(scoring) }, {})
+
+        sync.flush("uid-1")
+
+        assertEquals(listOf("edge"), submitted)
+    }
+
+    @Test
+    fun `a stale run is dropped even when the server cannot be reached`() = runTest {
+        // Otherwise a run that expired while offline would still be sent on the next retry.
+        val queue = FakeQueue(listOf(run("stale", createdAtEpochMs = NOW - MAX_PENDING_RUN_AGE_MS - 1), run("fresh")))
+        val sync = syncOf(queue, { SubmitOutcome.RetryLater }, {})
+
+        sync.flush("uid-1")
+
+        assertEquals(listOf("fresh"), queue.runs.map { it.runId })
+    }
+
+    @Test
+    fun `another account's stale runs are left for that account`() = runTest {
+        val queue = FakeQueue(listOf(run("theirs", uid = "uid-2", createdAtEpochMs = 0L)))
+        val sync = syncOf(queue, { SubmitOutcome.Accepted(scoring) }, {})
+
+        sync.flush("uid-1")
+
+        assertEquals(listOf("theirs"), queue.runs.map { it.runId })
+    }
+
+    @Test
+    fun `a run stamped in the future by a clock change is not dropped`() = runTest {
+        val queue = FakeQueue(listOf(run("ahead", createdAtEpochMs = NOW + MAX_PENDING_RUN_AGE_MS * 2)))
+        val submitted = mutableListOf<String>()
+        val sync = syncOf(queue, { r -> submitted += r.runId; SubmitOutcome.Accepted(scoring) }, {})
+
+        sync.flush("uid-1")
+
+        assertEquals(listOf("ahead"), submitted)
+    }
+
+    @Test
+    fun `dropping every queued run re-reads the server's scoring`() = runTest {
+        // The local profile counted the dropped runs provisionally and no answer will ever
+        // replace those numbers; the server's copy never included them.
+        val queue = FakeQueue(listOf(staleRun("stale")))
+        val resynced = mutableListOf<String>()
+        val sync = syncOf(queue, { SubmitOutcome.Accepted(scoring) }, {}, onResync = { resynced += it })
+
+        sync.flush("uid-1")
+
+        assertEquals(listOf("uid-1"), resynced)
+    }
+
+    @Test
+    fun `no re-read when an answer for a later run already carries the scoring`() = runTest {
+        val queue = FakeQueue(listOf(staleRun("stale"), run("fresh")))
+        val resynced = mutableListOf<String>()
+        val applied = mutableListOf<ServerScoring>()
+        val sync = syncOf(queue, { SubmitOutcome.Accepted(scoring) }, { applied += it }, onResync = { resynced += it })
+
+        sync.flush("uid-1")
+
+        assertEquals(1, applied.size)
+        assertTrue(resynced.isEmpty())
+    }
+
+    @Test
+    fun `no re-read while a fresh run is still queued`() = runTest {
+        // The local profile still counts that run; the server's copy would erase it.
+        val queue = FakeQueue(listOf(staleRun("stale"), run("fresh")))
+        val resynced = mutableListOf<String>()
+        val sync = syncOf(queue, { SubmitOutcome.RetryLater }, {}, onResync = { resynced += it })
+
+        sync.flush("uid-1")
+
+        assertTrue(resynced.isEmpty())
+    }
+
+    @Test
+    fun `no re-read when nothing was dropped`() = runTest {
+        val queue = FakeQueue(emptyList())
+        val resynced = mutableListOf<String>()
+        val sync = syncOf(queue, { SubmitOutcome.Accepted(scoring) }, {}, onResync = { resynced += it })
+
+        sync.flush("uid-1")
+
+        assertTrue(resynced.isEmpty())
+    }
+
+    @Test
+    fun `a rejected last run re-reads the server's scoring`() = runTest {
+        // Same gap as an expired run: counted locally, never counted by the server.
+        val queue = FakeQueue(listOf(run("bad")))
+        val resynced = mutableListOf<String>()
+        val sync = syncOf(queue, { SubmitOutcome.Rejected }, {}, onResync = { resynced += it })
+
+        sync.flush("uid-1")
+
+        assertEquals(listOf("uid-1"), resynced)
+    }
+
+    private companion object {
+        const val NOW = 1_800_000_000_000L
     }
 }

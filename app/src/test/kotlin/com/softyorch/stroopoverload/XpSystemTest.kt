@@ -71,7 +71,7 @@ class XpSystemTest {
             previousHighScore = 1000,
             won = true
         )
-        val breakdown = XpSystem.calculateGameXp(res, dailyStreak = 3, currentWinStreak = 2)
+        val breakdown = XpSystem.calculateGameXp(res, dailyStreak = 3, bestStreak = 2)
 
         assertTrue(res.isFlawless)
         assertTrue(res.isNewHighScore)
@@ -95,7 +95,7 @@ class XpSystemTest {
             won = true,
             mode = GameMode.TIME,
         )
-        val breakdown = XpSystem.calculateGameXp(res, dailyStreak = 0, currentWinStreak = 0)
+        val breakdown = XpSystem.calculateGameXp(res, dailyStreak = 0, bestStreak = 0)
 
         assertEquals(0, breakdown.timeBonus)
     }
@@ -107,7 +107,7 @@ class XpSystemTest {
             survivalMs = 45_000L, previousHighScore = 1000, won = true, mode = GameMode.OVERTIME,
         )
 
-        assertEquals(0, XpSystem.calculateGameXp(res, dailyStreak = 0, currentWinStreak = 0).timeBonus)
+        assertEquals(0, XpSystem.calculateGameXp(res, dailyStreak = 0, bestStreak = 0).timeBonus)
     }
 
     @Test
@@ -118,7 +118,7 @@ class XpSystemTest {
         )
         val lives = endless.copy(mode = GameMode.LIVES)
 
-        assertEquals(100, XpSystem.calculateGameXp(endless, dailyStreak = 0, currentWinStreak = 0).timeBonus)
-        assertEquals(100, XpSystem.calculateGameXp(lives, dailyStreak = 0, currentWinStreak = 0).timeBonus)
+        assertEquals(100, XpSystem.calculateGameXp(endless, dailyStreak = 0, bestStreak = 0).timeBonus)
+        assertEquals(100, XpSystem.calculateGameXp(lives, dailyStreak = 0, bestStreak = 0).timeBonus)
     }
 }

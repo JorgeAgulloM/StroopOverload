@@ -236,7 +236,7 @@ fun StroopNavGraph() {
                     viewModel = gameVm,
                     isAdFree = currentProfile.isAdFree || currentProfile.isPremium,
                     onLeaveMatch = { navController.popBackStack() },
-                    onGameOver = { result, streak, record ->
+                    onGameOver = { result, bestStreak, record ->
                         lastResult = result
                         scope.launch {
                             val hold = if (record) launch { delay(GAME_OVER_HOLD_MS) } else null
@@ -245,8 +245,8 @@ fun StroopNavGraph() {
                                 // The run must still be recorded whole, not half applied.
                                 withContext(NonCancellable) {
                                     val prof = repository.getProfile()
-                                    val xpBreakdown = XpSystem.calculateGameXp(result, prof.dailyStreak, streak)
-                                    val newAch = repository.recordGameResult(result, xpBreakdown.total, streak)
+                                    val xpBreakdown = XpSystem.calculateGameXp(result, prof.dailyStreak, bestStreak)
+                                    val newAch = repository.recordGameResult(result, xpBreakdown.total, bestStreak)
                                     gameVm.onRunRecorded(RecordedRun(xpBreakdown, newAch))
                                 }
                             }

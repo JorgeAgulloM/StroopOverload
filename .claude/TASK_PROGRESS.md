@@ -1715,16 +1715,28 @@ Verified test accounts are created with `firebase auth:import` (HMAC_SHA256) —
 - [ ] Mark both checks required on develop (checked 2026-09-28: develop has no branch protection and no rulesets). Exact names: `Android (unit tests, lint, debug build)`, `Cloud Functions (lint, build, tests)`.
 
 ## Open items (2026-09-28, after PR #6)
-- [ ] AdMob: the three PROD ad units are real (publisher `ca-app-pub-6938…`), but `PROD_KEY_ID_ADMOB_APP` in
-      `admob/admob.properties` is still Google's TEST app id (`ca-app-pub-3940256099942544~3347511713`). The app id
-      must be the real one from the same AdMob account, or the real units will not serve. Also NATIVE_DASHBOARD and
-      NATIVE_GAME share one ad unit id (`…/4943220932`) — confirm that is intended.
+- [x] AdMob: PROD app id + 3 units are real, same account (`ca-app-pub-6938…`), verified 2026-09-28.
+      NATIVE_DASHBOARD and NATIVE_GAME share one ad unit id (`…/4943220932`) — not confirmed as intended.
 - [ ] versionCode bump: deferred by the user until the next release scope is decided.
 - [ ] Republish the hosted terms (OVERTIME): at the next release.
 - [ ] Human checks (registration emails, sound/timer feel, online interstitial): later.
 - [ ] App Check: SHA-256 registered in Firebase (user, 2026-09-28); enforcement still OFF.
-- [ ] Product: best streak vs end streak — user said "yes" to deciding it; choice still open.
-- [ ] Product: age limit for queued offline runs — user wants one; value still open.
-- [ ] Old `stash@{0}` (feature/online-multiplayer WIP, 778ddec) — user asked to drop it; the auto-mode classifier
-      blocked `git stash drop`, left for the user.
+- [x] Product: XP streak bonus uses the run's BEST streak (user, 2026-09-28) — branch feat/best-streak-offline-age.
+- [x] Product: queued offline runs expire after 24 h (user, 2026-09-28) — same branch.
+- [ ] Mark both CI checks required on develop (still no branch protection/rulesets, checked 2026-09-28).
+- [x] Old `stash@{0}` dropped by the user (2026-09-28).
 - Done: GitHub default branch is now `main` (user); `store/` and `legal/` are committed.
+
+## feat/best-streak-offline-age (2026-09-28)
+- Branch from develop c4b00a8 (also carries the TASK_PROGRESS cleanup commit).
+- Best streak: `GameState.Playing.bestStreak` (max on each correct tap); `GameOver.endStreak` -> `bestStreak`;
+  sent as `winStreak` to submitSoloRun. Server unchanged (clampWinStreak still caps at correctHits; comment only,
+  no deploy needed). XpSystem param renamed `bestStreak`. Effect: most runs now earn the streak bonus (max 150 XP).
+- 24 h expiry: PendingRunSync drops the account's runs with `now - createdAtEpochMs > 24 h` before submitting,
+  even offline. Device clock only; the server cannot enforce it (accepted).
+- Review (kotlin-reviewer): "CRITICAL" (really MEDIUM, local numbers only) - dropping runs left the local
+  provisional profile inflated forever. Fixed: when dropped (expired) or rejected runs leave the account's queue
+  empty with no server scoring, PendingRunSync calls `onResync` = `refreshScoringFromCloud` (Firestore get; offline
+  falls back to the cached server doc, which never had those runs either). Rejected runs had the same gap before.
+  LOWs applied (helper placement, param rename).
+- Tests: Kotlin 202/202, lintDebug clean.

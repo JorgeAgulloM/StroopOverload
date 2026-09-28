@@ -103,6 +103,7 @@ class GameViewModel(
             correctHits = newHits,
             totalRounds = newRounds,
             currentStreak = newStreak,
+            bestStreak = maxOf(playing.bestStreak, newStreak),
             lastTap = TapFeedback(tapped, isCorrect = true, seq = newRounds),
         )
         nextStimulus()
@@ -264,7 +265,7 @@ class GameViewModel(
                 moveCount = playing.totalRounds,
                 mode = playing.mode,
             ),
-            endStreak = playing.currentStreak,
+            bestStreak = playing.bestStreak,
             finalBoard = playing,
         )
     }

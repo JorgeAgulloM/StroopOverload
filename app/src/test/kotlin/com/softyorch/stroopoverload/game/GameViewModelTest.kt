@@ -214,12 +214,38 @@ class GameViewModelTest {
     }
 
     @Test
-    fun `game over keeps the streak the run ended on`() = runTest {
-        // It used to be read from the Playing state after the run was already over, so it
-        // was always 0. A miss resets the streak, so an ENDLESS run ends on 0.
-        val viewModel = endedEndlessRun()
+    fun `game over keeps the best streak of the run, not the one it ended on`() = runTest {
+        // A miss resets the streak, so an ENDLESS run always ends on 0; the XP streak bonus
+        // rewards the longest run of correct answers instead.
+        val viewModel = GameViewModel()
+        viewModel.startGame(mode = GameMode.ENDLESS)
+        viewModel.beginRound()
 
-        assertEquals(0, (viewModel.state.value as GameState.GameOver).endStreak)
+        repeat(3) { tapCorrect(viewModel) }
+        tapWrong(viewModel)
+
+        assertEquals(3, (viewModel.state.value as GameState.GameOver).bestStreak)
+    }
+
+    @Test
+    fun `a later shorter streak does not lower the best streak`() = runTest {
+        val viewModel = GameViewModel()
+        viewModel.startGame(mode = GameMode.LIVES)
+        viewModel.beginRound()
+
+        repeat(2) { tapCorrect(viewModel) }
+        tapWrong(viewModel)
+        dispatcher.scheduler.advanceTimeBy(GameConfig.LIVES_MODE_FREEZE_MS + 50)
+        tapCorrect(viewModel)
+        assertEquals(1, (viewModel.state.value as GameState.Playing).currentStreak)
+        assertEquals(2, (viewModel.state.value as GameState.Playing).bestStreak)
+
+        repeat(GameConfig.LIVES_MODE_STARTING_LIVES - 1) {
+            tapWrong(viewModel)
+            dispatcher.scheduler.advanceTimeBy(GameConfig.LIVES_MODE_FREEZE_MS + 50)
+        }
+
+        assertEquals(2, (viewModel.state.value as GameState.GameOver).bestStreak)
     }
 
     @Test
@@ -260,6 +286,9 @@ class GameViewModelTest {
 
     private fun viewModelOnTestClock() =
         GameViewModel(clock = { dispatcher.scheduler.currentTime + clockLagMs })
+
+    private fun tapCorrect(viewModel: GameViewModel) =
+        viewModel.onColorTapped(viewModel.stimulus.value!!.correctAnswer)
 
     private fun tapWrong(viewModel: GameViewModel) {
         val correct = viewModel.stimulus.value!!.correctAnswer
