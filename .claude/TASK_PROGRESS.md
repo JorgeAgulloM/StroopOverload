@@ -1678,10 +1678,12 @@ Verified test accounts are created with `firebase auth:import` (HMAC_SHA256) —
   - [x] #8 strobe comet round the card (bb15742; verified moving in recording)
   - [x] #9 OVERTIME mode: client 8294142, server 9e16ebd (functions 231, Kotlin 191, lint 0 errors).
         Emulator: auto-played run lasted 48 s from a 30 s start, 26 rounds, accuracy row shown, no survival XP row.
-        **submitSoloRun NOT deployed yet** (ask; until then prod rejects OVERTIME runs as "unknown mode").
+        submitSoloRun deployed 2026-09-28 (see below).
   - Env note: an ANR on Home right after a lint build was the emulator starved by the host (92 % CPU, 77 % kernel,
     14 s GC of an 11 MB heap); after `gradlew --stop` it ran smoothly. Stop daemons before emulator checks.
   - [x] review (kotlin-reviewer): HIGH = deploy order (functions before any client release) -> deploy submitSoloRun;
         MEDIUM fixed (lockedLook: cached GraphicsLayer instead of per-frame saveLayer); LOW accepted (client/server
         constant parity guarded by profileScoring.test.ts). Kotlin 191, lint 0 errors / 49 warnings.
-  - [ ] deploy submitSoloRun (needs the user's OK), then PR
+  - [x] submitSoloRun DEPLOYED 2026-09-28 (user OK). Live check with a throwaway email account: plausible OVERTIME
+        run (25/26, 48 s) accepted; 70 001 ms with 10 hits rejected INVALID_RUN; account + users doc deleted, verified.
+  - [ ] PR to develop (ask: the user only said "despliega")
