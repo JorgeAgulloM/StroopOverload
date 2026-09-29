@@ -209,10 +209,12 @@ Los errores de las callables ahora llevan details.reason (ROOM_NOT_FOUND, ROOM_F
 
 - id: las-partidas-offline-no-suman-al-leaderboard-20260923-053336
 - type: architecture_decision
-- status: active
+- status: deprecated
 - platform: android
 - area: scoring
 - date: 2026-09-23
+
+> **Deprecated 2026-09-29:** sustituida por "Las partidas offline puntúan si llegan al servidor en menos de 24 h". Desde 7b9ae61 (2026-09-24) las partidas offline se meten en una cola y puntúan al llegar. Lo que sigue vigente de esta entrada es que el servidor es el único que escribe la puntuación.
 
 Decidido por el usuario el 2026-09-23, para el trabajo anti-trampas pendiente (#2). Solo puntúa lo que se envía estando online y el servidor puede validar; una partida jugada sin conexión cuenta para el progreso local, pero no para el ranking público. Esto permite validación estricta en el servidor (nada de topes de plausibilidad) y que las reglas de Firestore dejen users/{uid} de solo lectura para el cliente en los campos de puntuación.
 
@@ -271,10 +273,12 @@ VERIFICADO el 2026-09-23: assembleRelease pasa limpio (R8 + lintVital), APK de 1
 
 - id: estado-al-cerrar-sesi-n-2026-09-23-20260923-071218
 - type: architecture_decision
-- status: active
+- status: deprecated
 - platform: shared
 - area: project_status
 - date: 2026-09-23
+
+> **Deprecated 2026-09-29:** era el estado de una sesión, no una decisión. Todo se hizo push y se desplegó (PR #2, fusionado el 2026-09-25, ef4694d). El punto #12 también está hecho: existen AuthViewModelTest y ProfileViewModelTest.
 
 13 commits en develop SIN push y SIN desplegar (git log --oneline 70fc64f..HEAD). Árbol limpio. functions 191/191, Kotlin 88/88, assembleRelease verificado.
 Hecho: #1 salas atascadas, #2 puntuación autoritativa en servidor, #3 App Check + límites de uso, #4 Node 22, #5 CancellationException, #6 i18n + guard de paridad, #7/#8 recomposición de temporizadores, #9 confirmación al salir, #10 I/O fuera de composición, #11 firma opcional + reglas R8 verificadas.
@@ -283,3 +287,84 @@ ANTES DE DESPLEGAR: activar Cloud Scheduler, registrar Play Integrity (SHA-256 e
 
 ### Files
 - .claude/TASK_PROGRESS.md
+
+## Las partidas offline puntúan si llegan al servidor en menos de 24 h
+
+- id: las-partidas-offline-punt-an-si-llegan-al-servidor-en-menos-20260929-142904
+- type: architecture_decision
+- status: active
+- platform: shared
+- area: scoring
+- date: 2026-09-29
+
+### Decision
+Sustituye a "Las partidas offline NO suman al leaderboard" (2026-09-23). Desde 7b9ae61 (2026-09-24) cada partida solo terminada se guarda con un runId UUID en PendingRunStore (máx. 20) y PendingRunSync la reintenta contra submitSoloRun hasta que el servidor responde: se aplica, se rechaza (partida imposible o invitado) o se reintenta más tarde. Una partida jugada sin conexión sí puntúa en el ranking cuando llega.
+Desde 74751a7 (PR #7, 2026-09-28) se descartan sin enviar las partidas en cola con más de 24 h (MAX_PENDING_RUN_AGE_MS). Si al descartar o rechazar se vacía la cola sin puntuación del servidor, onResync vuelve a leer la puntuación del servidor.
+
+### Reason
+Antes, un corte de red al terminar la partida la perdía para siempre. El runId hace que el reintento sea idempotente (applySoloRun).
+
+### Límite conocido
+Las 24 h se miden con el reloj del dispositivo: el servidor NO puede hacerlas cumplir. El servidor solo recalcula puntos y XP a partir de los contadores y rechaza lo imposible; no puede verificar que la partida existió.
+
+### Files
+- app/src/main/kotlin/com/softyorch/stroopoverload/data/PendingRunSync.kt
+- app/src/main/kotlin/com/softyorch/stroopoverload/data/PendingSoloRun.kt
+- app/src/main/kotlin/com/softyorch/stroopoverload/data/local/PendingRunStore.kt
+- functions/src/index.ts
+- functions/src/profileScoring.ts
+
+## Modo solo OVERTIME (contrarreloj que se amplía)
+
+- id: modo-solo-overtime-contrarreloj-que-se-ampl-a-20260929-142904
+- type: architecture_decision
+- status: active
+- platform: shared
+- area: game_modes
+- date: 2026-09-29
+
+### Decision
+PR #5 (8294142 + 9e16ebd, 2026-09-27). Empieza con 30 s; un acierto suma 1 s en el nivel 1, 0,1 s menos por nivel y 0,3 s como mínimo; un fallo resta 2 s. Los casos especiales de TIME pasan por GameMode.hasSessionClock, así que OVERTIME tampoco usa temporizador por estímulo y queda fuera de los trofeos de supervivencia y del bonus de XP de supervivencia.
+Servidor: la duración se acota a 30 s + correctHits * 1 s (+ margen); sin bonus de supervivencia.
+
+### Reason
+Con +1 s fijo, cualquiera que respondiera en menos de un segundo jugaría para siempre. Los 30 s iniciales son gratis: si dieran XP o trofeos de supervivencia, bastaría con dejar pasar el tiempo sin jugar.
+
+### Files
+- app/src/main/kotlin/com/softyorch/stroopoverload/game/GameState.kt
+- functions/src/profileScoring.ts
+
+## El distractor hablado empieza en el nivel 15
+
+- id: el-distractor-hablado-empieza-en-el-nivel-15-20260929-142904
+- type: architecture_decision
+- status: active
+- platform: android
+- area: gameplay
+- date: 2026-09-29
+
+### Decision
+015586e (PR #5, 2026-09-27). El nombre de color distractor que se dice en voz alta (efecto Stroop auditivo) empieza en el nivel 15; antes lo hacía en el 5. Ya no se pide el distractor de fondo de nivel 3, que no se usaba.
+
+### Reason
+En el nivel 5 se percibía como ruido aleatorio.
+
+## CI en GitHub Actions para los PR a develop/main
+
+- id: ci-en-github-actions-para-los-pr-a-develop-main-20260929-142904
+- type: architecture_decision
+- status: active
+- platform: shared
+- area: ci
+- date: 2026-09-29
+
+### Decision
+9a5c0e5 (PR #6, 2026-09-28). Dos jobs en paralelo, en los PR y en los push a develop/main:
+- android: testDebugUnitTest lintDebug assembleDebug --continue, con un google-services.json de relleno (el real está en .gitignore; no hace falta ningún secreto).
+- functions: eslint, tsc y jest sobre el emulador de Firestore con un proyecto demo-, así que no busca credenciales.
+Las acciones van fijadas por SHA y las mantiene Dependabot. La caché de Gradle es de solo lectura en los PR; se escribe en develop/main. gradlew es ejecutable en git.
+develop todavía NO tiene reglas de protección de rama (2026-09-29).
+
+### Files
+- .github/workflows/ci.yml
+- .github/ci/google-services.placeholder.json

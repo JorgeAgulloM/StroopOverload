@@ -22,7 +22,9 @@
   "integrations": [
     "firebase"
   ],
-  "ci_cd": [],
+  "ci_cd": [
+    "github_actions"
+  ],
   "detected_files": {
     "android_manifest": "app/src/main/AndroidManifest.xml",
     "settings_gradle": "settings.gradle.kts"
@@ -30,6 +32,6 @@
   "warnings": [
     "sensitive file detected: app/google-services.json (not read)"
   ],
-  "created_at": "2026-09-22T11:31:37Z",
-  "updated_at": "2026-09-22T11:31:37Z"
+  "created_at": "2026-09-29T14:27:58Z",
+  "updated_at": "2026-09-29T14:27:58Z"
 }

@@ -82,11 +82,13 @@ ef7c843: users/{uid} no tenía regla y se denegaba por defecto, así que la sinc
 
 - id: auditor-a-2026-09-22-problemas-abiertos-priorizados-20260922-113740
 - type: platform_workaround
-- status: temporary
+- status: deprecated
 - platform: shared
 - area: audit
 - date: 2026-09-22
 - review_after: 2026-10-30
+
+> **Deprecated 2026-09-29:** resuelta en la pasada de endurecimiento (PR #2, fusionado el 2026-09-25): puntuación autoritativa en el servidor, App Check + límites, Node 22, CancellationException, i18n, watchdog de salas, BackHandler, firma opcional y reglas R8. Ver las entradas bug_fix/decision del 2026-09-22 al 2026-09-23.
 
 SIN RESOLVER (a fecha 2026-09-22):
 - CRÍTICO: users/{uid} lo escribe el cliente sin validar -> falsificación de leaderboard/puntos (también los puntos online, que aplica el cliente). Hay que mover los campos de puntuación a Functions y dejar las rules con hasOnly() sobre los campos cosméticos.
@@ -154,6 +156,61 @@ Despliegue: necesita la API de Cloud Scheduler activada (primer onSchedule del p
 OJO con los recursos string: un apóstrofo sin escapar (\') hace fallar el build con 'Invalid unicode escape sequence'. Los mensajes en inglés y francés se redactaron sin apóstrofo.
 PENDIENTE: al salir de una partida online no se pone el nodo de presencia de RTDB en offline, así que el abandono solo se registra cuando vence el timeout de la ronda.
 
+> **Nota 2026-09-29:** PENDIENTE resuelto. c315c2f (2026-09-23): leavePresence escribe "offline" al salir; el hook onDisconnect se deja armado a propósito como respaldo. ee09543 (2026-09-24): el callable leaveRoom saca al jugador de una sala que aún no ha empezado (el host pasa al siguiente y la sala se borra cuando sale el último).
+
 ### Files
 - app/src/main/kotlin/com/softyorch/stroopoverload/ui/components/ExitMatchDialog.kt
 - app/src/main/kotlin/com/softyorch/stroopoverload/ui/NavGraph.kt
+
+## Racha para el bonus de XP: la mejor racha, no la final
+
+- id: racha-para-el-bonus-de-xp-la-mejor-racha-no-la-final-20260929-142904
+- type: bug_fix
+- status: active
+- platform: shared
+- area: xp
+- date: 2026-09-29
+
+### Problem
+El bonus de racha de XP usaba la racha con la que acababa la partida. Un fallo la pone a 0, así que ENDLESS siempre terminaba en 0 y el bonus casi nunca se aplicaba.
+
+### Solution
+74751a7 (PR #7): se usa la mejor racha de la partida. El servidor ya la limitaba a los aciertos de la partida; allí solo cambió un comentario.
+
+### Files
+- app/src/main/kotlin/com/softyorch/stroopoverload/domain/XpSystem.kt
+- app/src/main/kotlin/com/softyorch/stroopoverload/game/GameState.kt
+- functions/src/profileScoring.ts
+
+## play() sobre un SoundPool ya liberado
+
+- id: play-sobre-un-soundpool-ya-liberado-20260929-142904
+- type: bug_fix
+- status: active
+- platform: android
+- area: audio
+- date: 2026-09-29
+
+### Problem
+Una muestra que seguía decodificándose cuando se cerraba la pantalla podía terminar después del release diferido y llamar a play() sobre el pool liberado.
+
+### Solution
+298003d (PR #4, 2026-09-27): nunca se reproduce sobre un SoundPool liberado. Relacionado con "Carrera en la carga asíncrona de SoundPool".
+
+## Música Ogg con carátula Theora: silencio en Samsung
+
+- id: m-sica-ogg-con-car-tula-theora-silencio-en-samsung-20260929-142905
+- type: bug_fix
+- status: active
+- platform: android
+- area: audio
+- date: 2026-09-29
+
+### Problem
+La primera exportación de las pistas llevaba, junto al audio Vorbis, un stream de vídeo Theora con la carátula. El extractor Ogg de Samsung lo rechaza: MediaPlayer falla con error (1, -2147483648) y no suena música.
+
+### Solution
+0960506 (2026-09-25): todo lo que va en res/raw tiene que ser Ogg Vorbis solo de audio. Exportar SIEMPRE sin carátula.
+
+### Files
+- app/src/main/res/raw
