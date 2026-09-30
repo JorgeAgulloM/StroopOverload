@@ -1717,7 +1717,7 @@ Verified test accounts are created with `firebase auth:import` (HMAC_SHA256) —
 ## Open items (2026-09-28, after PR #6)
 - [x] AdMob: PROD app id + 3 units are real, same account (`ca-app-pub-6938…`), verified 2026-09-28.
       NATIVE_DASHBOARD and NATIVE_GAME share one ad unit id (`…/4943220932`) — not confirmed as intended.
-- [ ] versionCode bump: deferred by the user until the next release scope is decided.
+- [x] versionCode bump: 4 / 0.0.4 (2026-09-30, branch release/v0.0.4).
 - [ ] Republish the hosted terms (OVERTIME): at the next release.
 - [ ] Human checks (registration emails, sound/timer feel, online interstitial): later.
 - [ ] App Check: SHA-256 registered in Firebase (user, 2026-09-28); enforcement still OFF.
@@ -1740,3 +1740,15 @@ Verified test accounts are created with `firebase auth:import` (HMAC_SHA256) —
   falls back to the cached server doc, which never had those runs either). Rejected runs had the same gap before.
   LOWs applied (helper placement, param rename).
 - Tests: Kotlin 202/202, lintDebug clean.
+
+## release/v0.0.4 (2026-09-30)
+- versionCode 4 / versionName 0.0.4 (user). Covers PRs #2-#8.
+- BETA launcher icon like Chronos Alarm: yellow tilted "BETA" stamped with PIL inside the adaptive-icon safe zone,
+  all densities (foreground + legacy). Store 512 icon with BETA: `F:\Marca SoftYorch\StroopOverload\images\icon_stroop_512_beta.png`
+  (upload it as the Play hi-res icon for the beta; the plain original stays for the final release).
+- Checked on the Samsung (SM-A165F, the user connected it this session): the icon shows BETA in the drawer.
+- Release notes: `store/release-notes-0.0.4.txt`, 6 locales, <= 500 chars each (fr-FR 489). The old
+  `store/release-notes.txt` stays as the 0.0.3 notes.
+- testDebugUnitTest + bundleRelease green; signed AAB + mapping.txt copied to `F:\Marca SoftYorch\StroopOverload\releases\`.
+- Still open: republish the hosted terms (OVERTIME) with this release; human checks; App Check enforcement once
+  the Play build is out; required CI checks on develop.

@@ -24,7 +24,7 @@ Release notes, checklists and lessons learned during shipping.
 
 - id: release-0-0-3-status-20260929
 - type: integration_note
-- status: active
+- status: deprecated
 - platform: android
 - area: release
 - date: 2026-09-29
@@ -40,3 +40,23 @@ Release notes, checklists and lessons learned during shipping.
 - app/build.gradle.kts
 - store/play-store-listing.txt
 - store/release-notes.txt
+
+## Release 0.0.4 (versionCode 4) — beta
+
+- id: release-0-0-4-20260930
+- type: integration_note
+- status: active
+- platform: android
+- area: release
+- date: 2026-09-30
+
+- versionCode 4 / versionName 0.0.4, rama release/v0.0.4. Recoge los PR #2 a #8 (0.0.3 salió antes del PR #2).
+- Se marca como BETA con el icono, igual que Chronos Alarm: "BETA" amarillo inclinado, abajo en el centro, dentro de la zona segura del icono adaptativo (círculo de 66/108 dp). Generado con PIL sobre `icon_stroop_512.png`. Fuente de la tienda: `F:\Marca SoftYorch\StroopOverload\images\icon_stroop_512_beta.png`. El original sin BETA se conserva ahí para la versión definitiva.
+- Launcher: `ic_launcher_foreground.webp` (108 dp por densidad) lleva el BETA. Los `ic_launcher`/`ic_launcher_round` legacy se regeneraron con la misma máscara, aunque con minSdk 26 no se usan.
+- Notas de versión: `store/release-notes-0.0.4.txt`, 6 locales, todas de 500 caracteres o menos (fr-FR es la más justa, 489).
+- AAB de release firmado con la keystore real; guardar `mapping.txt` con el AAB (no hay Crashlytics).
+
+### Files
+- app/build.gradle.kts
+- app/src/main/res/mipmap-*/ic_launcher*.webp
+- store/release-notes-0.0.4.txt

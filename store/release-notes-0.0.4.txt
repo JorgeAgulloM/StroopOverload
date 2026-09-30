@@ -1,0 +1,66 @@
+<en-US>
+Beta 0.0.4
+• New Overtime mode: right answers add time, misses take it away.
+• More pressure: strobe light around the card, a beating timer bar and a spoken distractor colour from level 15.
+• Tap a trophy to see its details.
+• The streak XP bonus now uses your best streak.
+• New music.
+• More stable online matches, scores verified by the server.
+• Fixes for large font sizes, sound and resuming games.
+Beta version: send us your feedback!
+</en-US>
+<de-DE>
+Beta 0.0.4
+• Neuer Modus Verlängerung: Richtige Antworten geben Zeit, Fehler kosten Zeit.
+• Mehr Druck: Stroboskoplicht um die Karte, pulsierender Timer und gesprochene Störfarbe ab Level 15.
+• Tippe auf eine Trophäe für Details.
+• Der Serien-XP-Bonus nutzt jetzt deine beste Serie.
+• Neue Musik.
+• Stabilere Online-Partien, Punkte vom Server geprüft.
+• Korrekturen für große Schrift, Sound und fortgesetzte Spiele.
+Beta-Version: Sende uns dein Feedback!
+</de-DE>
+<es-ES>
+Beta 0.0.4
+• Nuevo modo Prórroga: cada acierto suma tiempo y cada fallo lo resta.
+• Más presión: luz estroboscópica alrededor de la tarjeta, barra de tiempo que late y color distractor hablado desde el nivel 15.
+• Toca un trofeo para ver sus detalles.
+• El bonus de XP por racha usa ahora tu mejor racha.
+• Música nueva.
+• Partidas online más estables, puntuaciones validadas por el servidor.
+• Correcciones con fuentes grandes, sonido y reanudación de partidas.
+Versión beta: ¡envíanos tu opinión!
+</es-ES>
+<fr-FR>
+Bêta 0.0.4
+• Nouveau mode Prolongations : une bonne réponse ajoute du temps, une erreur en retire.
+• Plus de pression : stroboscope autour de la carte, barre de temps qui bat et couleur piège parlée dès le niveau 15.
+• Touchez un trophée pour voir ses détails.
+• Le bonus d'XP de série utilise votre meilleure série.
+• Nouvelle musique.
+• Parties en ligne plus stables, scores validés par le serveur.
+• Corrections : grandes polices, son, reprise.
+Version bêta : envoyez-nous vos retours !
+</fr-FR>
+<ja-JP>
+ベータ 0.0.4
+• 新モード「延長戦」:正解で時間が増え、ミスで減ります。
+• さらなるプレッシャー:カードを囲むストロボ、鼓動するタイマーバー、レベル15からの音声によるおとり色。
+• トロフィーをタップで詳細を表示。
+• 連続正解のXPボーナスは最高連続記録を使用するようになりました。
+• 新しい音楽。
+• オンライン対戦の安定性が向上、スコアはサーバーで検証。
+• 大きな文字サイズ、サウンド、ゲーム再開に関する修正。
+ベータ版です、ぜひご意見をお寄せください!
+</ja-JP>
+<pt-BR>
+Beta 0.0.4
+• Novo modo Prorrogação: cada acerto soma tempo e cada erro tira.
+• Mais pressão: luz estroboscópica ao redor do cartão, barra de tempo que pulsa e cor distratora falada a partir do nível 15.
+• Toque em um troféu para ver os detalhes.
+• O bônus de XP por sequência agora usa sua melhor sequência.
+• Música nova.
+• Partidas online mais estáveis, pontuações validadas pelo servidor.
+• Correções para fontes grandes, som e retomada de partidas.
+Versão beta: envie sua opinião!
+</pt-BR>
