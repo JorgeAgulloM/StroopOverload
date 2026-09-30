@@ -191,7 +191,7 @@ fun HomeScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
-                text = stringResource(R.string.home_footer),
+                text = stringResource(R.string.home_footer, BuildConfig.VERSION_NAME),
                 style = MaterialTheme.typography.bodySmall,
                 color = Muted,
                 fontSize = 10.sp,

@@ -69,6 +69,10 @@ export interface RoomDoc {
   // answer window is the same full duration regardless of how long their
   // local countdown animation/render took.
   startsAtMs: number | null;
+  // When the match ended, set by every finishing path. Clients measure the match duration
+  // against it -- their own clock is skewed and, after a restore, far later than the finish.
+  // Optional: rooms finished before it existed lack it.
+  finishedAtMs?: number;
 }
 
 export type ResolutionReason = "correct" | "wrong" | "timeout" | "disconnect";

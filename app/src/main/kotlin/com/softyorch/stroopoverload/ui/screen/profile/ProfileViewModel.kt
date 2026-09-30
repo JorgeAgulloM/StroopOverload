@@ -1,18 +1,20 @@
 package com.softyorch.stroopoverload.ui.screen.profile
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.softyorch.stroopoverload.R
+import com.softyorch.stroopoverload.core.StringResolver
+import com.softyorch.stroopoverload.data.AuthRepository
 import com.softyorch.stroopoverload.data.AuthService
 import com.softyorch.stroopoverload.data.ChangePasswordError
 import com.softyorch.stroopoverload.data.ChangePasswordException
 import com.softyorch.stroopoverload.data.DeleteAccountError
 import com.softyorch.stroopoverload.data.DeleteAccountException
-import com.softyorch.stroopoverload.data.FirebaseGameRepository
-import com.softyorch.stroopoverload.data.FirebaseMultiplayerRepository
+import com.softyorch.stroopoverload.data.GameRepository
 import com.softyorch.stroopoverload.data.MultiplayerRepository
 import com.softyorch.stroopoverload.domain.Achievement
+import com.softyorch.stroopoverload.domain.AchievementEngine
+import com.softyorch.stroopoverload.domain.AchievementProgress
 import com.softyorch.stroopoverload.domain.CareerStats
 import com.softyorch.stroopoverload.domain.UserProfile
 import com.softyorch.stroopoverload.domain.XpSystem
@@ -33,14 +35,26 @@ data class ProfileUiState(
     val changePasswordError: String? = null,
     val changePasswordSuccess: Boolean = false,
     val deleteAccountError: String? = null,
+    /** From the auth session, not [profile]: older builds saved guest profiles as registered. */
+    val isGuest: Boolean = false,
+    val showGuestSignOutConfirmation: Boolean = false,
 ) {
     val hasUnsavedChanges: Boolean get() = isEditing && editSnapshot != null && profile != editSnapshot
+
+    /** How far the career stats are towards [achievement], for its detail dialog. */
+    fun progressOf(achievement: Achievement): AchievementProgress =
+        PROGRESS_ENGINE.progressFor(achievement.id, careerStats)
 }
 
-class ProfileViewModel(application: Application) : AndroidViewModel(application) {
-    private val repository = FirebaseGameRepository.getInstance(application)
-    private val authService = AuthService()
-    private val multiplayerRepository: MultiplayerRepository = FirebaseMultiplayerRepository()
+// Stateless: only its progress rules are used here.
+private val PROGRESS_ENGINE = AchievementEngine()
+
+class ProfileViewModel(
+    private val repository: GameRepository,
+    private val authService: AuthRepository,
+    private val multiplayerRepository: MultiplayerRepository,
+    private val strings: StringResolver,
+) : ViewModel() {
 
     private val _state = MutableStateFlow(ProfileUiState())
     val state: StateFlow<ProfileUiState> = _state.asStateFlow()
@@ -57,6 +71,7 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
             val (currentXp, neededXp) = XpSystem.xpProgressInCurrentLevel(prof.experience)
             _state.value = _state.value.copy(
                 profile = prof,
+                isGuest = authService.isAnonymousSession ?: prof.isAnonymous,
                 careerStats = stats,
                 achievements = achs,
                 xpInCurrentLevel = currentXp,
@@ -94,12 +109,31 @@ class ProfileViewModel(application: Application) : AndroidViewModel(application)
         }
     }
 
+    /**
+     * A guest can't sign back in to the same account and their progress lives only on this
+     * device, so signing out loses it for good -- ask first. Registered accounts sign out
+     * straight away; their progress is restored from the cloud on the next sign-in.
+     */
     fun signOut(onSignedOut: () -> Unit) {
+        if (_state.value.isGuest) {
+            _state.value = _state.value.copy(showGuestSignOutConfirmation = true)
+            return
+        }
         authService.signOut()
         onSignedOut()
     }
 
-    private fun string(resId: Int): String = getApplication<Application>().getString(resId)
+    fun confirmGuestSignOut(onSignedOut: () -> Unit) {
+        _state.value = _state.value.copy(showGuestSignOutConfirmation = false)
+        authService.signOut()
+        onSignedOut()
+    }
+
+    fun dismissGuestSignOut() {
+        _state.value = _state.value.copy(showGuestSignOutConfirmation = false)
+    }
+
+    private fun string(resId: Int): String = strings.get(resId)
 
     fun changePassword(currentPassword: String, newPassword: String, confirmNewPassword: String) {
         if (newPassword != confirmNewPassword) {

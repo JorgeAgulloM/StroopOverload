@@ -1,5 +1,6 @@
 package com.softyorch.stroopoverload.ui.screen
 
+import com.softyorch.stroopoverload.ui.components.FitLabel
 import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -19,6 +20,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.softyorch.stroopoverload.R
+import com.softyorch.stroopoverload.core.formatMultiplier
 import com.softyorch.stroopoverload.domain.Achievement
 import com.softyorch.stroopoverload.domain.GameMode
 import com.softyorch.stroopoverload.domain.GameResult
@@ -98,7 +100,7 @@ fun GameOverScreen(
                     StatRow(stringResource(R.string.game_over_final_score), result.finalScore.toString(), MaterialTheme.colorScheme.primary)
                     // Accuracy only means something when misses don't end the run outright
                     // (ENDLESS/LIVES structurally trend toward ~100% until the run-ending miss).
-                    if (result.mode == GameMode.TIME) {
+                    if (result.mode.hasSessionClock) {
                         StatRow(stringResource(R.string.game_over_accuracy), "${result.accuracy}%", if (result.accuracy >= 80) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onBackground)
                     }
                     StatRow(stringResource(R.string.game_over_rounds_survived), result.totalRounds.toString(), MaterialTheme.colorScheme.onBackground)
@@ -130,7 +132,7 @@ fun GameOverScreen(
                         if (xpBreakdown.timeBonus > 0) XpRow(stringResource(R.string.game_over_xp_time_bonus), "+${xpBreakdown.timeBonus}")
                         if (xpBreakdown.streakBonus > 0) XpRow(stringResource(R.string.game_over_xp_streak_bonus), "+${xpBreakdown.streakBonus}")
                         if (xpBreakdown.dailyStreakBonus > 0) XpRow(stringResource(R.string.game_over_xp_daily_bonus), "+${xpBreakdown.dailyStreakBonus}")
-                        if (xpBreakdown.multiplier > 1.0) XpRow(stringResource(R.string.game_over_xp_multiplier), stringResource(R.string.game_over_xp_multiplier_value, xpBreakdown.multiplier.toString()))
+                        if (xpBreakdown.multiplier > 1.0) XpRow(stringResource(R.string.game_over_xp_multiplier), stringResource(R.string.game_over_xp_multiplier_value, formatMultiplier(xpBreakdown.multiplier)))
                     }
                 }
             }
@@ -198,7 +200,9 @@ fun GameOverScreen(
                 }
                 Spacer(modifier = Modifier.height(12.dp))
                 val shareText = stringResource(R.string.game_over_share_text, result.finalScore, xpBreakdown?.total ?: 0, result.accuracy)
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                // Stacked, not side by side: at half width "COMPARTIR PUNTUACIÓN" and friends did not
+                // fit even shrunk, once the system font scale was raised.
+                Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     OutlinedButton(
                         onClick = {
                             val intent = Intent(Intent.ACTION_SEND).apply {
@@ -210,18 +214,18 @@ fun GameOverScreen(
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.tertiary),
                         border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.tertiary),
                         shape = RoundedCornerShape(4.dp),
-                        modifier = Modifier.weight(1f).heightIn(min = 48.dp)
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
                     ) {
-                        Text(stringResource(R.string.game_over_share_score), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        FitLabel(stringResource(R.string.game_over_share_score))
                     }
                     OutlinedButton(
                         onClick = onMenu,
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = Muted),
                         border = androidx.compose.foundation.BorderStroke(1.dp, Muted),
                         shape = RoundedCornerShape(4.dp),
-                        modifier = Modifier.weight(1f).heightIn(min = 48.dp)
+                        modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)
                     ) {
-                        Text(stringResource(R.string.game_over_main_menu), maxLines = 1, overflow = TextOverflow.Ellipsis)
+                        FitLabel(stringResource(R.string.game_over_main_menu))
                     }
                 }
                 Spacer(modifier = Modifier.height(24.dp))

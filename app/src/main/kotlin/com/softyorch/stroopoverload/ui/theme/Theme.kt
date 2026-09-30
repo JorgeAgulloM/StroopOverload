@@ -23,6 +23,7 @@ fun StroopTheme(content: @Composable () -> Unit) {
     MaterialTheme(
         colorScheme = DarkColors,
         typography = StroopTypography,
-        content = content,
-    )
+    ) {
+        LimitFontScale(max = APP_MAX_FONT_SCALE, content = content)
+    }
 }

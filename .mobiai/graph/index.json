@@ -1,0 +1,6016 @@
+{
+  "version": 1,
+  "generatedAt": "2026-09-29T14:28:02.4431533Z",
+  "root": "C:\\Users\\Jorge\\Proyectos\\StroopOverload",
+  "files": [
+    {
+      "path": "app/src/debug/kotlin/com/softyorch/stroopoverload/AppCheckProviderFactory.kt",
+      "language": "kotlin",
+      "lines": 11,
+      "imports": [
+        "com.google.firebase.appcheck.AppCheckProviderFactory",
+        "com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory"
+      ],
+      "symbols": [
+        {
+          "name": "appCheckProviderFactory",
+          "kind": "fun",
+          "line": 11
+        }
+      ]
+    },
+    {
+      "path": "app/src/demo/kotlin/com/softyorch/stroopoverload/AppCheckProviderFactory.kt",
+      "language": "kotlin",
+      "lines": 11,
+      "imports": [
+        "com.google.firebase.appcheck.AppCheckProviderFactory",
+        "com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory"
+      ],
+      "symbols": [
+        {
+          "name": "appCheckProviderFactory",
+          "kind": "fun",
+          "line": 11
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/MainActivity.kt",
+      "language": "kotlin",
+      "lines": 32,
+      "imports": [
+        "android.graphics.Color",
+        "android.os.Bundle",
+        "androidx.activity.ComponentActivity",
+        "androidx.activity.SystemBarStyle",
+        "androidx.activity.compose.setContent",
+        "androidx.activity.enableEdgeToEdge",
+        "androidx.compose.foundation.layout.fillMaxSize",
+        "androidx.compose.material3.Surface",
+        "androidx.compose.ui.Modifier",
+        "com.softyorch.stroopoverload.ui.StroopNavGraph",
+        "com.softyorch.stroopoverload.ui.theme.StroopTheme"
+      ],
+      "symbols": [
+        {
+          "name": "MainActivity",
+          "kind": "class",
+          "line": 15
+        },
+        {
+          "name": "onCreate",
+          "kind": "fun",
+          "line": 16,
+          "container": "MainActivity",
+          "modifiers": [
+            "override"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/StroopApplication.kt",
+      "language": "kotlin",
+      "lines": 18,
+      "imports": [
+        "android.app.Application",
+        "com.google.firebase.FirebaseApp",
+        "com.google.firebase.appcheck.FirebaseAppCheck"
+      ],
+      "symbols": [
+        {
+          "name": "StroopApplication",
+          "kind": "class",
+          "line": 7
+        },
+        {
+          "name": "onCreate",
+          "kind": "fun",
+          "line": 8,
+          "container": "StroopApplication",
+          "modifiers": [
+            "override"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/ads/AdsConsentManager.kt",
+      "language": "kotlin",
+      "lines": 65,
+      "imports": [
+        "android.app.Activity",
+        "android.content.Context",
+        "com.google.android.gms.ads.MobileAds",
+        "com.google.android.ump.ConsentRequestParameters",
+        "com.google.android.ump.UserMessagingPlatform",
+        "com.softyorch.stroopoverload.BuildConfig",
+        "kotlinx.coroutines.flow.MutableStateFlow",
+        "kotlinx.coroutines.flow.StateFlow",
+        "kotlinx.coroutines.flow.asStateFlow",
+        "java.util.concurrent.atomic.AtomicBoolean"
+      ],
+      "symbols": [
+        {
+          "name": "AdsConsentManager",
+          "kind": "class",
+          "line": 21
+        },
+        {
+          "name": "requestConsentIfNeeded",
+          "kind": "fun",
+          "line": 26,
+          "container": "AdsConsentManager"
+        },
+        {
+          "name": "initializeIfReady",
+          "kind": "fun",
+          "line": 56,
+          "container": "AdsConsentManager"
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/ads/InterstitialAdManager.kt",
+      "language": "kotlin",
+      "lines": 85,
+      "imports": [
+        "android.app.Activity",
+        "android.content.Context",
+        "android.util.Log",
+        "com.google.android.gms.ads.AdError",
+        "com.google.android.gms.ads.AdRequest",
+        "com.google.android.gms.ads.FullScreenContentCallback",
+        "com.google.android.gms.ads.LoadAdError",
+        "com.google.android.gms.ads.interstitial.InterstitialAd",
+        "com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback",
+        "com.softyorch.stroopoverload.BuildConfig"
+      ],
+      "symbols": [
+        {
+          "name": "InterstitialAdManager",
+          "kind": "class",
+          "line": 23
+        },
+        {
+          "name": "preload",
+          "kind": "fun",
+          "line": 27,
+          "container": "InterstitialAdManager"
+        },
+        {
+          "name": "onAdLoaded",
+          "kind": "fun",
+          "line": 35,
+          "container": "InterstitialAdManager",
+          "modifiers": [
+            "override"
+          ]
+        },
+        {
+          "name": "onAdFailedToLoad",
+          "kind": "fun",
+          "line": 40,
+          "container": "InterstitialAdManager",
+          "modifiers": [
+            "override"
+          ]
+        },
+        {
+          "name": "showAndThen",
+          "kind": "fun",
+          "line": 56,
+          "container": "InterstitialAdManager"
+        },
+        {
+          "name": "onAdDismissedFullScreenContent",
+          "kind": "fun",
+          "line": 70,
+          "container": "InterstitialAdManager",
+          "modifiers": [
+            "override"
+          ]
+        },
+        {
+          "name": "onAdFailedToShowFullScreenContent",
+          "kind": "fun",
+          "line": 76,
+          "container": "InterstitialAdManager",
+          "modifiers": [
+            "override"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/ads/NativeAdBanner.kt",
+      "language": "kotlin",
+      "lines": 178,
+      "imports": [
+        "android.content.Context",
+        "android.graphics.Typeface",
+        "android.text.TextUtils",
+        "android.util.Log",
+        "android.view.Gravity",
+        "android.view.View",
+        "android.view.ViewGroup.LayoutParams.MATCH_PARENT",
+        "android.view.ViewGroup.LayoutParams.WRAP_CONTENT",
+        "android.widget.Button",
+        "android.widget.FrameLayout",
+        "android.widget.ImageView",
+        "android.widget.LinearLayout",
+        "android.widget.TextView",
+        "androidx.compose.foundation.background",
+        "androidx.compose.foundation.border",
+        "androidx.compose.foundation.shape.RoundedCornerShape",
+        "androidx.compose.material3.MaterialTheme",
+        "androidx.compose.runtime.Composable",
+        "androidx.compose.runtime.DisposableEffect",
+        "androidx.compose.runtime.getValue",
+        "androidx.compose.runtime.mutableStateOf",
+        "androidx.compose.runtime.remember",
+        "androidx.compose.runtime.setValue",
+        "androidx.compose.ui.Modifier",
+        "androidx.compose.ui.draw.clip",
+        "androidx.compose.ui.graphics.Color",
+        "androidx.compose.ui.platform.LocalContext",
+        "androidx.compose.ui.unit.dp",
+        "androidx.compose.ui.viewinterop.AndroidView",
+        "com.google.android.gms.ads.AdListener",
+        "com.google.android.gms.ads.AdLoader",
+        "com.google.android.gms.ads.AdRequest",
+        "com.google.android.gms.ads.LoadAdError",
+        "com.google.android.gms.ads.nativead.NativeAd",
+        "com.google.android.gms.ads.nativead.NativeAdView",
+        "com.softyorch.stroopoverload.BuildConfig"
+      ],
+      "symbols": [
+        {
+          "name": "NativeAdBanner",
+          "kind": "fun",
+          "line": 60
+        },
+        {
+          "name": "onAdFailedToLoad",
+          "kind": "fun",
+          "line": 74,
+          "modifiers": [
+            "override"
+          ]
+        },
+        {
+          "name": "buildNativeAdView",
+          "kind": "fun",
+          "line": 98,
+          "modifiers": [
+            "private"
+          ]
+        },
+        {
+          "name": "dp",
+          "kind": "fun",
+          "line": 100
+        },
+        {
+          "name": "populateNativeAdView",
+          "kind": "fun",
+          "line": 166,
+          "modifiers": [
+            "private"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/audio/AudioPlayer.kt",
+      "language": "kotlin",
+      "lines": 91,
+      "imports": [
+        "android.content.Context",
+        "android.media.AudioAttributes",
+        "android.media.SoundPool",
+        "android.os.Handler",
+        "android.os.Looper",
+        "com.softyorch.stroopoverload.core.StroopColor"
+      ],
+      "symbols": [
+        {
+          "name": "AudioPlayer",
+          "kind": "class",
+          "line": 22
+        },
+        {
+          "name": "play",
+          "kind": "fun",
+          "line": 66,
+          "container": "AudioPlayer"
+        },
+        {
+          "name": "play",
+          "kind": "fun",
+          "line": 68,
+          "container": "AudioPlayer"
+        },
+        {
+          "name": "playSample",
+          "kind": "fun",
+          "line": 70,
+          "container": "AudioPlayer",
+          "modifiers": [
+            "private"
+          ]
+        },
+        {
+          "name": "release",
+          "kind": "fun",
+          "line": 85,
+          "container": "AudioPlayer"
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/audio/AudioSettingsStore.kt",
+      "language": "kotlin",
+      "lines": 50,
+      "imports": [
+        "android.content.Context",
+        "android.content.SharedPreferences",
+        "kotlinx.coroutines.flow.MutableStateFlow",
+        "kotlinx.coroutines.flow.StateFlow",
+        "kotlinx.coroutines.flow.asStateFlow"
+      ],
+      "symbols": [
+        {
+          "name": "AudioSettingsStore",
+          "kind": "class",
+          "line": 16
+        },
+        {
+          "name": "setMusicEnabled",
+          "kind": "fun",
+          "line": 37,
+          "container": "AudioSettingsStore"
+        },
+        {
+          "name": "setSfxEnabled",
+          "kind": "fun",
+          "line": 41,
+          "container": "AudioSettingsStore"
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/audio/GameSfx.kt",
+      "language": "kotlin",
+      "lines": 12,
+      "imports": [],
+      "symbols": [
+        {
+          "name": "GameSfx",
+          "kind": "class",
+          "line": 4,
+          "modifiers": [
+            "enum"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/audio/MusicManager.kt",
+      "language": "kotlin",
+      "lines": 155,
+      "imports": [
+        "android.content.Context",
+        "android.media.AudioAttributes",
+        "android.media.AudioManager",
+        "android.media.MediaPlayer",
+        "androidx.annotation.RawRes",
+        "kotlinx.coroutines.CoroutineScope",
+        "kotlinx.coroutines.Dispatchers",
+        "kotlinx.coroutines.Job",
+        "kotlinx.coroutines.SupervisorJob",
+        "kotlinx.coroutines.cancel",
+        "kotlinx.coroutines.delay",
+        "kotlinx.coroutines.launch"
+      ],
+      "symbols": [
+        {
+          "name": "MusicTrack",
+          "kind": "interface",
+          "line": 17,
+          "modifiers": [
+            "sealed"
+          ]
+        },
+        {
+          "name": "Loop",
+          "kind": "class",
+          "line": 18,
+          "container": "MusicTrack",
+          "modifiers": [
+            "data"
+          ]
+        },
+        {
+          "name": "Playlist",
+          "kind": "class",
+          "line": 19,
+          "container": "MusicTrack",
+          "modifiers": [
+            "data"
+          ]
+        },
+        {
+          "name": "MusicManager",
+          "kind": "class",
+          "line": 41
+        },
+        {
+          "name": "setTrack",
+          "kind": "fun",
+          "line": 60,
+          "container": "MusicManager"
+        },
+        {
+          "name": "release",
+          "kind": "fun",
+          "line": 66,
+          "container": "MusicManager"
+        },
+        {
+          "name": "pause",
+          "kind": "fun",
+          "line": 79,
+          "container": "MusicManager"
+        },
+        {
+          "name": "resume",
+          "kind": "fun",
+          "line": 85,
+          "container": "MusicManager"
+        },
+        {
+          "name": "startTransition",
+          "kind": "fun",
+          "line": 96,
+          "container": "MusicManager",
+          "modifiers": [
+            "private"
+          ]
+        },
+        {
+          "name": "fadeOutAndStop",
+          "kind": "fun",
+          "line": 104,
+          "container": "MusicManager",
+          "modifiers": [
+            "private"
+          ]
+        },
+        {
+          "name": "startTrack",
+          "kind": "fun",
+          "line": 109,
+          "container": "MusicManager",
+          "modifiers": [
+            "private",
+            "suspend"
+          ]
+        },
+        {
+          "name": "pickResId",
+          "kind": "fun",
+          "line": 124,
+          "container": "MusicManager",
+          "modifiers": [
+            "private"
+          ]
+        },
+        {
+          "name": "onPlaylistTrackFinished",
+          "kind": "fun",
+          "line": 132,
+          "container": "MusicManager",
+          "modifiers": [
+            "private"
+          ]
+        },
+        {
+          "name": "fadeOutAndRelease",
+          "kind": "fun",
+          "line": 139,
+          "container": "MusicManager",
+          "modifiers": [
+            "private",
+            "suspend"
+          ]
+        },
+        {
+          "name": "fadeVolume",
+          "kind": "fun",
+          "line": 146,
+          "container": "MusicManager",
+          "modifiers": [
+            "private",
+            "suspend"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/core/GameConfig.kt",
+      "language": "kotlin",
+      "lines": 22,
+      "imports": [],
+      "symbols": [
+        {
+          "name": "GameConfig",
+          "kind": "object",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/core/LegalLinks.kt",
+      "language": "kotlin",
+      "lines": 6,
+      "imports": [],
+      "symbols": [
+        {
+          "name": "LegalLinks",
+          "kind": "object",
+          "line": 3
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/core/NumberFormatting.kt",
+      "language": "kotlin",
+      "lines": 17,
+      "imports": [
+        "java.text.NumberFormat",
+        "java.util.Locale"
+      ],
+      "symbols": [
+        {
+          "name": "formatMultiplier",
+          "kind": "fun",
+          "line": 13
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/core/RunCatchingCancellable.kt",
+      "language": "kotlin",
+      "lines": 17,
+      "imports": [
+        "kotlinx.coroutines.CancellationException"
+      ],
+      "symbols": [
+        {
+          "name": "runCatchingCancellable",
+          "kind": "fun",
+          "line": 11,
+          "modifiers": [
+            "inline"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/core/StringResolver.kt",
+      "language": "kotlin",
+      "lines": 23,
+      "imports": [
+        "android.content.Context",
+        "androidx.annotation.StringRes"
+      ],
+      "symbols": [
+        {
+          "name": "get",
+          "kind": "fun",
+          "line": 12
+        },
+        {
+          "name": "AndroidStringResolver",
+          "kind": "class",
+          "line": 15
+        },
+        {
+          "name": "get",
+          "kind": "fun",
+          "line": 21,
+          "container": "AndroidStringResolver",
+          "modifiers": [
+            "override"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/core/StroopColor.kt",
+      "language": "kotlin",
+      "lines": 16,
+      "imports": [
+        "androidx.annotation.StringRes",
+        "androidx.compose.ui.graphics.Color",
+        "com.softyorch.stroopoverload.R"
+      ],
+      "symbols": [
+        {
+          "name": "StroopColor",
+          "kind": "class",
+          "line": 7,
+          "modifiers": [
+            "enum"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/data/AsoDemoSeeder.kt",
+      "language": "kotlin",
+      "lines": 80,
+      "imports": [
+        "android.content.Context",
+        "com.softyorch.stroopoverload.BuildConfig",
+        "com.softyorch.stroopoverload.data.local.AchievementsLocalStore",
+        "com.softyorch.stroopoverload.data.local.ProfileLocalStore",
+        "com.softyorch.stroopoverload.domain.CareerStats",
+        "com.softyorch.stroopoverload.domain.UserProfile"
+      ],
+      "symbols": [
+        {
+          "name": "AsoDemoSeeder",
+          "kind": "object",
+          "line": 10
+        },
+        {
+          "name": "seedIfNeeded",
+          "kind": "fun",
+          "line": 14,
+          "container": "AsoDemoSeeder"
+        },
+        {
+          "name": "forceSeed",
+          "kind": "fun",
+          "line": 26,
+          "container": "AsoDemoSeeder"
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/data/AuthRepository.kt",
+      "language": "kotlin",
+      "lines": 54,
+      "imports": [],
+      "symbols": [
+        {
+          "name": "AuthUser",
+          "kind": "class",
+          "line": 4,
+          "modifiers": [
+            "data"
+          ]
+        },
+        {
+          "name": "AuthRepository",
+          "kind": "interface",
+          "line": 12
+        },
+        {
+          "name": "consumePendingNickname",
+          "kind": "fun",
+          "line": 18,
+          "container": "AuthRepository"
+        },
+        {
+          "name": "signInWithEmail",
+          "kind": "fun",
+          "line": 20,
+          "container": "AuthRepository",
+          "modifiers": [
+            "suspend"
+          ]
+        },
+        {
+          "name": "registerWithEmail",
+          "kind": "fun",
+          "line": 22,
+          "container": "AuthRepository",
+          "modifiers": [
+            "suspend"
+          ]
+        },
+        {
+          "name": "signInAnonymously",
+          "kind": "fun",
+          "line": 31,
+          "container": "AuthRepository",
+          "modifiers": [
+            "suspend"
+          ]
+        },
+        {
+          "name": "resendVerificationEmailWithCooldown",
+          "kind": "fun",
+          "line": 37,
+          "container": "AuthRepository",
+          "modifiers": [
+            "suspend"
+          ]
+        },
+        {
+          "name": "reloadUser",
+          "kind": "fun",
+          "line": 40,
+          "container": "AuthRepository",
+          "modifiers": [
+            "suspend"
+          ]
+        },
+        {
+          "name": "signOut",
+          "kind": "fun",
+          "line": 42,
+          "container": "AuthRepository"
+        },
+        {
+          "name": "sendPasswordResetEmail",
+          "kind": "fun",
+          "line": 44,
+          "container": "AuthRepository",
+          "modifiers": [
+            "suspend"
+          ]
+        },
+        {
+          "name": "changePassword",
+          "kind": "fun",
+          "line": 47,
+          "container": "AuthRepository",
+          "modifiers": [
+            "suspend"
+          ]
+        },
+        {
+          "name": "deleteAccount",
+          "kind": "fun",
+          "line": 53,
+          "container": "AuthRepository",
+          "modifiers": [
+            "suspend"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/data/AuthService.kt",
+      "language": "kotlin",
+      "lines": 348,
+      "imports": [
+        "android.util.Log",
+        "com.google.firebase.auth.EmailAuthProvider",
+        "com.google.firebase.auth.FirebaseAuth",
+        "com.google.firebase.auth.FirebaseUser",
+        "com.softyorch.stroopoverload.R",
+        "kotlinx.coroutines.CancellationException",
+        "kotlinx.coroutines.tasks.await"
+      ],
+      "symbols": [
+        {
+          "name": "LoginError",
+          "kind": "interface",
+          "line": 11,
+          "modifiers": [
+            "sealed"
+          ]
+        },
+        {
+          "name": "WrongPassword",
+          "kind": "object",
+          "line": 12,
+          "container": "LoginError"
+        },
+        {
+          "name": "InvalidEmail",
+          "kind": "object",
+          "line": 13,
+          "container": "LoginError"
+        },
+        {
+          "name": "NetworkError",
+          "kind": "object",
+          "line": 14,
+          "container": "LoginError"
+        },
+        {
+          "name": "Unknown",
+          "kind": "class",
+          "line": 15,
+          "container": "LoginError",
+          "modifiers": [
+            "data"
+          ]
+        },
+        {
+          "name": "fromException",
+          "kind": "fun",
+          "line": 18,
+          "container": "LoginError"
+        },
+        {
+          "name": "CooldownException",
+          "kind": "class",
+          "line": 34
+        },
+        {
+          "name": "RegistrationError",
+          "kind": "interface",
+          "line": 36,
+          "modifiers": [
+            "sealed"
+          ]
+        },
+        {
+          "name": "NicknameTooShort",
+          "kind": "object",
+          "line": 37,
+          "container": "RegistrationError"
+        },
+        {
+          "name": "InvalidEmailFormat",
+          "kind": "object",
+          "line": 38,
+          "container": "RegistrationError"
+        },
+        {
+          "name": "EmailMismatch",
+          "kind": "object",
+          "line": 39,
+          "container": "RegistrationError"
+        },
+        {
+          "name": "PasswordTooShort",
+          "kind": "object",
+          "line": 40,
+          "container": "RegistrationError"
+        },
+        {
+          "name": "PasswordNeedsUppercase",
+          "kind": "object",
+          "line": 41,
+          "container": "RegistrationError"
+        },
+        {
+          "name": "PasswordNeedsLowercase",
+          "kind": "object",
+          "line": 42,
+          "container": "RegistrationError"
+        },
+        {
+          "name": "PasswordNeedsDigit",
+          "kind": "object",
+          "line": 43,
+          "container": "RegistrationError"
+        },
+        {
+          "name": "PasswordNeedsSymbol",
+          "kind": "object",
+          "line": 44,
+          "container": "RegistrationError"
+        },
+        {
+          "name": "PasswordMismatch",
+          "kind": "object",
+          "line": 45,
+          "container": "RegistrationError"
+        },
+        {
+          "name": "RegistrationValidationException",
+          "kind": "class",
+          "line": 48
+        },
+        {
+          "name": "ChangePasswordError",
+          "kind": "interface",
+          "line": 50,
+          "modifiers": [
+            "sealed"
+          ]
+        },
+        {
+          "name": "WrongCurrentPassword",
+          "kind": "object",
+          "line": 51,
+          "container": "ChangePasswordError"
+        },
+        {
+          "name": "RequiresRecentLogin",
+          "kind": "object",
+          "line": 52,
+          "container": "ChangePasswordError"
+        },
+        {
+          "name": "NetworkError",
+          "kind": "object",
+          "line": 53,
+          "container": "ChangePasswordError"
+        },
+        {
+          "name": "NotSignedIn",
+          "kind": "object",
+          "line": 54,
+          "container": "ChangePasswordError"
+        },
+        {
+          "name": "WeakNewPassword",
+          "kind": "class",
+          "line": 55,
+          "container": "ChangePasswordError",
+          "modifiers": [
+            "data"
+          ]
+        },
+        {
+          "name": "Unknown",
+          "kind": "class",
+          "line": 56,
+          "container": "ChangePasswordError",
+          "modifiers": [
+            "data"
+          ]
+        },
+        {
+          "name": "fromException",
+          "kind": "fun",
+          "line": 59,
+          "container": "ChangePasswordError"
+        },
+        {
+          "name": "ChangePasswordException",
+          "kind": "class",
+          "line": 74
+        },
+        {
+          "name": "DeleteAccountError",
+          "kind": "interface",
+          "line": 76,
+          "modifiers": [
+            "sealed"
+          ]
+        },
+        {
+          "name": "WrongPassword",
+          "kind": "object",
+          "line": 77,
+          "container": "DeleteAccountError"
+        },
+        {
+          "name": "RequiresRecentLogin",
+          "kind": "object",
+          "line": 78,
+          "container": "DeleteAccountError"
+        },
+        {
+          "name": "NetworkError",
+          "kind": "object",
+          "line": 79,
+          "container": "DeleteAccountError"
+        },
+        {
+          "name": "NotSignedIn",
+          "kind": "object",
+          "line": 80,
+          "container": "DeleteAccountError"
+        },
+        {
+          "name": "Unknown",
+          "kind": "class",
+          "line": 81,
+          "container": "DeleteAccountError",
+          "modifiers": [
+            "data"
+          ]
+        },
+        {
+          "name": "fromException",
+          "kind": "fun",
+          "line": 84,
+          "container": "DeleteAccountError"
+        },
+        {
+          "name": "DeleteAccountException",
+          "kind": "class",
+          "line": 99
+        },
+        {
+          "name": "AuthService",
+          "kind": "class",
+          "line": 101
+        },
+        {
+          "name": "consumePendingNickname",
+          "kind": "fun",
+          "line": 111,
+          "modifiers": [
+            "override"
+          ]
+        },
+        {
+          "name": "signInWithEmail",
+          "kind": "fun",
+          "line": 117,
+          "modifiers": [
+            "override",
+            "suspend"
+          ]
+        },
+        {
+          "name": "registerWithEmail",
+          "kind": "fun",
+          "line": 128,
+          "modifiers": [
+            "override",
+            "suspend"
+          ]
+        },
+        {
+          "name": "signInAnonymously",
+          "kind": "fun",
+          "line": 156,
+          "modifiers": [
+            "override",
+            "suspend"
+          ]
+        },
+        {
+          "name": "sendVerificationEmailFireAndForget",
+          "kind": "fun",
+          "line": 172
+        },
+        {
+          "name": "resendVerificationEmailWithCooldown",
+          "kind": "fun",
+          "line": 182,
+          "modifiers": [
+            "override",
+            "suspend"
+          ]
+        },
+        {
+          "name": "reloadUser",
+          "kind": "fun",
+          "line": 199,
+          "modifiers": [
+            "override",
+            "suspend"
+          ]
+        },
+        {
+          "name": "signOut",
+          "kind": "fun",
+          "line": 210,
+          "modifiers": [
+            "override"
+          ]
+        },
+        {
+          "name": "sendPasswordResetEmail",
+          "kind": "fun",
+          "line": 221,
+          "modifiers": [
+            "override",
+            "suspend"
+          ]
+        },
+        {
+          "name": "reauthenticate",
+          "kind": "fun",
+          "line": 232,
+          "modifiers": [
+            "private",
+            "suspend"
+          ]
+        },
+        {
+          "name": "changePassword",
+          "kind": "fun",
+          "line": 247,
+          "modifiers": [
+            "override",
+            "suspend"
+          ]
+        },
+        {
+          "name": "deleteAccount",
+          "kind": "fun",
+          "line": 272,
+          "modifiers": [
+            "override",
+            "suspend"
+          ]
+        },
+        {
+          "name": "toAuthUser",
+          "kind": "fun",
+          "line": 292,
+          "modifiers": [
+            "private"
+          ]
+        },
+        {
+          "name": "registrationErrorRes",
+          "kind": "fun",
+          "line": 311
+        },
+        {
+          "name": "validatePasswordStrength",
+          "kind": "fun",
+          "line": 323
+        },
+        {
+          "name": "validateRegistration",
+          "kind": "fun",
+          "line": 333
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/data/FirebaseGameRepository.kt",
+      "language": "kotlin",
+      "lines": 452,
+      "imports": [
+        "android.content.Context",
+        "android.util.Log",
+        "com.google.firebase.auth.FirebaseAuth",
+        "com.google.firebase.firestore.AggregateSource",
+        "com.google.firebase.firestore.FieldValue",
+        "com.google.firebase.firestore.FirebaseFirestore",
+        "com.google.firebase.functions.FirebaseFunctions",
+        "com.google.firebase.functions.FirebaseFunctionsException",
+        "com.google.firebase.firestore.Query",
+        "com.google.firebase.firestore.SetOptions",
+        "com.softyorch.stroopoverload.core.GameConfig",
+        "com.softyorch.stroopoverload.data.local.AchievementsLocalStore",
+        "com.softyorch.stroopoverload.data.local.MultiplayerAwardStore",
+        "com.softyorch.stroopoverload.data.local.PendingRunStore",
+        "com.softyorch.stroopoverload.data.local.ProfileLocalStore",
+        "com.softyorch.stroopoverload.domain.Achievement",
+        "com.softyorch.stroopoverload.domain.AchievementDefinitions",
+        "com.softyorch.stroopoverload.domain.AchievementEngine",
+        "com.softyorch.stroopoverload.domain.CareerStats",
+        "com.softyorch.stroopoverload.domain.GameResult",
+        "com.softyorch.stroopoverload.domain.applyServerScoring",
+        "com.softyorch.stroopoverload.domain.serverScoringFrom",
+        "com.softyorch.stroopoverload.domain.UserProfile",
+        "com.softyorch.stroopoverload.domain.isRecordable",
+        "com.softyorch.stroopoverload.domain.withAchievementXp",
+        "com.softyorch.stroopoverload.domain.withRunApplied",
+        "kotlinx.coroutines.CancellationException",
+        "kotlinx.coroutines.CoroutineScope",
+        "kotlinx.coroutines.Dispatchers",
+        "kotlinx.coroutines.SupervisorJob",
+        "kotlinx.coroutines.launch",
+        "kotlinx.coroutines.tasks.await",
+        "kotlinx.coroutines.withContext",
+        "java.util.UUID"
+      ],
+      "symbols": [
+        {
+          "name": "FirebaseGameRepository",
+          "kind": "class",
+          "line": 38
+        },
+        {
+          "name": "getProfile",
+          "kind": "fun",
+          "line": 65,
+          "modifiers": [
+            "override"
+          ]
+        },
+        {
+          "name": "updateProfile",
+          "kind": "fun",
+          "line": 69,
+          "modifiers": [
+            "override",
+            "suspend"
+          ]
+        },
+        {
+          "name": "pushProfileToCloud",
+          "kind": "fun",
+          "line": 82,
+          "modifiers": [
+            "private"
+          ]
+        },
+        {
+          "name": "syncUserProfile",
+          "kind": "fun",
+          "line": 109,
+          "modifiers": [
+            "override",
+            "suspend"
+          ]
+        },
+        {
+          "name": "restoreProgressFromCloud",
+          "kind": "fun",
+          "line": 163,
+          "modifiers": [
+            "private"
+          ]
+        },
+        {
+          "name": "clearLocalProgress",
+          "kind": "fun",
+          "line": 181,
+          "modifiers": [
+            "override",
+            "suspend"
+          ]
+        },
+        {
+          "name": "deleteAllUserData",
+          "kind": "fun",
+          "line": 191,
+          "modifiers": [
+            "override",
+            "suspend"
+          ]
+        },
+        {
+          "name": "recordGameResult",
+          "kind": "fun",
+          "line": 198,
+          "modifiers": [
+            "override",
+            "suspend"
+          ]
+        },
+        {
+          "name": "flushPendingRuns",
+          "kind": "fun",
+          "line": 254,
+          "modifiers": [
+            "override"
+          ]
+        },
+        {
+          "name": "submitPendingRun",
+          "kind": "fun",
+          "line": 260,
+          "modifiers": [
+            "private",
+            "suspend"
+          ]
+        },
+        {
+          "name": "refreshScoringFromCloud",
+          "kind": "fun",
+          "line": 299,
+          "modifiers": [
+            "override",
+            "suspend"
+          ]
+        },
+        {
+          "name": "syncMatchResult",
+          "kind": "fun",
+          "line": 325,
+          "modifiers": [
+            "override",
+            "suspend"
+          ]
+        },
+        {
+          "name": "syncProgressToCloud",
+          "kind": "fun",
+          "line": 339,
+          "modifiers": [
+            "private"
+          ]
+        },
+        {
+          "name": "getLeaderboard",
+          "kind": "fun",
+          "line": 360,
+          "modifiers": [
+            "override",
+            "suspend"
+          ]
+        },
+        {
+          "name": "getUserRank",
+          "kind": "fun",
+          "line": 412,
+          "modifiers": [
+            "override",
+            "suspend"
+          ]
+        },
+        {
+          "name": "getCareerStats",
+          "kind": "fun",
+          "line": 431,
+          "modifiers": [
+            "override"
+          ]
+        },
+        {
+          "name": "getAllAchievements",
+          "kind": "fun",
+          "line": 432,
+          "modifiers": [
+            "override"
+          ]
+        },
+        {
+          "name": "getInstance",
+          "kind": "fun",
+          "line": 446
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/data/FirebaseMultiplayerRepository.kt",
+      "language": "kotlin",
+      "lines": 194,
+      "imports": [
+        "android.util.Log",
+        "com.google.firebase.database.FirebaseDatabase",
+        "com.google.firebase.database.ServerValue",
+        "com.google.firebase.firestore.FirebaseFirestore",
+        "com.google.firebase.functions.FirebaseFunctions",
+        "com.google.firebase.functions.FirebaseFunctionsException",
+        "com.google.firebase.functions.HttpsCallableResult",
+        "com.softyorch.stroopoverload.core.StroopColor",
+        "com.softyorch.stroopoverload.core.runCatchingCancellable",
+        "com.softyorch.stroopoverload.domain.multiplayer.MultiplayerRoom",
+        "com.softyorch.stroopoverload.domain.multiplayer.MultiplayerStimulus",
+        "com.softyorch.stroopoverload.domain.multiplayer.RoomMode",
+        "com.softyorch.stroopoverload.domain.multiplayer.RoomPlayer",
+        "com.softyorch.stroopoverload.domain.multiplayer.RoomStatus",
+        "kotlinx.coroutines.channels.awaitClose",
+        "kotlinx.coroutines.flow.Flow",
+        "kotlinx.coroutines.flow.callbackFlow",
+        "kotlinx.coroutines.tasks.await"
+      ],
+      "symbols": [
+        {
+          "name": "FirebaseMultiplayerRepository",
+          "kind": "class",
+          "line": 22
+        },
+        {
+          "name": "createRoom",
+          "kind": "fun",
+          "line": 32,
+          "modifiers": [
+            "override",
+            "suspend"
+          ]
+        },
+        {
+          "name": "joinRoom",
+          "kind": "fun",
+          "line": 39,
+          "modifiers": [
+            "override",
+            "suspend"
+          ]
+        },
+        {
+          "name": "startGame",
+          "kind": "fun",
+          "line": 44,
+          "modifiers": [
+            "override",
+            "suspend"
+          ]
+        },
+        {
+          "name": "submitAnswer",
+          "kind": "fun",
+          "line": 49,
+          "modifiers": [
+            "override",
+            "suspend"
+          ]
+        },
+        {
+          "name": "observeRoom",
+          "kind": "fun",
+          "line": 60,
+          "modifiers": [
+            "override"
+          ]
+        },
+        {
+          "name": "deleteMyMultiplayerData",
+          "kind": "fun",
+          "line": 79,
+          "modifiers": [
+            "override",
+            "suspend"
+          ]
+        },
+        {
+          "name": "callTyped",
+          "kind": "fun",
+          "line": 85,
+          "modifiers": [
+            "private",
+            "suspend"
+          ]
+        },
+        {
+          "name": "call",
+          "kind": "fun",
+          "line": 92,
+          "modifiers": [
+            "private",
+            "inline"
+          ]
+        },
+        {
+          "name": "trackPresence",
+          "kind": "fun",
+          "line": 95,
+          "modifiers": [
+            "override"
+          ]
+        },
+        {
+          "name": "leavePresence",
+          "kind": "fun",
+          "line": 105,
+          "modifiers": [
+            "override"
+          ]
+        },
+        {
+          "name": "leaveRoom",
+          "kind": "fun",
+          "line": 115,
+          "modifiers": [
+            "override"
+          ]
+        },
+        {
+          "name": "mapRoom",
+          "kind": "fun",
+          "line": 122,
+          "modifiers": [
+            "private"
+          ]
+        },
+        {
+          "name": "parseStimulus",
+          "kind": "fun",
+          "line": 171,
+          "modifiers": [
+            "private"
+          ]
+        },
+        {
+          "name": "parseStroopColor",
+          "kind": "fun",
+          "line": 186,
+          "modifiers": [
+            "private"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/data/GameRepository.kt",
+      "language": "kotlin",
+      "lines": 37,
+      "imports": [
+        "com.softyorch.stroopoverload.domain.Achievement",
+        "com.softyorch.stroopoverload.domain.CareerStats",
+        "com.softyorch.stroopoverload.domain.GameResult",
+        "com.softyorch.stroopoverload.domain.UserProfile"
+      ],
+      "symbols": [
+        {
+          "name": "GameRepository",
+          "kind": "interface",
+          "line": 13
+        },
+        {
+          "name": "getProfile",
+          "kind": "fun",
+          "line": 14,
+          "container": "GameRepository"
+        },
+        {
+          "name": "updateProfile",
+          "kind": "fun",
+          "line": 15,
+          "container": "GameRepository",
+          "modifiers": [
+            "suspend"
+          ]
+        },
+        {
+          "name": "syncUserProfile",
+          "kind": "fun",
+          "line": 17,
+          "container": "GameRepository",
+          "modifiers": [
+            "suspend"
+          ]
+        },
+        {
+          "name": "clearLocalProgress",
+          "kind": "fun",
+          "line": 18,
+          "container": "GameRepository",
+          "modifiers": [
+            "suspend"
+          ]
+        },
+        {
+          "name": "deleteAllUserData",
+          "kind": "fun",
+          "line": 21,
+          "container": "GameRepository",
+          "modifiers": [
+            "suspend"
+          ]
+        },
+        {
+          "name": "recordGameResult",
+          "kind": "fun",
+          "line": 24,
+          "container": "GameRepository",
+          "modifiers": [
+            "suspend"
+          ]
+        },
+        {
+          "name": "refreshScoringFromCloud",
+          "kind": "fun",
+          "line": 25,
+          "container": "GameRepository",
+          "modifiers": [
+            "suspend"
+          ]
+        },
+        {
+          "name": "flushPendingRuns",
+          "kind": "fun",
+          "line": 28,
+          "container": "GameRepository"
+        },
+        {
+          "name": "syncMatchResult",
+          "kind": "fun",
+          "line": 31,
+          "container": "GameRepository",
+          "modifiers": [
+            "suspend"
+          ]
+        },
+        {
+          "name": "getLeaderboard",
+          "kind": "fun",
+          "line": 33,
+          "container": "GameRepository",
+          "modifiers": [
+            "suspend"
+          ]
+        },
+        {
+          "name": "getUserRank",
+          "kind": "fun",
+          "line": 34,
+          "container": "GameRepository",
+          "modifiers": [
+            "suspend"
+          ]
+        },
+        {
+          "name": "getCareerStats",
+          "kind": "fun",
+          "line": 35,
+          "container": "GameRepository"
+        },
+        {
+          "name": "getAllAchievements",
+          "kind": "fun",
+          "line": 36,
+          "container": "GameRepository"
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/data/MultiplayerFailures.kt",
+      "language": "kotlin",
+      "lines": 39,
+      "imports": [],
+      "symbols": [
+        {
+          "name": "MultiplayerCallFailure",
+          "kind": "class",
+          "line": 4,
+          "modifiers": [
+            "enum"
+          ]
+        },
+        {
+          "name": "MultiplayerCallException",
+          "kind": "class",
+          "line": 6
+        },
+        {
+          "name": "RoomUnavailableException",
+          "kind": "class",
+          "line": 9
+        },
+        {
+          "name": "multiplayerCallFailureFor",
+          "kind": "fun",
+          "line": 22
+        },
+        {
+          "name": "reasonDetailOf",
+          "kind": "fun",
+          "line": 39
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/data/MultiplayerRepository.kt",
+      "language": "kotlin",
+      "lines": 30,
+      "imports": [
+        "com.softyorch.stroopoverload.core.StroopColor",
+        "com.softyorch.stroopoverload.domain.multiplayer.MultiplayerRoom",
+        "com.softyorch.stroopoverload.domain.multiplayer.RoomMode",
+        "kotlinx.coroutines.flow.Flow"
+      ],
+      "symbols": [
+        {
+          "name": "MultiplayerRepository",
+          "kind": "interface",
+          "line": 8
+        },
+        {
+          "name": "createRoom",
+          "kind": "fun",
+          "line": 9,
+          "container": "MultiplayerRepository",
+          "modifiers": [
+            "suspend"
+          ]
+        },
+        {
+          "name": "joinRoom",
+          "kind": "fun",
+          "line": 10,
+          "container": "MultiplayerRepository",
+          "modifiers": [
+            "suspend"
+          ]
+        },
+        {
+          "name": "startGame",
+          "kind": "fun",
+          "line": 11,
+          "container": "MultiplayerRepository",
+          "modifiers": [
+            "suspend"
+          ]
+        },
+        {
+          "name": "submitAnswer",
+          "kind": "fun",
+          "line": 12,
+          "container": "MultiplayerRepository",
+          "modifiers": [
+            "suspend"
+          ]
+        },
+        {
+          "name": "observeRoom",
+          "kind": "fun",
+          "line": 13,
+          "container": "MultiplayerRepository"
+        },
+        {
+          "name": "trackPresence",
+          "kind": "fun",
+          "line": 14,
+          "container": "MultiplayerRepository"
+        },
+        {
+          "name": "leavePresence",
+          "kind": "fun",
+          "line": 22,
+          "container": "MultiplayerRepository"
+        },
+        {
+          "name": "leaveRoom",
+          "kind": "fun",
+          "line": 28,
+          "container": "MultiplayerRepository"
+        },
+        {
+          "name": "deleteMyMultiplayerData",
+          "kind": "fun",
+          "line": 29,
+          "container": "MultiplayerRepository",
+          "modifiers": [
+            "suspend"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/data/PendingRunSync.kt",
+      "language": "kotlin",
+      "lines": 96,
+      "imports": [
+        "com.softyorch.stroopoverload.domain.ServerScoring",
+        "kotlinx.coroutines.sync.Mutex",
+        "kotlinx.coroutines.sync.withLock"
+      ],
+      "symbols": [
+        {
+          "name": "PendingRunQueue",
+          "kind": "interface",
+          "line": 15
+        },
+        {
+          "name": "all",
+          "kind": "fun",
+          "line": 16,
+          "container": "PendingRunQueue"
+        },
+        {
+          "name": "add",
+          "kind": "fun",
+          "line": 17,
+          "container": "PendingRunQueue"
+        },
+        {
+          "name": "remove",
+          "kind": "fun",
+          "line": 18,
+          "container": "PendingRunQueue"
+        },
+        {
+          "name": "SubmitOutcome",
+          "kind": "interface",
+          "line": 22,
+          "modifiers": [
+            "sealed"
+          ]
+        },
+        {
+          "name": "Accepted",
+          "kind": "class",
+          "line": 24,
+          "container": "SubmitOutcome",
+          "modifiers": [
+            "data"
+          ]
+        },
+        {
+          "name": "Rejected",
+          "kind": "object",
+          "line": 27,
+          "container": "SubmitOutcome",
+          "modifiers": [
+            "data"
+          ]
+        },
+        {
+          "name": "RetryLater",
+          "kind": "object",
+          "line": 30,
+          "container": "SubmitOutcome",
+          "modifiers": [
+            "data"
+          ]
+        },
+        {
+          "name": "submit",
+          "kind": "fun",
+          "line": 34,
+          "modifiers": [
+            "suspend"
+          ]
+        },
+        {
+          "name": "PendingRunSync",
+          "kind": "class",
+          "line": 52
+        },
+        {
+          "name": "flush",
+          "kind": "fun",
+          "line": 61,
+          "modifiers": [
+            "suspend"
+          ]
+        },
+        {
+          "name": "isStale",
+          "kind": "fun",
+          "line": 86,
+          "modifiers": [
+            "private"
+          ]
+        },
+        {
+          "name": "discard",
+          "kind": "fun",
+          "line": 93,
+          "modifiers": [
+            "suspend"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/data/PendingSoloRun.kt",
+      "language": "kotlin",
+      "lines": 53,
+      "imports": [],
+      "symbols": [
+        {
+          "name": "PendingSoloRun",
+          "kind": "class",
+          "line": 8,
+          "modifiers": [
+            "data"
+          ]
+        },
+        {
+          "name": "encode",
+          "kind": "fun",
+          "line": 21
+        },
+        {
+          "name": "decode",
+          "kind": "fun",
+          "line": 32
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/data/ServerClock.kt",
+      "language": "kotlin",
+      "lines": 52,
+      "imports": [
+        "android.util.Log",
+        "com.google.firebase.database.DataSnapshot",
+        "com.google.firebase.database.DatabaseError",
+        "com.google.firebase.database.FirebaseDatabase",
+        "com.google.firebase.database.ValueEventListener",
+        "java.util.concurrent.atomic.AtomicBoolean"
+      ],
+      "symbols": [
+        {
+          "name": "ServerClock",
+          "kind": "class",
+          "line": 16
+        },
+        {
+          "name": "nowMs",
+          "kind": "fun",
+          "line": 21,
+          "container": "ServerClock"
+        },
+        {
+          "name": "updateOffset",
+          "kind": "fun",
+          "line": 23,
+          "container": "ServerClock"
+        },
+        {
+          "name": "listenTo",
+          "kind": "fun",
+          "line": 39,
+          "container": "ServerClock"
+        },
+        {
+          "name": "onDataChange",
+          "kind": "fun",
+          "line": 42,
+          "container": "ServerClock",
+          "modifiers": [
+            "override"
+          ]
+        },
+        {
+          "name": "onCancelled",
+          "kind": "fun",
+          "line": 46,
+          "container": "ServerClock",
+          "modifiers": [
+            "override"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/data/SessionProfiles.kt",
+      "language": "kotlin",
+      "lines": 67,
+      "imports": [
+        "com.softyorch.stroopoverload.domain.UserProfile"
+      ],
+      "symbols": [
+        {
+          "name": "newSessionProfile",
+          "kind": "fun",
+          "line": 16,
+          "modifiers": [
+            "internal"
+          ]
+        },
+        {
+          "name": "profileFromRemote",
+          "kind": "fun",
+          "line": 34,
+          "modifiers": [
+            "internal"
+          ]
+        },
+        {
+          "name": "repairedForSession",
+          "kind": "fun",
+          "line": 63,
+          "modifiers": [
+            "internal"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/data/local/AchievementsLocalStore.kt",
+      "language": "kotlin",
+      "lines": 192,
+      "imports": [
+        "android.content.ContentValues",
+        "android.content.Context",
+        "android.database.sqlite.SQLiteDatabase",
+        "android.database.sqlite.SQLiteOpenHelper",
+        "com.softyorch.stroopoverload.domain.Achievement",
+        "com.softyorch.stroopoverload.domain.AchievementDefinitions",
+        "com.softyorch.stroopoverload.domain.CareerStats"
+      ],
+      "symbols": [
+        {
+          "name": "AchievementsLocalStore",
+          "kind": "class",
+          "line": 11
+        },
+        {
+          "name": "onCreate",
+          "kind": "fun",
+          "line": 15,
+          "modifiers": [
+            "override"
+          ]
+        },
+        {
+          "name": "onUpgrade",
+          "kind": "fun",
+          "line": 47,
+          "modifiers": [
+            "override"
+          ]
+        },
+        {
+          "name": "seedIfNeeded",
+          "kind": "fun",
+          "line": 51
+        },
+        {
+          "name": "seedCatalog",
+          "kind": "fun",
+          "line": 57,
+          "modifiers": [
+            "private"
+          ]
+        },
+        {
+          "name": "initCareerStats",
+          "kind": "fun",
+          "line": 72,
+          "modifiers": [
+            "private"
+          ]
+        },
+        {
+          "name": "unlock",
+          "kind": "fun",
+          "line": 84
+        },
+        {
+          "name": "getUnlockedIds",
+          "kind": "fun",
+          "line": 98
+        },
+        {
+          "name": "getAllAchievements",
+          "kind": "fun",
+          "line": 111
+        },
+        {
+          "name": "getCareerStats",
+          "kind": "fun",
+          "line": 129
+        },
+        {
+          "name": "updateCareerStats",
+          "kind": "fun",
+          "line": 154
+        },
+        {
+          "name": "clearProgress",
+          "kind": "fun",
+          "line": 173
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/data/local/MultiplayerAwardStore.kt",
+      "language": "kotlin",
+      "lines": 36,
+      "imports": [
+        "android.content.Context",
+        "android.content.SharedPreferences"
+      ],
+      "symbols": [
+        {
+          "name": "MultiplayerAwardStore",
+          "kind": "class",
+          "line": 12
+        },
+        {
+          "name": "hasAwarded",
+          "kind": "fun",
+          "line": 16,
+          "container": "MultiplayerAwardStore"
+        },
+        {
+          "name": "markAwarded",
+          "kind": "fun",
+          "line": 19,
+          "container": "MultiplayerAwardStore"
+        },
+        {
+          "name": "awardedIds",
+          "kind": "fun",
+          "line": 24,
+          "container": "MultiplayerAwardStore",
+          "modifiers": [
+            "private"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/data/local/PendingRunStore.kt",
+      "language": "kotlin",
+      "lines": 39,
+      "imports": [
+        "android.content.Context",
+        "android.content.SharedPreferences",
+        "com.softyorch.stroopoverload.data.PendingRunQueue",
+        "com.softyorch.stroopoverload.data.PendingSoloRun",
+        "com.softyorch.stroopoverload.data.appendCapped"
+      ],
+      "symbols": [
+        {
+          "name": "PendingRunStore",
+          "kind": "class",
+          "line": 14
+        },
+        {
+          "name": "all",
+          "kind": "fun",
+          "line": 19,
+          "container": "PendingRunStore",
+          "modifiers": [
+            "override"
+          ]
+        },
+        {
+          "name": "add",
+          "kind": "fun",
+          "line": 23,
+          "container": "PendingRunStore",
+          "modifiers": [
+            "override"
+          ]
+        },
+        {
+          "name": "remove",
+          "kind": "fun",
+          "line": 26,
+          "container": "PendingRunStore",
+          "modifiers": [
+            "override"
+          ]
+        },
+        {
+          "name": "save",
+          "kind": "fun",
+          "line": 28,
+          "container": "PendingRunStore",
+          "modifiers": [
+            "private"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/data/local/ProfileLocalStore.kt",
+      "language": "kotlin",
+      "lines": 87,
+      "imports": [
+        "android.content.Context",
+        "android.content.SharedPreferences",
+        "com.softyorch.stroopoverload.domain.UserProfile"
+      ],
+      "symbols": [
+        {
+          "name": "ProfileLocalStore",
+          "kind": "class",
+          "line": 7
+        },
+        {
+          "name": "saveProfile",
+          "kind": "fun",
+          "line": 11,
+          "container": "ProfileLocalStore"
+        },
+        {
+          "name": "getProfile",
+          "kind": "fun",
+          "line": 34,
+          "container": "ProfileLocalStore"
+        },
+        {
+          "name": "deleteProfile",
+          "kind": "fun",
+          "line": 63,
+          "container": "ProfileLocalStore"
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/domain/Achievement.kt",
+      "language": "kotlin",
+      "lines": 24,
+      "imports": [
+        "androidx.annotation.StringRes"
+      ],
+      "symbols": [
+        {
+          "name": "Achievement",
+          "kind": "class",
+          "line": 5,
+          "modifiers": [
+            "data"
+          ]
+        },
+        {
+          "name": "AchievementProgress",
+          "kind": "interface",
+          "line": 19,
+          "modifiers": [
+            "sealed"
+          ]
+        },
+        {
+          "name": "None",
+          "kind": "object",
+          "line": 20,
+          "container": "AchievementProgress"
+        },
+        {
+          "name": "Count",
+          "kind": "class",
+          "line": 21,
+          "container": "AchievementProgress",
+          "modifiers": [
+            "data"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/domain/AchievementDefinitions.kt",
+      "language": "kotlin",
+      "lines": 283,
+      "imports": [
+        "com.softyorch.stroopoverload.R"
+      ],
+      "symbols": [
+        {
+          "name": "AchievementDefinitions",
+          "kind": "object",
+          "line": 5
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/domain/AchievementEngine.kt",
+      "language": "kotlin",
+      "lines": 136,
+      "imports": [],
+      "symbols": [
+        {
+          "name": "AchievementEngine",
+          "kind": "class",
+          "line": 3
+        },
+        {
+          "name": "evaluate",
+          "kind": "fun",
+          "line": 4,
+          "container": "AchievementEngine"
+        },
+        {
+          "name": "check",
+          "kind": "fun",
+          "line": 15,
+          "container": "AchievementEngine"
+        },
+        {
+          "name": "tryUnlock",
+          "kind": "fun",
+          "line": 21,
+          "container": "AchievementEngine"
+        },
+        {
+          "name": "progressFor",
+          "kind": "fun",
+          "line": 67,
+          "container": "AchievementEngine"
+        },
+        {
+          "name": "updatedCareerStats",
+          "kind": "fun",
+          "line": 101,
+          "container": "AchievementEngine"
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/domain/CareerStats.kt",
+      "language": "kotlin",
+      "lines": 49,
+      "imports": [],
+      "symbols": [
+        {
+          "name": "CareerStats",
+          "kind": "class",
+          "line": 3,
+          "modifiers": [
+            "data"
+          ]
+        },
+        {
+          "name": "toMap",
+          "kind": "fun",
+          "line": 18
+        },
+        {
+          "name": "fromMap",
+          "kind": "fun",
+          "line": 34
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/domain/GameMode.kt",
+      "language": "kotlin",
+      "lines": 27,
+      "imports": [
+        "androidx.annotation.StringRes",
+        "com.softyorch.stroopoverload.R"
+      ],
+      "symbols": [
+        {
+          "name": "GameMode",
+          "kind": "class",
+          "line": 18,
+          "modifiers": [
+            "enum"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/domain/GameResult.kt",
+      "language": "kotlin",
+      "lines": 32,
+      "imports": [],
+      "symbols": [
+        {
+          "name": "OpponentType",
+          "kind": "class",
+          "line": 3,
+          "modifiers": [
+            "enum"
+          ]
+        },
+        {
+          "name": "AiDifficulty",
+          "kind": "class",
+          "line": 7,
+          "modifiers": [
+            "enum"
+          ]
+        },
+        {
+          "name": "GameResult",
+          "kind": "class",
+          "line": 11,
+          "modifiers": [
+            "data"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/domain/LocalRunScoring.kt",
+      "language": "kotlin",
+      "lines": 47,
+      "imports": [],
+      "symbols": [
+        {
+          "name": "isRecordable",
+          "kind": "fun",
+          "line": 15
+        },
+        {
+          "name": "nextDailyStreak",
+          "kind": "fun",
+          "line": 18
+        },
+        {
+          "name": "withRunApplied",
+          "kind": "fun",
+          "line": 28
+        },
+        {
+          "name": "withAchievementXp",
+          "kind": "fun",
+          "line": 43
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/domain/ServerScoring.kt",
+      "language": "kotlin",
+      "lines": 58,
+      "imports": [],
+      "symbols": [
+        {
+          "name": "ServerScoring",
+          "kind": "class",
+          "line": 13,
+          "modifiers": [
+            "data"
+          ]
+        },
+        {
+          "name": "serverScoringFrom",
+          "kind": "fun",
+          "line": 34
+        },
+        {
+          "name": "int",
+          "kind": "fun",
+          "line": 36
+        },
+        {
+          "name": "applyServerScoring",
+          "kind": "fun",
+          "line": 49
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/domain/StroopStimulus.kt",
+      "language": "kotlin",
+      "lines": 13,
+      "imports": [
+        "com.softyorch.stroopoverload.core.StroopColor"
+      ],
+      "symbols": [
+        {
+          "name": "StroopStimulus",
+          "kind": "class",
+          "line": 5,
+          "modifiers": [
+            "data"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/domain/UserProfile.kt",
+      "language": "kotlin",
+      "lines": 38,
+      "imports": [],
+      "symbols": [
+        {
+          "name": "UserProfile",
+          "kind": "class",
+          "line": 3,
+          "modifiers": [
+            "data"
+          ]
+        },
+        {
+          "name": "generateUniqueName",
+          "kind": "fun",
+          "line": 33
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/domain/XpSystem.kt",
+      "language": "kotlin",
+      "lines": 144,
+      "imports": [
+        "androidx.annotation.StringRes",
+        "com.softyorch.stroopoverload.R"
+      ],
+      "symbols": [
+        {
+          "name": "Rarity",
+          "kind": "class",
+          "line": 6,
+          "modifiers": [
+            "enum"
+          ]
+        },
+        {
+          "name": "XpBreakdown",
+          "kind": "class",
+          "line": 16,
+          "modifiers": [
+            "data"
+          ]
+        },
+        {
+          "name": "XpSystem",
+          "kind": "object",
+          "line": 27
+        },
+        {
+          "name": "titleResForLevel",
+          "kind": "fun",
+          "line": 53,
+          "container": "XpSystem"
+        },
+        {
+          "name": "xpForLevel",
+          "kind": "fun",
+          "line": 59,
+          "container": "XpSystem"
+        },
+        {
+          "name": "levelFromTotalXp",
+          "kind": "fun",
+          "line": 61,
+          "container": "XpSystem"
+        },
+        {
+          "name": "xpProgressInCurrentLevel",
+          "kind": "fun",
+          "line": 73,
+          "container": "XpSystem"
+        },
+        {
+          "name": "levelRarity",
+          "kind": "fun",
+          "line": 84,
+          "container": "XpSystem"
+        },
+        {
+          "name": "calculateGameXp",
+          "kind": "fun",
+          "line": 92,
+          "container": "XpSystem"
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/domain/multiplayer/MultiplayerRoom.kt",
+      "language": "kotlin",
+      "lines": 123,
+      "imports": [
+        "androidx.annotation.StringRes",
+        "com.softyorch.stroopoverload.R",
+        "com.softyorch.stroopoverload.core.StroopColor"
+      ],
+      "symbols": [
+        {
+          "name": "RoomStatus",
+          "kind": "class",
+          "line": 7,
+          "modifiers": [
+            "enum"
+          ]
+        },
+        {
+          "name": "fromFirestoreValue",
+          "kind": "fun",
+          "line": 11,
+          "container": "RoomStatus"
+        },
+        {
+          "name": "RoomMode",
+          "kind": "class",
+          "line": 21,
+          "modifiers": [
+            "enum"
+          ]
+        },
+        {
+          "name": "toFirestoreValue",
+          "kind": "fun",
+          "line": 26,
+          "container": "RoomMode"
+        },
+        {
+          "name": "fromFirestoreValue",
+          "kind": "fun",
+          "line": 33,
+          "container": "RoomMode"
+        },
+        {
+          "name": "RoomPlayer",
+          "kind": "class",
+          "line": 41,
+          "modifiers": [
+            "data"
+          ]
+        },
+        {
+          "name": "MultiplayerStimulus",
+          "kind": "class",
+          "line": 66,
+          "modifiers": [
+            "data"
+          ]
+        },
+        {
+          "name": "MultiplayerRoom",
+          "kind": "class",
+          "line": 74,
+          "modifiers": [
+            "data"
+          ]
+        },
+        {
+          "name": "isMyTurn",
+          "kind": "fun",
+          "line": 99
+        },
+        {
+          "name": "player",
+          "kind": "fun",
+          "line": 100
+        },
+        {
+          "name": "canAnswer",
+          "kind": "fun",
+          "line": 108
+        },
+        {
+          "name": "answerRound",
+          "kind": "fun",
+          "line": 119
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/game/GameState.kt",
+      "language": "kotlin",
+      "lines": 47,
+      "imports": [
+        "com.softyorch.stroopoverload.core.StroopColor",
+        "com.softyorch.stroopoverload.domain.GameMode",
+        "com.softyorch.stroopoverload.domain.Achievement",
+        "com.softyorch.stroopoverload.domain.GameResult",
+        "com.softyorch.stroopoverload.domain.XpBreakdown"
+      ],
+      "symbols": [
+        {
+          "name": "GameState",
+          "kind": "interface",
+          "line": 9,
+          "modifiers": [
+            "sealed"
+          ]
+        },
+        {
+          "name": "Menu",
+          "kind": "object",
+          "line": 10,
+          "container": "GameState",
+          "modifiers": [
+            "data"
+          ]
+        },
+        {
+          "name": "Countdown",
+          "kind": "object",
+          "line": 11,
+          "container": "GameState",
+          "modifiers": [
+            "data"
+          ]
+        },
+        {
+          "name": "Playing",
+          "kind": "class",
+          "line": 12,
+          "container": "GameState",
+          "modifiers": [
+            "data"
+          ]
+        },
+        {
+          "name": "GameOver",
+          "kind": "class",
+          "line": 33,
+          "container": "GameState",
+          "modifiers": [
+            "data"
+          ]
+        },
+        {
+          "name": "RecordedRun",
+          "kind": "class",
+          "line": 41,
+          "modifiers": [
+            "data"
+          ]
+        },
+        {
+          "name": "TapFeedback",
+          "kind": "class",
+          "line": 47,
+          "modifiers": [
+            "data"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/game/GameViewModel.kt",
+      "language": "kotlin",
+      "lines": 295,
+      "imports": [
+        "androidx.lifecycle.ViewModel",
+        "androidx.lifecycle.viewModelScope",
+        "com.softyorch.stroopoverload.core.GameConfig",
+        "com.softyorch.stroopoverload.core.StroopColor",
+        "com.softyorch.stroopoverload.domain.AiDifficulty",
+        "com.softyorch.stroopoverload.domain.GameMode",
+        "com.softyorch.stroopoverload.domain.GameResult",
+        "com.softyorch.stroopoverload.domain.OpponentType",
+        "com.softyorch.stroopoverload.domain.StroopStimulus",
+        "kotlinx.coroutines.Job",
+        "kotlinx.coroutines.delay",
+        "kotlinx.coroutines.flow.MutableStateFlow",
+        "kotlinx.coroutines.flow.StateFlow",
+        "kotlinx.coroutines.flow.asStateFlow",
+        "kotlinx.coroutines.launch"
+      ],
+      "symbols": [
+        {
+          "name": "GameViewModel",
+          "kind": "class",
+          "line": 19
+        },
+        {
+          "name": "startGame",
+          "kind": "fun",
+          "line": 53
+        },
+        {
+          "name": "beginRound",
+          "kind": "fun",
+          "line": 62
+        },
+        {
+          "name": "onColorTapped",
+          "kind": "fun",
+          "line": 78
+        },
+        {
+          "name": "handleCorrect",
+          "kind": "fun",
+          "line": 92,
+          "modifiers": [
+            "private"
+          ]
+        },
+        {
+          "name": "handleMiss",
+          "kind": "fun",
+          "line": 115,
+          "modifiers": [
+            "private"
+          ]
+        },
+        {
+          "name": "nextStimulus",
+          "kind": "fun",
+          "line": 157,
+          "modifiers": [
+            "private"
+          ]
+        },
+        {
+          "name": "startPerStimulusTimer",
+          "kind": "fun",
+          "line": 169,
+          "modifiers": [
+            "private"
+          ]
+        },
+        {
+          "name": "sessionStartMs",
+          "kind": "fun",
+          "line": 196,
+          "modifiers": [
+            "private"
+          ]
+        },
+        {
+          "name": "startSessionTimer",
+          "kind": "fun",
+          "line": 202,
+          "modifiers": [
+            "private"
+          ]
+        },
+        {
+          "name": "claimGameOver",
+          "kind": "fun",
+          "line": 231
+        },
+        {
+          "name": "playedMs",
+          "kind": "fun",
+          "line": 244,
+          "modifiers": [
+            "private"
+          ]
+        },
+        {
+          "name": "endGame",
+          "kind": "fun",
+          "line": 249,
+          "modifiers": [
+            "private"
+          ]
+        },
+        {
+          "name": "onRunRecorded",
+          "kind": "fun",
+          "line": 273
+        },
+        {
+          "name": "returnToMenu",
+          "kind": "fun",
+          "line": 277
+        },
+        {
+          "name": "timeLimitMs",
+          "kind": "fun",
+          "line": 285
+        },
+        {
+          "name": "onCleared",
+          "kind": "fun",
+          "line": 290,
+          "modifiers": [
+            "override"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/game/IncongruenceEngine.kt",
+      "language": "kotlin",
+      "lines": 28,
+      "imports": [
+        "com.softyorch.stroopoverload.core.StroopColor",
+        "com.softyorch.stroopoverload.domain.StroopStimulus",
+        "kotlin.random.Random"
+      ],
+      "symbols": [
+        {
+          "name": "IncongruenceEngine",
+          "kind": "class",
+          "line": 7
+        },
+        {
+          "name": "generate",
+          "kind": "fun",
+          "line": 9,
+          "container": "IncongruenceEngine"
+        },
+        {
+          "name": "pick",
+          "kind": "fun",
+          "line": 23,
+          "container": "IncongruenceEngine",
+          "modifiers": [
+            "private"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/game/OvertimeClock.kt",
+      "language": "kotlin",
+      "lines": 12,
+      "imports": [
+        "com.softyorch.stroopoverload.core.GameConfig"
+      ],
+      "symbols": [
+        {
+          "name": "overtimeBonusMs",
+          "kind": "fun",
+          "line": 10
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/ui/NavGraph.kt",
+      "language": "kotlin",
+      "lines": 364,
+      "imports": [
+        "com.softyorch.stroopoverload.ui.theme.LimitFontScale",
+        "com.softyorch.stroopoverload.ui.theme.GAME_BOARD_FONT_SCALE",
+        "android.app.Application",
+        "androidx.activity.compose.LocalActivity",
+        "androidx.compose.runtime.*",
+        "androidx.compose.runtime.saveable.rememberSaveable",
+        "androidx.compose.ui.platform.LocalContext",
+        "androidx.compose.ui.platform.LocalLifecycleOwner",
+        "androidx.lifecycle.Lifecycle",
+        "androidx.lifecycle.LifecycleEventObserver",
+        "androidx.lifecycle.viewmodel.compose.viewModel",
+        "androidx.navigation.compose.NavHost",
+        "androidx.navigation.compose.composable",
+        "androidx.navigation.compose.currentBackStackEntryAsState",
+        "androidx.navigation.compose.rememberNavController",
+        "com.softyorch.stroopoverload.BuildConfig",
+        "com.softyorch.stroopoverload.R",
+        "com.softyorch.stroopoverload.ads.AdsConsentManager",
+        "com.softyorch.stroopoverload.ads.InterstitialAdManager",
+        "com.softyorch.stroopoverload.audio.MusicManager",
+        "com.softyorch.stroopoverload.audio.MusicTrack",
+        "com.softyorch.stroopoverload.data.AsoDemoSeeder",
+        "com.softyorch.stroopoverload.core.AndroidStringResolver",
+        "com.softyorch.stroopoverload.data.AuthService",
+        "com.softyorch.stroopoverload.data.FirebaseMultiplayerRepository",
+        "com.softyorch.stroopoverload.data.FirebaseGameRepository",
+        "com.softyorch.stroopoverload.data.repairedForSession",
+        "com.softyorch.stroopoverload.domain.Achievement",
+        "com.softyorch.stroopoverload.domain.GameMode",
+        "com.softyorch.stroopoverload.domain.GameResult",
+        "com.softyorch.stroopoverload.domain.UserProfile",
+        "com.softyorch.stroopoverload.domain.XpBreakdown",
+        "com.softyorch.stroopoverload.domain.XpSystem",
+        "com.softyorch.stroopoverload.game.GameViewModel",
+        "com.softyorch.stroopoverload.game.RecordedRun",
+        "com.softyorch.stroopoverload.ui.screen.GameModeSelectScreen",
+        "com.softyorch.stroopoverload.ui.screen.GameOverScreen",
+        "com.softyorch.stroopoverload.ui.screen.GameScreen",
+        "com.softyorch.stroopoverload.ui.screen.HomeScreen",
+        "com.softyorch.stroopoverload.ui.screen.LeaderboardScreen",
+        "com.softyorch.stroopoverload.ui.screen.multiplayer.MultiplayerScreen",
+        "com.softyorch.stroopoverload.ui.screen.auth.AuthScreen",
+        "com.softyorch.stroopoverload.ui.screen.auth.AuthViewModel",
+        "com.softyorch.stroopoverload.ui.screen.profile.ProfileScreen",
+        "com.softyorch.stroopoverload.ui.screen.profile.ProfileViewModel",
+        "com.softyorch.stroopoverload.ui.components.AnonymousGateDialog",
+        "kotlinx.coroutines.NonCancellable",
+        "kotlinx.coroutines.delay",
+        "kotlinx.coroutines.flow.filterNotNull",
+        "kotlinx.coroutines.flow.first",
+        "kotlinx.coroutines.launch",
+        "kotlinx.coroutines.Dispatchers",
+        "kotlinx.coroutines.withContext"
+      ],
+      "symbols": [
+        {
+          "name": "StroopNavGraph",
+          "kind": "fun",
+          "line": 86
+        },
+        {
+          "name": "AuthViewModelFactory",
+          "kind": "class",
+          "line": 343,
+          "modifiers": [
+            "private"
+          ]
+        },
+        {
+          "name": "create",
+          "kind": "fun",
+          "line": 344,
+          "container": "AuthViewModelFactory",
+          "modifiers": [
+            "override"
+          ]
+        },
+        {
+          "name": "ProfileViewModelFactory",
+          "kind": "class",
+          "line": 354,
+          "modifiers": [
+            "private"
+          ]
+        },
+        {
+          "name": "create",
+          "kind": "fun",
+          "line": 355,
+          "container": "ProfileViewModelFactory",
+          "modifiers": [
+            "override"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/ui/components/AnonymousGateDialog.kt",
+      "language": "kotlin",
+      "lines": 104,
+      "imports": [
+        "androidx.compose.foundation.background",
+        "androidx.compose.foundation.border",
+        "androidx.compose.foundation.layout.Box",
+        "androidx.compose.foundation.layout.Column",
+        "androidx.compose.foundation.layout.Spacer",
+        "androidx.compose.foundation.layout.fillMaxWidth",
+        "androidx.compose.foundation.layout.height",
+        "androidx.compose.foundation.layout.heightIn",
+        "androidx.compose.foundation.layout.padding",
+        "androidx.compose.foundation.layout.size",
+        "androidx.compose.foundation.shape.CircleShape",
+        "androidx.compose.foundation.shape.RoundedCornerShape",
+        "androidx.compose.material.icons.Icons",
+        "androidx.compose.material.icons.filled.Lock",
+        "androidx.compose.material3.Button",
+        "androidx.compose.material3.ButtonDefaults",
+        "androidx.compose.material3.Icon",
+        "androidx.compose.material3.MaterialTheme",
+        "androidx.compose.material3.Text",
+        "androidx.compose.runtime.Composable",
+        "androidx.compose.ui.Alignment",
+        "androidx.compose.ui.Modifier",
+        "androidx.compose.ui.draw.clip",
+        "androidx.compose.ui.graphics.Shadow",
+        "androidx.compose.ui.res.stringResource",
+        "androidx.compose.ui.text.font.FontWeight",
+        "androidx.compose.ui.text.style.TextAlign",
+        "androidx.compose.ui.unit.dp",
+        "androidx.compose.ui.unit.sp",
+        "androidx.compose.ui.window.Dialog",
+        "com.softyorch.stroopoverload.R",
+        "com.softyorch.stroopoverload.ui.theme.Muted",
+        "com.softyorch.stroopoverload.ui.theme.NeonYellow",
+        "com.softyorch.stroopoverload.ui.theme.TechAccent"
+      ],
+      "symbols": [
+        {
+          "name": "AnonymousGateDialog",
+          "kind": "fun",
+          "line": 45
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/ui/components/CountdownOverlay.kt",
+      "language": "kotlin",
+      "lines": 171,
+      "imports": [
+        "androidx.compose.animation.AnimatedContent",
+        "androidx.compose.animation.ContentTransform",
+        "androidx.compose.animation.core.Animatable",
+        "androidx.compose.animation.core.EaseOut",
+        "androidx.compose.animation.core.Spring",
+        "androidx.compose.animation.core.spring",
+        "androidx.compose.animation.core.tween",
+        "androidx.compose.animation.fadeIn",
+        "androidx.compose.animation.fadeOut",
+        "androidx.compose.animation.scaleIn",
+        "androidx.compose.animation.scaleOut",
+        "androidx.compose.foundation.background",
+        "androidx.compose.foundation.border",
+        "androidx.compose.foundation.clickable",
+        "androidx.compose.foundation.interaction.MutableInteractionSource",
+        "androidx.compose.foundation.layout.Box",
+        "androidx.compose.foundation.layout.Column",
+        "androidx.compose.foundation.layout.Spacer",
+        "androidx.compose.foundation.layout.fillMaxSize",
+        "androidx.compose.foundation.layout.height",
+        "androidx.compose.foundation.layout.size",
+        "androidx.compose.foundation.shape.CircleShape",
+        "androidx.compose.material3.LocalTextStyle",
+        "androidx.compose.material3.Text",
+        "androidx.compose.runtime.Composable",
+        "androidx.compose.runtime.LaunchedEffect",
+        "androidx.compose.runtime.getValue",
+        "androidx.compose.runtime.mutableIntStateOf",
+        "androidx.compose.runtime.remember",
+        "androidx.compose.runtime.setValue",
+        "androidx.compose.ui.Alignment",
+        "androidx.compose.ui.Modifier",
+        "androidx.compose.ui.draw.alpha",
+        "androidx.compose.ui.graphics.Color",
+        "androidx.compose.ui.graphics.Shadow",
+        "androidx.compose.ui.hapticfeedback.HapticFeedbackType",
+        "androidx.compose.ui.platform.LocalHapticFeedback",
+        "androidx.compose.ui.res.stringResource",
+        "androidx.compose.ui.text.font.FontWeight",
+        "androidx.compose.ui.unit.dp",
+        "androidx.compose.ui.unit.sp",
+        "com.softyorch.stroopoverload.R",
+        "com.softyorch.stroopoverload.ui.theme.NeonCyan",
+        "com.softyorch.stroopoverload.ui.theme.NeonGreen",
+        "com.softyorch.stroopoverload.ui.theme.NeonRed",
+        "com.softyorch.stroopoverload.ui.theme.NeonYellow",
+        "kotlinx.coroutines.delay",
+        "kotlinx.coroutines.launch",
+        "kotlin.time.Duration.Companion.milliseconds"
+      ],
+      "symbols": [
+        {
+          "name": "CountdownOverlay",
+          "kind": "fun",
+          "line": 62
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/ui/components/ExitMatchDialog.kt",
+      "language": "kotlin",
+      "lines": 52,
+      "imports": [
+        "androidx.annotation.StringRes",
+        "androidx.compose.material3.AlertDialog",
+        "androidx.compose.material3.MaterialTheme",
+        "androidx.compose.material3.Text",
+        "androidx.compose.material3.TextButton",
+        "androidx.compose.runtime.Composable",
+        "androidx.compose.ui.res.stringResource",
+        "com.softyorch.stroopoverload.R",
+        "androidx.compose.ui.tooling.preview.Preview",
+        "com.softyorch.stroopoverload.ui.theme.StroopTheme"
+      ],
+      "symbols": [
+        {
+          "name": "ExitMatchDialog",
+          "kind": "fun",
+          "line": 22
+        },
+        {
+          "name": "ExitMatchDialogPreview",
+          "kind": "fun",
+          "line": 48,
+          "modifiers": [
+            "private"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/ui/components/FitLabel.kt",
+      "language": "kotlin",
+      "lines": 31,
+      "imports": [
+        "androidx.compose.foundation.text.BasicText",
+        "androidx.compose.foundation.text.TextAutoSize",
+        "androidx.compose.material3.LocalContentColor",
+        "androidx.compose.material3.LocalTextStyle",
+        "androidx.compose.runtime.Composable",
+        "androidx.compose.ui.Modifier",
+        "androidx.compose.ui.text.style.TextAlign",
+        "androidx.compose.ui.unit.sp"
+      ],
+      "symbols": [
+        {
+          "name": "FitLabel",
+          "kind": "fun",
+          "line": 21
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/ui/components/HudCornerBrackets.kt",
+      "language": "kotlin",
+      "lines": 49,
+      "imports": [
+        "androidx.compose.ui.Modifier",
+        "androidx.compose.ui.composed",
+        "androidx.compose.ui.draw.drawWithContent",
+        "androidx.compose.ui.geometry.Offset",
+        "androidx.compose.ui.graphics.Color",
+        "androidx.compose.ui.graphics.StrokeCap",
+        "androidx.compose.ui.unit.Dp",
+        "androidx.compose.ui.unit.dp"
+      ],
+      "symbols": [
+        {
+          "name": "hudCornerBrackets",
+          "kind": "fun",
+          "line": 20
+        },
+        {
+          "name": "corner",
+          "kind": "fun",
+          "line": 39
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/ui/components/PilotHandle.kt",
+      "language": "kotlin",
+      "lines": 14,
+      "imports": [
+        "androidx.compose.runtime.Composable",
+        "androidx.compose.ui.res.stringResource",
+        "com.softyorch.stroopoverload.R"
+      ],
+      "symbols": [
+        {
+          "name": "pilotHandleFallback",
+          "kind": "fun",
+          "line": 13
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/ui/components/QuadrantBox.kt",
+      "language": "kotlin",
+      "lines": 274,
+      "imports": [
+        "androidx.compose.animation.core.Animatable",
+        "androidx.compose.animation.core.RepeatMode",
+        "androidx.compose.animation.core.keyframes",
+        "androidx.compose.animation.core.animateFloat",
+        "androidx.compose.animation.core.animateFloatAsState",
+        "androidx.compose.animation.core.infiniteRepeatable",
+        "androidx.compose.animation.core.rememberInfiniteTransition",
+        "androidx.compose.animation.core.tween",
+        "androidx.compose.foundation.Canvas",
+        "androidx.compose.foundation.background",
+        "androidx.compose.foundation.border",
+        "androidx.compose.foundation.clickable",
+        "androidx.compose.foundation.gestures.detectTapGestures",
+        "androidx.compose.foundation.layout.Box",
+        "androidx.compose.foundation.layout.fillMaxSize",
+        "androidx.compose.foundation.shape.RoundedCornerShape",
+        "androidx.compose.material3.MaterialTheme",
+        "androidx.compose.material3.Text",
+        "androidx.compose.runtime.Composable",
+        "androidx.compose.runtime.LaunchedEffect",
+        "androidx.compose.runtime.getValue",
+        "androidx.compose.runtime.rememberCoroutineScope",
+        "androidx.compose.ui.Alignment",
+        "androidx.compose.ui.Modifier",
+        "androidx.compose.ui.draw.clip",
+        "androidx.compose.ui.graphics.Color",
+        "androidx.compose.ui.res.stringResource",
+        "androidx.compose.ui.text.font.FontWeight",
+        "androidx.compose.ui.text.style.TextOverflow",
+        "androidx.compose.ui.unit.dp",
+        "androidx.compose.ui.unit.sp",
+        "com.softyorch.stroopoverload.core.StroopColor",
+        "com.softyorch.stroopoverload.game.TapFeedback",
+        "kotlinx.coroutines.launch",
+        "androidx.compose.ui.tooling.preview.Preview",
+        "com.softyorch.stroopoverload.ui.theme.StroopTheme",
+        "androidx.compose.foundation.layout.Row",
+        "androidx.compose.foundation.layout.height",
+        "androidx.compose.foundation.layout.padding",
+        "androidx.compose.foundation.layout.Arrangement",
+        "androidx.compose.foundation.layout.fillMaxHeight",
+        "androidx.compose.runtime.mutableStateOf",
+        "androidx.compose.runtime.remember",
+        "androidx.compose.runtime.setValue",
+        "androidx.compose.ui.draw.drawBehind",
+        "androidx.compose.ui.geometry.Offset",
+        "androidx.compose.ui.graphics.Brush",
+        "androidx.compose.ui.graphics.Shadow",
+        "androidx.compose.ui.graphics.graphicsLayer",
+        "androidx.compose.ui.input.pointer.pointerInput",
+        "androidx.compose.ui.text.TextStyle"
+      ],
+      "symbols": [
+        {
+          "name": "QuadrantBox",
+          "kind": "fun",
+          "line": 69
+        },
+        {
+          "name": "QuadrantBoxPreview",
+          "kind": "fun",
+          "line": 263,
+          "modifiers": [
+            "private"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/ui/components/StimulusWord.kt",
+      "language": "kotlin",
+      "lines": 68,
+      "imports": [
+        "androidx.compose.foundation.layout.Column",
+        "androidx.compose.foundation.layout.fillMaxWidth",
+        "androidx.compose.foundation.layout.padding",
+        "androidx.compose.foundation.text.BasicText",
+        "androidx.compose.foundation.text.TextAutoSize",
+        "androidx.compose.material3.LocalTextStyle",
+        "androidx.compose.runtime.Composable",
+        "androidx.compose.ui.Modifier",
+        "androidx.compose.ui.graphics.Color",
+        "androidx.compose.ui.graphics.Shadow",
+        "androidx.compose.ui.text.font.FontWeight",
+        "androidx.compose.ui.text.style.TextAlign",
+        "androidx.compose.ui.tooling.preview.Preview",
+        "androidx.compose.ui.unit.TextUnit",
+        "androidx.compose.ui.unit.dp",
+        "androidx.compose.ui.unit.sp",
+        "com.softyorch.stroopoverload.ui.theme.StroopTheme"
+      ],
+      "symbols": [
+        {
+          "name": "StimulusWord",
+          "kind": "fun",
+          "line": 33
+        },
+        {
+          "name": "StimulusWordPreview",
+          "kind": "fun",
+          "line": 61,
+          "modifiers": [
+            "private"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/ui/components/StrobeBorder.kt",
+      "language": "kotlin",
+      "lines": 78,
+      "imports": [
+        "androidx.compose.animation.core.LinearEasing",
+        "androidx.compose.animation.core.animateFloat",
+        "androidx.compose.animation.core.infiniteRepeatable",
+        "androidx.compose.animation.core.rememberInfiniteTransition",
+        "androidx.compose.animation.core.tween",
+        "androidx.compose.runtime.Composable",
+        "androidx.compose.runtime.getValue",
+        "androidx.compose.ui.Modifier",
+        "androidx.compose.ui.draw.drawWithCache",
+        "androidx.compose.ui.geometry.CornerRadius",
+        "androidx.compose.ui.geometry.Offset",
+        "androidx.compose.ui.graphics.Brush",
+        "androidx.compose.ui.graphics.Color",
+        "androidx.compose.ui.graphics.ShaderBrush",
+        "androidx.compose.ui.graphics.SweepGradientShader",
+        "androidx.compose.ui.graphics.drawscope.Stroke",
+        "androidx.compose.ui.unit.Dp"
+      ],
+      "symbols": [
+        {
+          "name": "rememberStrobeAngle",
+          "kind": "fun",
+          "line": 27
+        },
+        {
+          "name": "strobeBorder",
+          "kind": "fun",
+          "line": 44
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/ui/components/TimerBar.kt",
+      "language": "kotlin",
+      "lines": 144,
+      "imports": [
+        "androidx.compose.animation.animateColorAsState",
+        "androidx.compose.animation.core.animateFloat",
+        "androidx.compose.animation.core.infiniteRepeatable",
+        "androidx.compose.animation.core.keyframes",
+        "androidx.compose.animation.core.rememberInfiniteTransition",
+        "androidx.compose.foundation.background",
+        "androidx.compose.foundation.layout.Box",
+        "androidx.compose.foundation.layout.fillMaxHeight",
+        "androidx.compose.foundation.layout.fillMaxSize",
+        "androidx.compose.foundation.layout.fillMaxWidth",
+        "androidx.compose.material3.MaterialTheme",
+        "androidx.compose.runtime.Composable",
+        "androidx.compose.runtime.getValue",
+        "androidx.compose.runtime.mutableLongStateOf",
+        "androidx.compose.runtime.remember",
+        "androidx.compose.runtime.setValue",
+        "androidx.compose.ui.Modifier",
+        "androidx.compose.ui.graphics.Color",
+        "androidx.compose.ui.graphics.graphicsLayer",
+        "androidx.compose.ui.graphics.lerp",
+        "androidx.lifecycle.compose.collectAsStateWithLifecycle",
+        "kotlinx.coroutines.delay",
+        "kotlinx.coroutines.flow.StateFlow",
+        "androidx.compose.ui.tooling.preview.Preview",
+        "com.softyorch.stroopoverload.data.ServerClock",
+        "com.softyorch.stroopoverload.ui.theme.StroopTheme",
+        "androidx.compose.foundation.layout.Column",
+        "androidx.compose.foundation.layout.Arrangement",
+        "androidx.compose.foundation.layout.height",
+        "androidx.compose.foundation.layout.padding",
+        "androidx.compose.ui.unit.dp"
+      ],
+      "symbols": [
+        {
+          "name": "TimerBar",
+          "kind": "fun",
+          "line": 48
+        },
+        {
+          "name": "rememberHeartbeat",
+          "kind": "fun",
+          "line": 68,
+          "modifiers": [
+            "private"
+          ]
+        },
+        {
+          "name": "TimerBarHost",
+          "kind": "fun",
+          "line": 97
+        },
+        {
+          "name": "DeadlineTimerBar",
+          "kind": "fun",
+          "line": 111
+        },
+        {
+          "name": "LaunchedTicker",
+          "kind": "fun",
+          "line": 124,
+          "modifiers": [
+            "private"
+          ]
+        },
+        {
+          "name": "TimerBarPreview",
+          "kind": "fun",
+          "line": 136,
+          "modifiers": [
+            "private"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/ui/screen/GameModeSelectScreen.kt",
+      "language": "kotlin",
+      "lines": 89,
+      "imports": [
+        "androidx.compose.foundation.background",
+        "androidx.compose.foundation.border",
+        "androidx.compose.foundation.clickable",
+        "androidx.compose.foundation.rememberScrollState",
+        "androidx.compose.foundation.verticalScroll",
+        "androidx.compose.foundation.layout.*",
+        "androidx.compose.foundation.shape.RoundedCornerShape",
+        "androidx.compose.material.icons.Icons",
+        "androidx.compose.material.icons.automirrored.filled.ArrowBack",
+        "androidx.compose.material3.*",
+        "androidx.compose.runtime.Composable",
+        "androidx.compose.ui.Alignment",
+        "androidx.compose.ui.Modifier",
+        "androidx.compose.ui.res.stringResource",
+        "androidx.compose.ui.text.font.FontWeight",
+        "androidx.compose.ui.unit.dp",
+        "com.softyorch.stroopoverload.R",
+        "com.softyorch.stroopoverload.domain.GameMode",
+        "com.softyorch.stroopoverload.ui.theme.Muted",
+        "com.softyorch.stroopoverload.ui.theme.TechAccent"
+      ],
+      "symbols": [
+        {
+          "name": "GameModeSelectScreen",
+          "kind": "fun",
+          "line": 26
+        },
+        {
+          "name": "GameModeCard",
+          "kind": "fun",
+          "line": 67,
+          "modifiers": [
+            "private"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/ui/screen/GameOverScreen.kt",
+      "language": "kotlin",
+      "lines": 267,
+      "imports": [
+        "com.softyorch.stroopoverload.ui.components.FitLabel",
+        "android.content.Intent",
+        "androidx.compose.foundation.background",
+        "androidx.compose.foundation.border",
+        "androidx.compose.foundation.layout.*",
+        "androidx.compose.foundation.lazy.LazyColumn",
+        "androidx.compose.foundation.lazy.items",
+        "androidx.compose.foundation.shape.RoundedCornerShape",
+        "androidx.compose.material3.*",
+        "androidx.compose.runtime.*",
+        "androidx.compose.ui.Alignment",
+        "androidx.compose.ui.Modifier",
+        "androidx.compose.ui.graphics.Color",
+        "androidx.compose.ui.platform.LocalContext",
+        "androidx.compose.ui.res.stringResource",
+        "androidx.compose.ui.text.font.FontWeight",
+        "androidx.compose.ui.text.style.TextOverflow",
+        "androidx.compose.ui.unit.dp",
+        "androidx.compose.ui.unit.sp",
+        "com.softyorch.stroopoverload.R",
+        "com.softyorch.stroopoverload.core.formatMultiplier",
+        "com.softyorch.stroopoverload.domain.Achievement",
+        "com.softyorch.stroopoverload.domain.GameMode",
+        "com.softyorch.stroopoverload.domain.GameResult",
+        "com.softyorch.stroopoverload.domain.XpBreakdown",
+        "com.softyorch.stroopoverload.ui.theme.*"
+      ],
+      "symbols": [
+        {
+          "name": "GameOverScreen",
+          "kind": "fun",
+          "line": 31
+        },
+        {
+          "name": "StatRow",
+          "kind": "fun",
+          "line": 238,
+          "modifiers": [
+            "private"
+          ]
+        },
+        {
+          "name": "XpRow",
+          "kind": "fun",
+          "line": 254,
+          "modifiers": [
+            "private"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/ui/screen/GameScreen.kt",
+      "language": "kotlin",
+      "lines": 327,
+      "imports": [
+        "androidx.compose.animation.AnimatedContent",
+        "androidx.compose.animation.fadeIn",
+        "androidx.compose.animation.fadeOut",
+        "androidx.compose.animation.scaleIn",
+        "androidx.compose.animation.scaleOut",
+        "androidx.compose.animation.togetherWith",
+        "androidx.compose.foundation.background",
+        "androidx.compose.foundation.border",
+        "androidx.compose.foundation.layout.*",
+        "androidx.compose.foundation.shape.RoundedCornerShape",
+        "androidx.compose.material3.MaterialTheme",
+        "androidx.compose.material3.Text",
+        "androidx.compose.runtime.*",
+        "androidx.compose.ui.Alignment",
+        "androidx.compose.ui.Modifier",
+        "androidx.compose.ui.draw.clip",
+        "androidx.compose.ui.platform.LocalContext",
+        "androidx.compose.ui.res.stringResource",
+        "androidx.compose.ui.text.font.FontWeight",
+        "androidx.compose.ui.text.style.TextOverflow",
+        "androidx.compose.ui.unit.dp",
+        "androidx.compose.ui.unit.sp",
+        "com.softyorch.stroopoverload.BuildConfig",
+        "com.softyorch.stroopoverload.R",
+        "com.softyorch.stroopoverload.ads.NativeAdBanner",
+        "com.softyorch.stroopoverload.audio.AudioPlayer",
+        "com.softyorch.stroopoverload.audio.GameSfx",
+        "com.softyorch.stroopoverload.core.StroopColor",
+        "com.softyorch.stroopoverload.domain.GameMode",
+        "com.softyorch.stroopoverload.domain.GameResult",
+        "com.softyorch.stroopoverload.game.GameState",
+        "com.softyorch.stroopoverload.game.GameViewModel",
+        "com.softyorch.stroopoverload.ui.components.StimulusWord",
+        "com.softyorch.stroopoverload.ui.components.CountdownOverlay",
+        "com.softyorch.stroopoverload.ui.components.QuadrantBox",
+        "com.softyorch.stroopoverload.ui.components.rememberStrobeAngle",
+        "com.softyorch.stroopoverload.ui.components.strobeBorder",
+        "com.softyorch.stroopoverload.ui.theme.*",
+        "com.softyorch.stroopoverload.ui.components.TimerBarHost",
+        "androidx.lifecycle.compose.collectAsStateWithLifecycle",
+        "androidx.activity.compose.BackHandler",
+        "kotlinx.coroutines.delay",
+        "com.softyorch.stroopoverload.ui.components.ExitMatchDialog"
+      ],
+      "symbols": [
+        {
+          "name": "GameScreen",
+          "kind": "fun",
+          "line": 48
+        },
+        {
+          "name": "formatMillisAsClock",
+          "kind": "fun",
+          "line": 322,
+          "modifiers": [
+            "private"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/ui/screen/HomeScreen.kt",
+      "language": "kotlin",
+      "lines": 207,
+      "imports": [
+        "androidx.compose.animation.core.*",
+        "androidx.compose.foundation.background",
+        "androidx.compose.foundation.border",
+        "androidx.compose.foundation.clickable",
+        "androidx.compose.foundation.layout.*",
+        "androidx.compose.foundation.shape.RoundedCornerShape",
+        "androidx.compose.material.icons.Icons",
+        "androidx.compose.material.icons.filled.Person",
+        "androidx.compose.material3.*",
+        "androidx.compose.runtime.*",
+        "androidx.compose.ui.Alignment",
+        "androidx.compose.ui.Modifier",
+        "androidx.compose.ui.draw.scale",
+        "androidx.compose.ui.graphics.Color",
+        "androidx.compose.ui.res.stringResource",
+        "androidx.compose.ui.text.font.FontWeight",
+        "androidx.compose.ui.unit.dp",
+        "androidx.compose.ui.unit.sp",
+        "com.softyorch.stroopoverload.BuildConfig",
+        "com.softyorch.stroopoverload.R",
+        "com.softyorch.stroopoverload.ads.NativeAdBanner",
+        "com.softyorch.stroopoverload.domain.UserProfile",
+        "com.softyorch.stroopoverload.domain.XpSystem",
+        "com.softyorch.stroopoverload.ui.theme.*"
+      ],
+      "symbols": [
+        {
+          "name": "HomeScreen",
+          "kind": "fun",
+          "line": 29
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/ui/screen/LeaderboardScreen.kt",
+      "language": "kotlin",
+      "lines": 265,
+      "imports": [
+        "androidx.compose.foundation.background",
+        "androidx.compose.foundation.border",
+        "androidx.compose.foundation.layout.*",
+        "androidx.compose.foundation.lazy.LazyColumn",
+        "androidx.compose.foundation.lazy.itemsIndexed",
+        "androidx.compose.foundation.shape.RoundedCornerShape",
+        "androidx.compose.material.icons.Icons",
+        "androidx.compose.material.icons.automirrored.filled.ArrowBack",
+        "androidx.compose.material.icons.filled.Refresh",
+        "androidx.compose.material3.*",
+        "androidx.compose.runtime.*",
+        "androidx.compose.ui.Alignment",
+        "androidx.compose.ui.Modifier",
+        "androidx.compose.ui.graphics.Color",
+        "androidx.compose.ui.platform.LocalContext",
+        "androidx.compose.ui.res.stringResource",
+        "androidx.compose.ui.text.font.FontWeight",
+        "androidx.compose.ui.text.style.TextOverflow",
+        "androidx.compose.ui.unit.dp",
+        "androidx.compose.ui.unit.sp",
+        "com.softyorch.stroopoverload.R",
+        "com.softyorch.stroopoverload.ui.components.pilotHandleFallback",
+        "com.softyorch.stroopoverload.data.FirebaseGameRepository",
+        "com.softyorch.stroopoverload.domain.UserProfile",
+        "com.softyorch.stroopoverload.ui.theme.*",
+        "kotlinx.coroutines.launch"
+      ],
+      "symbols": [
+        {
+          "name": "LeaderboardScreen",
+          "kind": "fun",
+          "line": 32
+        },
+        {
+          "name": "fetchLeaderboard",
+          "kind": "fun",
+          "line": 42
+        },
+        {
+          "name": "LeaderboardScoreColumn",
+          "kind": "fun",
+          "line": 233,
+          "modifiers": [
+            "private"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/ui/screen/auth/AuthComponents.kt",
+      "language": "kotlin",
+      "lines": 151,
+      "imports": [
+        "androidx.compose.foundation.background",
+        "androidx.compose.foundation.border",
+        "androidx.compose.foundation.layout.*",
+        "androidx.compose.foundation.shape.RoundedCornerShape",
+        "androidx.compose.material3.*",
+        "androidx.compose.runtime.*",
+        "androidx.compose.ui.Alignment",
+        "androidx.compose.ui.Modifier",
+        "androidx.compose.ui.res.stringResource",
+        "androidx.compose.ui.semantics.contentDescription",
+        "androidx.compose.ui.semantics.semantics",
+        "androidx.compose.ui.text.LinkAnnotation",
+        "androidx.compose.ui.text.SpanStyle",
+        "androidx.compose.ui.text.TextLinkStyles",
+        "androidx.compose.ui.text.buildAnnotatedString",
+        "androidx.compose.ui.text.font.FontWeight",
+        "androidx.compose.ui.text.style.TextDecoration",
+        "androidx.compose.ui.unit.dp",
+        "androidx.compose.ui.unit.sp",
+        "com.softyorch.stroopoverload.R",
+        "com.softyorch.stroopoverload.core.LegalLinks",
+        "com.softyorch.stroopoverload.ui.theme.*"
+      ],
+      "symbols": [
+        {
+          "name": "LegalConsentText",
+          "kind": "fun",
+          "line": 29,
+          "modifiers": [
+            "internal"
+          ]
+        },
+        {
+          "name": "PasswordVisibilityToggle",
+          "kind": "fun",
+          "line": 71
+        },
+        {
+          "name": "EmailVerificationCard",
+          "kind": "fun",
+          "line": 82,
+          "modifiers": [
+            "internal"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/ui/screen/auth/AuthScreen.kt",
+      "language": "kotlin",
+      "lines": 403,
+      "imports": [
+        "androidx.compose.animation.AnimatedVisibility",
+        "androidx.compose.foundation.background",
+        "androidx.compose.foundation.border",
+        "androidx.compose.foundation.clickable",
+        "androidx.compose.foundation.layout.*",
+        "androidx.compose.foundation.rememberScrollState",
+        "androidx.compose.foundation.shape.RoundedCornerShape",
+        "androidx.compose.foundation.text.KeyboardOptions",
+        "androidx.compose.foundation.verticalScroll",
+        "androidx.compose.material3.*",
+        "androidx.compose.runtime.*",
+        "androidx.compose.ui.Alignment",
+        "androidx.compose.ui.Modifier",
+        "androidx.compose.ui.graphics.Color",
+        "androidx.compose.ui.res.stringResource",
+        "androidx.compose.ui.text.font.FontWeight",
+        "androidx.compose.ui.text.input.KeyboardType",
+        "androidx.compose.ui.text.input.PasswordVisualTransformation",
+        "androidx.compose.ui.text.input.VisualTransformation",
+        "androidx.compose.ui.unit.dp",
+        "androidx.compose.ui.unit.sp",
+        "com.softyorch.stroopoverload.R",
+        "com.softyorch.stroopoverload.ui.theme.*",
+        "androidx.lifecycle.compose.collectAsStateWithLifecycle"
+      ],
+      "symbols": [
+        {
+          "name": "AuthScreen",
+          "kind": "fun",
+          "line": 29
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/ui/screen/auth/AuthViewModel.kt",
+      "language": "kotlin",
+      "lines": 204,
+      "imports": [
+        "androidx.lifecycle.ViewModel",
+        "androidx.lifecycle.viewModelScope",
+        "com.softyorch.stroopoverload.R",
+        "com.softyorch.stroopoverload.core.StringResolver",
+        "com.softyorch.stroopoverload.data.AuthRepository",
+        "com.softyorch.stroopoverload.data.AuthService",
+        "com.softyorch.stroopoverload.data.CooldownException",
+        "com.softyorch.stroopoverload.data.GameRepository",
+        "com.softyorch.stroopoverload.data.LoginError",
+        "com.softyorch.stroopoverload.data.RegistrationError",
+        "kotlinx.coroutines.flow.MutableStateFlow",
+        "kotlinx.coroutines.flow.StateFlow",
+        "kotlinx.coroutines.flow.asStateFlow",
+        "kotlinx.coroutines.CancellationException",
+        "kotlinx.coroutines.launch"
+      ],
+      "symbols": [
+        {
+          "name": "AuthUiState",
+          "kind": "class",
+          "line": 19,
+          "modifiers": [
+            "data"
+          ]
+        },
+        {
+          "name": "AuthViewModel",
+          "kind": "class",
+          "line": 30
+        },
+        {
+          "name": "string",
+          "kind": "fun",
+          "line": 40,
+          "modifiers": [
+            "private"
+          ]
+        },
+        {
+          "name": "checkCurrentSession",
+          "kind": "fun",
+          "line": 46,
+          "modifiers": [
+            "private"
+          ]
+        },
+        {
+          "name": "login",
+          "kind": "fun",
+          "line": 63
+        },
+        {
+          "name": "register",
+          "kind": "fun",
+          "line": 94
+        },
+        {
+          "name": "continueAsGuest",
+          "kind": "fun",
+          "line": 129
+        },
+        {
+          "name": "resendVerificationEmail",
+          "kind": "fun",
+          "line": 148
+        },
+        {
+          "name": "checkEmailVerified",
+          "kind": "fun",
+          "line": 170
+        },
+        {
+          "name": "clearMessages",
+          "kind": "fun",
+          "line": 181
+        },
+        {
+          "name": "signOut",
+          "kind": "fun",
+          "line": 185
+        },
+        {
+          "name": "forgotPassword",
+          "kind": "fun",
+          "line": 190
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/ui/screen/multiplayer/LobbyScreen.kt",
+      "language": "kotlin",
+      "lines": 165,
+      "imports": [
+        "androidx.annotation.StringRes",
+        "androidx.compose.foundation.background",
+        "androidx.compose.foundation.border",
+        "androidx.compose.foundation.clickable",
+        "androidx.compose.foundation.layout.*",
+        "androidx.compose.foundation.rememberScrollState",
+        "androidx.compose.foundation.shape.RoundedCornerShape",
+        "androidx.compose.foundation.verticalScroll",
+        "androidx.compose.material3.*",
+        "androidx.compose.runtime.*",
+        "androidx.compose.ui.Modifier",
+        "androidx.compose.ui.res.stringResource",
+        "androidx.compose.ui.text.font.FontWeight",
+        "androidx.compose.ui.text.style.TextOverflow",
+        "androidx.compose.ui.unit.dp",
+        "com.softyorch.stroopoverload.R",
+        "com.softyorch.stroopoverload.data.MultiplayerCallFailure",
+        "com.softyorch.stroopoverload.domain.multiplayer.RoomMode",
+        "com.softyorch.stroopoverload.ui.components.hudCornerBrackets",
+        "com.softyorch.stroopoverload.ui.theme.Muted",
+        "com.softyorch.stroopoverload.ui.theme.TechAccent"
+      ],
+      "symbols": [
+        {
+          "name": "LobbyScreen",
+          "kind": "fun",
+          "line": 26
+        },
+        {
+          "name": "ModeCard",
+          "kind": "fun",
+          "line": 118,
+          "modifiers": [
+            "private"
+          ]
+        },
+        {
+          "name": "errorReasonText",
+          "kind": "fun",
+          "line": 146,
+          "modifiers": [
+            "private"
+          ]
+        },
+        {
+          "name": "callFailureTextRes",
+          "kind": "fun",
+          "line": 158,
+          "modifiers": [
+            "private"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/ui/screen/multiplayer/MatchFinishedOverlay.kt",
+      "language": "kotlin",
+      "lines": 259,
+      "imports": [
+        "androidx.compose.foundation.background",
+        "androidx.compose.foundation.border",
+        "androidx.compose.foundation.layout.*",
+        "androidx.compose.foundation.rememberScrollState",
+        "androidx.compose.foundation.shape.RoundedCornerShape",
+        "androidx.compose.foundation.verticalScroll",
+        "androidx.compose.material3.*",
+        "androidx.compose.runtime.Composable",
+        "androidx.compose.runtime.LaunchedEffect",
+        "androidx.compose.runtime.remember",
+        "androidx.compose.ui.Alignment",
+        "androidx.compose.ui.Modifier",
+        "androidx.compose.ui.draw.clip",
+        "androidx.compose.ui.res.stringResource",
+        "androidx.compose.ui.text.font.FontWeight",
+        "androidx.compose.ui.text.style.TextAlign",
+        "androidx.compose.ui.text.style.TextOverflow",
+        "androidx.compose.ui.unit.dp",
+        "androidx.compose.ui.window.Dialog",
+        "androidx.compose.ui.window.DialogProperties",
+        "com.softyorch.stroopoverload.R",
+        "com.softyorch.stroopoverload.data.ServerClock",
+        "com.softyorch.stroopoverload.core.formatMultiplier",
+        "com.softyorch.stroopoverload.audio.AudioPlayer",
+        "com.softyorch.stroopoverload.audio.GameSfx",
+        "com.softyorch.stroopoverload.domain.multiplayer.MultiplayerRoom",
+        "com.softyorch.stroopoverload.domain.multiplayer.RoomMode",
+        "com.softyorch.stroopoverload.domain.multiplayer.RoomPlayer",
+        "com.softyorch.stroopoverload.ui.components.hudCornerBrackets",
+        "com.softyorch.stroopoverload.ui.theme.Muted",
+        "com.softyorch.stroopoverload.ui.theme.NeonYellow",
+        "com.softyorch.stroopoverload.ui.theme.TechAccent"
+      ],
+      "symbols": [
+        {
+          "name": "MatchFinishedOverlay",
+          "kind": "fun",
+          "line": 46
+        },
+        {
+          "name": "PlayerBreakdownCard",
+          "kind": "fun",
+          "line": 157,
+          "modifiers": [
+            "private"
+          ]
+        },
+        {
+          "name": "BreakdownRow",
+          "kind": "fun",
+          "line": 221,
+          "modifiers": [
+            "private"
+          ]
+        },
+        {
+          "name": "movesDetailText",
+          "kind": "fun",
+          "line": 238,
+          "modifiers": [
+            "private"
+          ]
+        },
+        {
+          "name": "placementMultiplierLabel",
+          "kind": "fun",
+          "line": 246,
+          "modifiers": [
+            "private"
+          ]
+        },
+        {
+          "name": "formatDuration",
+          "kind": "fun",
+          "line": 255,
+          "modifiers": [
+            "private"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/ui/screen/multiplayer/MultiplayerGameScreen.kt",
+      "language": "kotlin",
+      "lines": 347,
+      "imports": [
+        "androidx.compose.animation.core.EaseOut",
+        "androidx.compose.animation.core.LinearEasing",
+        "androidx.compose.animation.core.RepeatMode",
+        "androidx.compose.animation.core.animateFloat",
+        "androidx.compose.animation.core.animateFloatAsState",
+        "androidx.compose.animation.core.infiniteRepeatable",
+        "androidx.compose.animation.core.rememberInfiniteTransition",
+        "androidx.compose.animation.core.tween",
+        "androidx.compose.foundation.background",
+        "androidx.compose.foundation.border",
+        "androidx.compose.foundation.layout.*",
+        "androidx.compose.foundation.shape.CircleShape",
+        "androidx.compose.foundation.shape.RoundedCornerShape",
+        "androidx.compose.material3.*",
+        "androidx.compose.runtime.*",
+        "com.softyorch.stroopoverload.game.TapFeedback",
+        "androidx.compose.ui.Alignment",
+        "androidx.compose.ui.Modifier",
+        "androidx.compose.ui.draw.clip",
+        "androidx.compose.ui.graphics.Color",
+        "androidx.compose.ui.graphics.lerp",
+        "androidx.compose.ui.res.stringResource",
+        "androidx.compose.ui.text.font.FontWeight",
+        "androidx.compose.ui.text.style.TextOverflow",
+        "androidx.compose.ui.unit.dp",
+        "androidx.compose.ui.unit.sp",
+        "com.softyorch.stroopoverload.R",
+        "com.softyorch.stroopoverload.audio.AudioPlayer",
+        "com.softyorch.stroopoverload.audio.GameSfx",
+        "com.softyorch.stroopoverload.core.GameConfig",
+        "com.softyorch.stroopoverload.core.StroopColor",
+        "com.softyorch.stroopoverload.domain.multiplayer.MultiplayerRoom",
+        "com.softyorch.stroopoverload.domain.multiplayer.RoomMode",
+        "com.softyorch.stroopoverload.domain.multiplayer.RoomStatus",
+        "com.softyorch.stroopoverload.ui.components.StimulusWord",
+        "com.softyorch.stroopoverload.ui.components.QuadrantBox",
+        "com.softyorch.stroopoverload.ui.theme.Muted",
+        "com.softyorch.stroopoverload.ui.theme.NeonRed",
+        "com.softyorch.stroopoverload.ui.theme.NeonYellow",
+        "com.softyorch.stroopoverload.ui.theme.TechAccent",
+        "kotlinx.coroutines.delay",
+        "com.softyorch.stroopoverload.ui.components.DeadlineTimerBar"
+      ],
+      "symbols": [
+        {
+          "name": "MultiplayerGameScreen",
+          "kind": "fun",
+          "line": 47
+        },
+        {
+          "name": "PlayingContent",
+          "kind": "fun",
+          "line": 136,
+          "modifiers": [
+            "private"
+          ]
+        },
+        {
+          "name": "HotPotatoBalloon",
+          "kind": "fun",
+          "line": 254,
+          "modifiers": [
+            "private"
+          ]
+        },
+        {
+          "name": "tricolorLerp",
+          "kind": "fun",
+          "line": 340,
+          "modifiers": [
+            "private"
+          ]
+        },
+        {
+          "name": "timeLimitMsForRound",
+          "kind": "fun",
+          "line": 344,
+          "modifiers": [
+            "internal"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/ui/screen/multiplayer/MultiplayerScreen.kt",
+      "language": "kotlin",
+      "lines": 228,
+      "imports": [
+        "com.softyorch.stroopoverload.ui.theme.LimitFontScale",
+        "com.softyorch.stroopoverload.ui.theme.GAME_BOARD_FONT_SCALE",
+        "androidx.activity.compose.LocalActivity",
+        "androidx.compose.foundation.background",
+        "androidx.compose.foundation.layout.Box",
+        "androidx.compose.foundation.layout.fillMaxSize",
+        "androidx.compose.material3.MaterialTheme",
+        "androidx.compose.runtime.Composable",
+        "androidx.compose.runtime.DisposableEffect",
+        "androidx.compose.runtime.LaunchedEffect",
+        "androidx.compose.runtime.getValue",
+        "androidx.compose.runtime.mutableStateOf",
+        "androidx.compose.runtime.remember",
+        "androidx.compose.runtime.setValue",
+        "androidx.compose.ui.Modifier",
+        "androidx.compose.ui.platform.LocalContext",
+        "androidx.lifecycle.createSavedStateHandle",
+        "androidx.lifecycle.viewmodel.compose.viewModel",
+        "androidx.lifecycle.viewmodel.initializer",
+        "androidx.lifecycle.viewmodel.viewModelFactory",
+        "com.softyorch.stroopoverload.R",
+        "com.softyorch.stroopoverload.ads.InterstitialAdManager",
+        "com.softyorch.stroopoverload.audio.AudioPlayer",
+        "com.softyorch.stroopoverload.audio.GameSfx",
+        "com.softyorch.stroopoverload.audio.MusicManager",
+        "com.softyorch.stroopoverload.audio.MusicTrack",
+        "com.softyorch.stroopoverload.data.FirebaseGameRepository",
+        "com.softyorch.stroopoverload.data.FirebaseMultiplayerRepository",
+        "com.softyorch.stroopoverload.data.ServerClock",
+        "com.softyorch.stroopoverload.domain.multiplayer.MultiplayerRoom",
+        "com.softyorch.stroopoverload.domain.multiplayer.RoomMode",
+        "com.softyorch.stroopoverload.domain.multiplayer.RoomStatus",
+        "com.softyorch.stroopoverload.ui.GAMEPLAY_MUSIC_TRACKS",
+        "com.softyorch.stroopoverload.ui.MENU_MUSIC",
+        "com.softyorch.stroopoverload.ui.components.CountdownOverlay",
+        "kotlinx.coroutines.delay",
+        "androidx.lifecycle.compose.collectAsStateWithLifecycle",
+        "androidx.activity.compose.BackHandler",
+        "com.softyorch.stroopoverload.ui.components.ExitMatchDialog"
+      ],
+      "symbols": [
+        {
+          "name": "MultiplayerScreen",
+          "kind": "fun",
+          "line": 44
+        },
+        {
+          "name": "gatedThen",
+          "kind": "fun",
+          "line": 99
+        },
+        {
+          "name": "StartingPhase",
+          "kind": "class",
+          "line": 184,
+          "modifiers": [
+            "private",
+            "enum"
+          ]
+        },
+        {
+          "name": "MultiplayerStartingScreen",
+          "kind": "fun",
+          "line": 201,
+          "modifiers": [
+            "private"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/ui/screen/multiplayer/MultiplayerUiState.kt",
+      "language": "kotlin",
+      "lines": 30,
+      "imports": [
+        "com.softyorch.stroopoverload.data.MultiplayerCallFailure",
+        "com.softyorch.stroopoverload.domain.multiplayer.MultiplayerRoom"
+      ],
+      "symbols": [
+        {
+          "name": "MultiplayerErrorReason",
+          "kind": "interface",
+          "line": 9,
+          "modifiers": [
+            "sealed"
+          ]
+        },
+        {
+          "name": "CreateRoomFailed",
+          "kind": "class",
+          "line": 10,
+          "container": "MultiplayerErrorReason",
+          "modifiers": [
+            "data"
+          ]
+        },
+        {
+          "name": "JoinRoomFailed",
+          "kind": "class",
+          "line": 11,
+          "container": "MultiplayerErrorReason",
+          "modifiers": [
+            "data"
+          ]
+        },
+        {
+          "name": "StartGameFailed",
+          "kind": "object",
+          "line": 12,
+          "container": "MultiplayerErrorReason",
+          "modifiers": [
+            "data"
+          ]
+        },
+        {
+          "name": "ConnectionLost",
+          "kind": "object",
+          "line": 13,
+          "container": "MultiplayerErrorReason",
+          "modifiers": [
+            "data"
+          ]
+        },
+        {
+          "name": "MultiplayerUiState",
+          "kind": "interface",
+          "line": 16,
+          "modifiers": [
+            "sealed"
+          ]
+        },
+        {
+          "name": "Idle",
+          "kind": "object",
+          "line": 17,
+          "container": "MultiplayerUiState",
+          "modifiers": [
+            "data"
+          ]
+        },
+        {
+          "name": "Connecting",
+          "kind": "object",
+          "line": 18,
+          "container": "MultiplayerUiState",
+          "modifiers": [
+            "data"
+          ]
+        },
+        {
+          "name": "InRoom",
+          "kind": "class",
+          "line": 19,
+          "container": "MultiplayerUiState",
+          "modifiers": [
+            "data"
+          ]
+        },
+        {
+          "name": "Error",
+          "kind": "class",
+          "line": 29,
+          "container": "MultiplayerUiState",
+          "modifiers": [
+            "data"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/ui/screen/multiplayer/MultiplayerViewModel.kt",
+      "language": "kotlin",
+      "lines": 203,
+      "imports": [
+        "androidx.lifecycle.SavedStateHandle",
+        "androidx.lifecycle.ViewModel",
+        "androidx.lifecycle.viewModelScope",
+        "com.softyorch.stroopoverload.core.StroopColor",
+        "com.softyorch.stroopoverload.data.FirebaseMultiplayerRepository",
+        "com.softyorch.stroopoverload.data.MultiplayerCallException",
+        "com.softyorch.stroopoverload.data.MultiplayerCallFailure",
+        "com.softyorch.stroopoverload.data.MultiplayerRepository",
+        "com.softyorch.stroopoverload.domain.multiplayer.RoomMode",
+        "com.softyorch.stroopoverload.domain.multiplayer.RoomStatus",
+        "kotlinx.coroutines.CancellationException",
+        "kotlinx.coroutines.Job",
+        "kotlinx.coroutines.flow.MutableStateFlow",
+        "kotlinx.coroutines.flow.StateFlow",
+        "kotlinx.coroutines.flow.asStateFlow",
+        "kotlinx.coroutines.launch"
+      ],
+      "symbols": [
+        {
+          "name": "MultiplayerViewModel",
+          "kind": "class",
+          "line": 20
+        },
+        {
+          "name": "createRoom",
+          "kind": "fun",
+          "line": 58
+        },
+        {
+          "name": "joinRoom",
+          "kind": "fun",
+          "line": 71
+        },
+        {
+          "name": "startGame",
+          "kind": "fun",
+          "line": 84
+        },
+        {
+          "name": "exitRoom",
+          "kind": "fun",
+          "line": 110
+        },
+        {
+          "name": "forgetSavedRoom",
+          "kind": "fun",
+          "line": 119,
+          "modifiers": [
+            "private"
+          ]
+        },
+        {
+          "name": "leaveRoomIfNotStarted",
+          "kind": "fun",
+          "line": 129,
+          "modifiers": [
+            "private"
+          ]
+        },
+        {
+          "name": "leavePresence",
+          "kind": "fun",
+          "line": 135,
+          "modifiers": [
+            "private"
+          ]
+        },
+        {
+          "name": "submitAnswer",
+          "kind": "fun",
+          "line": 141
+        },
+        {
+          "name": "observeRoom",
+          "kind": "fun",
+          "line": 163,
+          "modifiers": [
+            "private"
+          ]
+        },
+        {
+          "name": "callFailure",
+          "kind": "fun",
+          "line": 189,
+          "modifiers": [
+            "private"
+          ]
+        },
+        {
+          "name": "onCleared",
+          "kind": "fun",
+          "line": 192,
+          "modifiers": [
+            "override"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/ui/screen/multiplayer/PreloadWaitingRoom.kt",
+      "language": "kotlin",
+      "lines": 105,
+      "imports": [
+        "androidx.compose.animation.Crossfade",
+        "androidx.compose.foundation.background",
+        "androidx.compose.foundation.layout.Arrangement",
+        "androidx.compose.foundation.layout.Box",
+        "androidx.compose.foundation.layout.Column",
+        "androidx.compose.foundation.layout.Spacer",
+        "androidx.compose.foundation.layout.fillMaxSize",
+        "androidx.compose.foundation.layout.height",
+        "androidx.compose.foundation.layout.padding",
+        "androidx.compose.foundation.layout.safeDrawingPadding",
+        "androidx.compose.material3.MaterialTheme",
+        "androidx.compose.material3.Text",
+        "androidx.compose.runtime.Composable",
+        "androidx.compose.runtime.LaunchedEffect",
+        "androidx.compose.runtime.getValue",
+        "androidx.compose.runtime.mutableIntStateOf",
+        "androidx.compose.runtime.remember",
+        "androidx.compose.runtime.setValue",
+        "androidx.compose.ui.Alignment",
+        "androidx.compose.ui.Modifier",
+        "androidx.compose.ui.res.stringResource",
+        "androidx.compose.ui.text.style.TextAlign",
+        "androidx.compose.ui.unit.dp",
+        "androidx.compose.ui.unit.sp",
+        "com.softyorch.stroopoverload.R",
+        "com.softyorch.stroopoverload.domain.multiplayer.MultiplayerRoom",
+        "com.softyorch.stroopoverload.ui.theme.Muted",
+        "com.softyorch.stroopoverload.ui.theme.TechAccent",
+        "kotlinx.coroutines.delay"
+      ],
+      "symbols": [
+        {
+          "name": "PreloadWaitingRoom",
+          "kind": "fun",
+          "line": 44
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/ui/screen/multiplayer/SoloSurvivalGameScreen.kt",
+      "language": "kotlin",
+      "lines": 223,
+      "imports": [
+        "androidx.compose.foundation.background",
+        "androidx.compose.foundation.border",
+        "androidx.compose.foundation.layout.*",
+        "androidx.compose.foundation.shape.RoundedCornerShape",
+        "androidx.compose.material3.MaterialTheme",
+        "androidx.compose.material3.Text",
+        "androidx.compose.runtime.*",
+        "com.softyorch.stroopoverload.game.TapFeedback",
+        "androidx.compose.ui.Alignment",
+        "androidx.compose.ui.Modifier",
+        "androidx.compose.ui.draw.clip",
+        "androidx.compose.ui.res.stringResource",
+        "androidx.compose.ui.text.font.FontWeight",
+        "androidx.compose.ui.text.style.TextOverflow",
+        "androidx.compose.ui.unit.dp",
+        "androidx.compose.ui.unit.sp",
+        "com.softyorch.stroopoverload.R",
+        "com.softyorch.stroopoverload.audio.AudioPlayer",
+        "com.softyorch.stroopoverload.audio.GameSfx",
+        "com.softyorch.stroopoverload.core.StroopColor",
+        "com.softyorch.stroopoverload.domain.multiplayer.MultiplayerRoom",
+        "com.softyorch.stroopoverload.domain.multiplayer.RoomPlayer",
+        "com.softyorch.stroopoverload.domain.multiplayer.RoomStatus",
+        "com.softyorch.stroopoverload.ui.components.StimulusWord",
+        "com.softyorch.stroopoverload.ui.components.QuadrantBox",
+        "com.softyorch.stroopoverload.ui.theme.Muted",
+        "kotlinx.coroutines.delay",
+        "com.softyorch.stroopoverload.ui.components.DeadlineTimerBar"
+      ],
+      "symbols": [
+        {
+          "name": "soloTimeLimitMs",
+          "kind": "fun",
+          "line": 35,
+          "modifiers": [
+            "private"
+          ]
+        },
+        {
+          "name": "SoloSurvivalGameScreen",
+          "kind": "fun",
+          "line": 47
+        },
+        {
+          "name": "PlayingContent",
+          "kind": "fun",
+          "line": 141,
+          "modifiers": [
+            "private"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/ui/screen/multiplayer/WaitingRoomScreen.kt",
+      "language": "kotlin",
+      "lines": 296,
+      "imports": [
+        "androidx.compose.animation.core.FastOutSlowInEasing",
+        "androidx.compose.animation.core.LinearEasing",
+        "androidx.compose.animation.core.RepeatMode",
+        "androidx.compose.animation.core.StartOffset",
+        "androidx.compose.animation.core.animateFloat",
+        "androidx.compose.animation.core.infiniteRepeatable",
+        "androidx.compose.animation.core.rememberInfiniteTransition",
+        "androidx.compose.animation.core.tween",
+        "androidx.compose.foundation.background",
+        "androidx.compose.foundation.border",
+        "androidx.compose.foundation.clickable",
+        "androidx.compose.foundation.layout.*",
+        "androidx.compose.foundation.lazy.LazyColumn",
+        "androidx.compose.foundation.lazy.items",
+        "androidx.compose.foundation.shape.RoundedCornerShape",
+        "androidx.compose.material.icons.Icons",
+        "androidx.compose.material.icons.filled.Person",
+        "androidx.compose.material3.*",
+        "androidx.compose.runtime.Composable",
+        "androidx.compose.runtime.getValue",
+        "androidx.compose.ui.Alignment",
+        "androidx.compose.ui.Modifier",
+        "androidx.compose.ui.draw.clip",
+        "androidx.compose.ui.graphics.Color",
+        "androidx.compose.ui.platform.LocalClipboardManager",
+        "androidx.compose.ui.res.stringResource",
+        "androidx.compose.ui.text.AnnotatedString",
+        "androidx.compose.ui.text.font.FontWeight",
+        "androidx.compose.ui.text.style.TextAlign",
+        "androidx.compose.ui.text.style.TextOverflow",
+        "androidx.compose.ui.unit.dp",
+        "androidx.compose.ui.unit.sp",
+        "com.softyorch.stroopoverload.R",
+        "com.softyorch.stroopoverload.domain.multiplayer.MultiplayerRoom",
+        "com.softyorch.stroopoverload.domain.multiplayer.RoomPlayer",
+        "com.softyorch.stroopoverload.ui.components.hudCornerBrackets",
+        "com.softyorch.stroopoverload.ui.theme.Muted",
+        "com.softyorch.stroopoverload.ui.theme.TechAccent",
+        "com.softyorch.stroopoverload.ui.theme.TechBorder"
+      ],
+      "symbols": [
+        {
+          "name": "WaitingRoomScreen",
+          "kind": "fun",
+          "line": 46
+        },
+        {
+          "name": "PlayerSlot",
+          "kind": "fun",
+          "line": 187,
+          "modifiers": [
+            "private"
+          ]
+        },
+        {
+          "name": "EmptyPlayerSlot",
+          "kind": "fun",
+          "line": 222,
+          "modifiers": [
+            "private"
+          ]
+        },
+        {
+          "name": "SignalScanner",
+          "kind": "fun",
+          "line": 243,
+          "modifiers": [
+            "internal"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/ui/screen/profile/AchievementDetailDialog.kt",
+      "language": "kotlin",
+      "lines": 174,
+      "imports": [
+        "androidx.compose.foundation.background",
+        "androidx.compose.foundation.border",
+        "androidx.compose.foundation.layout.Column",
+        "androidx.compose.foundation.layout.Spacer",
+        "androidx.compose.foundation.layout.fillMaxWidth",
+        "androidx.compose.foundation.layout.height",
+        "androidx.compose.foundation.layout.heightIn",
+        "androidx.compose.foundation.layout.padding",
+        "androidx.compose.foundation.shape.RoundedCornerShape",
+        "androidx.compose.material3.Button",
+        "androidx.compose.material3.ButtonDefaults",
+        "androidx.compose.material3.LinearProgressIndicator",
+        "androidx.compose.material3.MaterialTheme",
+        "androidx.compose.material3.Text",
+        "androidx.compose.runtime.Composable",
+        "androidx.compose.runtime.remember",
+        "androidx.compose.ui.Alignment",
+        "androidx.compose.ui.Modifier",
+        "androidx.compose.ui.draw.clip",
+        "androidx.compose.ui.draw.drawWithCache",
+        "androidx.compose.ui.graphics.Color",
+        "androidx.compose.ui.graphics.ColorFilter",
+        "androidx.compose.ui.graphics.ColorMatrix",
+        "androidx.compose.ui.graphics.StrokeCap",
+        "androidx.compose.ui.graphics.layer.drawLayer",
+        "androidx.compose.ui.platform.LocalConfiguration",
+        "androidx.compose.ui.res.stringResource",
+        "androidx.compose.ui.text.font.FontWeight",
+        "androidx.compose.ui.text.style.TextAlign",
+        "androidx.compose.ui.unit.dp",
+        "androidx.compose.ui.unit.sp",
+        "androidx.compose.ui.window.Dialog",
+        "com.softyorch.stroopoverload.R",
+        "com.softyorch.stroopoverload.domain.Achievement",
+        "com.softyorch.stroopoverload.domain.AchievementProgress",
+        "com.softyorch.stroopoverload.ui.theme.CyberDark",
+        "com.softyorch.stroopoverload.ui.theme.Muted",
+        "java.text.DateFormat",
+        "java.util.Date"
+      ],
+      "symbols": [
+        {
+          "name": "lockedLook",
+          "kind": "fun",
+          "line": 53,
+          "modifiers": [
+            "internal"
+          ]
+        },
+        {
+          "name": "AchievementDetailDialog",
+          "kind": "fun",
+          "line": 67
+        },
+        {
+          "name": "AchievementStatus",
+          "kind": "fun",
+          "line": 141,
+          "modifiers": [
+            "private"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/ui/screen/profile/ProfileAccountDialogs.kt",
+      "language": "kotlin",
+      "lines": 179,
+      "imports": [
+        "androidx.compose.foundation.layout.*",
+        "androidx.compose.foundation.text.KeyboardOptions",
+        "androidx.compose.material3.*",
+        "androidx.compose.runtime.*",
+        "androidx.compose.ui.Modifier",
+        "androidx.compose.ui.res.stringResource",
+        "androidx.compose.ui.text.input.KeyboardType",
+        "androidx.compose.ui.text.input.PasswordVisualTransformation",
+        "androidx.compose.ui.text.input.VisualTransformation",
+        "androidx.compose.ui.unit.dp",
+        "com.softyorch.stroopoverload.R",
+        "com.softyorch.stroopoverload.ui.screen.auth.PasswordVisibilityToggle",
+        "com.softyorch.stroopoverload.ui.theme.*"
+      ],
+      "symbols": [
+        {
+          "name": "ChangePasswordDialog",
+          "kind": "fun",
+          "line": 20,
+          "modifiers": [
+            "internal"
+          ]
+        },
+        {
+          "name": "DeleteAccountDialog",
+          "kind": "fun",
+          "line": 111,
+          "modifiers": [
+            "internal"
+          ]
+        },
+        {
+          "name": "GuestSignOutDialog",
+          "kind": "fun",
+          "line": 162,
+          "modifiers": [
+            "internal"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/ui/screen/profile/ProfileScreen.kt",
+      "language": "kotlin",
+      "lines": 512,
+      "imports": [
+        "androidx.compose.foundation.background",
+        "androidx.compose.foundation.border",
+        "androidx.compose.foundation.clickable",
+        "androidx.compose.foundation.layout.*",
+        "androidx.compose.foundation.lazy.LazyColumn",
+        "androidx.compose.foundation.lazy.items",
+        "androidx.compose.foundation.shape.RoundedCornerShape",
+        "androidx.compose.material.icons.Icons",
+        "androidx.compose.material.icons.automirrored.filled.ArrowBack",
+        "androidx.compose.material.icons.filled.Edit",
+        "androidx.compose.material3.*",
+        "androidx.compose.runtime.*",
+        "androidx.compose.ui.Alignment",
+        "androidx.compose.ui.Modifier",
+        "androidx.compose.ui.graphics.Color",
+        "androidx.compose.ui.platform.LocalContext",
+        "androidx.compose.ui.res.stringResource",
+        "androidx.compose.ui.semantics.Role",
+        "androidx.compose.ui.text.font.FontWeight",
+        "androidx.compose.ui.text.style.TextAlign",
+        "androidx.compose.ui.text.style.TextOverflow",
+        "androidx.compose.ui.unit.dp",
+        "androidx.compose.ui.unit.sp",
+        "com.softyorch.stroopoverload.R",
+        "com.softyorch.stroopoverload.ui.components.pilotHandleFallback",
+        "com.softyorch.stroopoverload.audio.AudioSettingsStore",
+        "com.softyorch.stroopoverload.domain.Achievement",
+        "com.softyorch.stroopoverload.domain.XpSystem",
+        "com.softyorch.stroopoverload.ui.theme.*",
+        "androidx.lifecycle.compose.collectAsStateWithLifecycle"
+      ],
+      "symbols": [
+        {
+          "name": "ProfileScreen",
+          "kind": "fun",
+          "line": 36
+        },
+        {
+          "name": "AudioToggleRow",
+          "kind": "fun",
+          "line": 406,
+          "modifiers": [
+            "private"
+          ]
+        },
+        {
+          "name": "StatBox",
+          "kind": "fun",
+          "line": 429,
+          "modifiers": [
+            "private"
+          ]
+        },
+        {
+          "name": "AchievementCard",
+          "kind": "fun",
+          "line": 461,
+          "modifiers": [
+            "private"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/ui/screen/profile/ProfileViewModel.kt",
+      "language": "kotlin",
+      "lines": 208,
+      "imports": [
+        "androidx.lifecycle.ViewModel",
+        "androidx.lifecycle.viewModelScope",
+        "com.softyorch.stroopoverload.R",
+        "com.softyorch.stroopoverload.core.StringResolver",
+        "com.softyorch.stroopoverload.data.AuthRepository",
+        "com.softyorch.stroopoverload.data.AuthService",
+        "com.softyorch.stroopoverload.data.ChangePasswordError",
+        "com.softyorch.stroopoverload.data.ChangePasswordException",
+        "com.softyorch.stroopoverload.data.DeleteAccountError",
+        "com.softyorch.stroopoverload.data.DeleteAccountException",
+        "com.softyorch.stroopoverload.data.GameRepository",
+        "com.softyorch.stroopoverload.data.MultiplayerRepository",
+        "com.softyorch.stroopoverload.domain.Achievement",
+        "com.softyorch.stroopoverload.domain.AchievementEngine",
+        "com.softyorch.stroopoverload.domain.AchievementProgress",
+        "com.softyorch.stroopoverload.domain.CareerStats",
+        "com.softyorch.stroopoverload.domain.UserProfile",
+        "com.softyorch.stroopoverload.domain.XpSystem",
+        "kotlinx.coroutines.flow.MutableStateFlow",
+        "kotlinx.coroutines.flow.StateFlow",
+        "kotlinx.coroutines.flow.asStateFlow",
+        "kotlinx.coroutines.launch"
+      ],
+      "symbols": [
+        {
+          "name": "ProfileUiState",
+          "kind": "class",
+          "line": 26,
+          "modifiers": [
+            "data"
+          ]
+        },
+        {
+          "name": "progressOf",
+          "kind": "fun",
+          "line": 45
+        },
+        {
+          "name": "ProfileViewModel",
+          "kind": "class",
+          "line": 52
+        },
+        {
+          "name": "loadProfile",
+          "kind": "fun",
+          "line": 66
+        },
+        {
+          "name": "beginEdit",
+          "kind": "fun",
+          "line": 83
+        },
+        {
+          "name": "updateDraftNickname",
+          "kind": "fun",
+          "line": 87
+        },
+        {
+          "name": "discardEdit",
+          "kind": "fun",
+          "line": 93
+        },
+        {
+          "name": "saveEdit",
+          "kind": "fun",
+          "line": 98
+        },
+        {
+          "name": "signOut",
+          "kind": "fun",
+          "line": 117
+        },
+        {
+          "name": "confirmGuestSignOut",
+          "kind": "fun",
+          "line": 126
+        },
+        {
+          "name": "dismissGuestSignOut",
+          "kind": "fun",
+          "line": 132
+        },
+        {
+          "name": "string",
+          "kind": "fun",
+          "line": 136,
+          "modifiers": [
+            "private"
+          ]
+        },
+        {
+          "name": "changePassword",
+          "kind": "fun",
+          "line": 138
+        },
+        {
+          "name": "clearChangePasswordResult",
+          "kind": "fun",
+          "line": 155
+        },
+        {
+          "name": "deleteAccount",
+          "kind": "fun",
+          "line": 159
+        },
+        {
+          "name": "clearDeleteAccountError",
+          "kind": "fun",
+          "line": 184
+        },
+        {
+          "name": "resolveChangePasswordError",
+          "kind": "fun",
+          "line": 188,
+          "modifiers": [
+            "private"
+          ]
+        },
+        {
+          "name": "resolveDeleteAccountError",
+          "kind": "fun",
+          "line": 199,
+          "modifiers": [
+            "private"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/ui/theme/Color.kt",
+      "language": "kotlin",
+      "lines": 21,
+      "imports": [
+        "androidx.compose.ui.graphics.Color"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/ui/theme/FontScale.kt",
+      "language": "kotlin",
+      "lines": 30,
+      "imports": [
+        "androidx.compose.runtime.Composable",
+        "androidx.compose.runtime.CompositionLocalProvider",
+        "androidx.compose.ui.platform.LocalDensity",
+        "androidx.compose.ui.unit.Density"
+      ],
+      "symbols": [
+        {
+          "name": "LimitFontScale",
+          "kind": "fun",
+          "line": 24
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/ui/theme/Theme.kt",
+      "language": "kotlin",
+      "lines": 29,
+      "imports": [
+        "androidx.compose.material3.MaterialTheme",
+        "androidx.compose.material3.darkColorScheme",
+        "androidx.compose.runtime.Composable"
+      ],
+      "symbols": [
+        {
+          "name": "StroopTheme",
+          "kind": "fun",
+          "line": 22
+        }
+      ]
+    },
+    {
+      "path": "app/src/main/kotlin/com/softyorch/stroopoverload/ui/theme/Type.kt",
+      "language": "kotlin",
+      "lines": 70,
+      "imports": [
+        "androidx.compose.material3.Typography",
+        "androidx.compose.ui.text.TextStyle",
+        "androidx.compose.ui.text.font.FontFamily",
+        "androidx.compose.ui.text.font.FontWeight",
+        "androidx.compose.ui.unit.sp"
+      ],
+      "symbols": []
+    },
+    {
+      "path": "app/src/release/kotlin/com/softyorch/stroopoverload/AppCheckProviderFactory.kt",
+      "language": "kotlin",
+      "lines": 7,
+      "imports": [
+        "com.google.firebase.appcheck.AppCheckProviderFactory",
+        "com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory"
+      ],
+      "symbols": [
+        {
+          "name": "appCheckProviderFactory",
+          "kind": "fun",
+          "line": 7
+        }
+      ]
+    },
+    {
+      "path": "app/src/test/kotlin/com/softyorch/stroopoverload/AchievementEngineTest.kt",
+      "language": "kotlin",
+      "lines": 170,
+      "imports": [
+        "com.softyorch.stroopoverload.domain.AchievementEngine",
+        "com.softyorch.stroopoverload.domain.AchievementProgress",
+        "com.softyorch.stroopoverload.domain.CareerStats",
+        "com.softyorch.stroopoverload.domain.GameMode",
+        "com.softyorch.stroopoverload.domain.GameResult",
+        "org.junit.Assert.assertEquals",
+        "org.junit.Assert.assertFalse",
+        "org.junit.Assert.assertTrue",
+        "org.junit.Test"
+      ],
+      "symbols": [
+        {
+          "name": "AchievementEngineTest",
+          "kind": "class",
+          "line": 13
+        }
+      ]
+    },
+    {
+      "path": "app/src/test/kotlin/com/softyorch/stroopoverload/GameResultTest.kt",
+      "language": "kotlin",
+      "lines": 34,
+      "imports": [
+        "com.softyorch.stroopoverload.domain.GameResult",
+        "org.junit.Assert.assertEquals",
+        "org.junit.Assert.assertFalse",
+        "org.junit.Assert.assertTrue",
+        "org.junit.Test"
+      ],
+      "symbols": [
+        {
+          "name": "GameResultTest",
+          "kind": "class",
+          "line": 9
+        }
+      ]
+    },
+    {
+      "path": "app/src/test/kotlin/com/softyorch/stroopoverload/IncongruenceEngineTest.kt",
+      "language": "kotlin",
+      "lines": 66,
+      "imports": [
+        "com.softyorch.stroopoverload.core.StroopColor",
+        "com.softyorch.stroopoverload.game.IncongruenceEngine",
+        "org.junit.Assert.assertEquals",
+        "org.junit.Assert.assertNotNull",
+        "org.junit.Assert.assertNull",
+        "org.junit.Assert.assertNotEquals",
+        "org.junit.Assert.assertTrue",
+        "org.junit.Test",
+        "kotlin.random.Random"
+      ],
+      "symbols": [
+        {
+          "name": "IncongruenceEngineTest",
+          "kind": "class",
+          "line": 13
+        }
+      ]
+    },
+    {
+      "path": "app/src/test/kotlin/com/softyorch/stroopoverload/StringsParityTest.kt",
+      "language": "kotlin",
+      "lines": 74,
+      "imports": [
+        "java.io.File",
+        "org.junit.Assert.assertEquals",
+        "org.junit.Assert.assertTrue",
+        "org.junit.Test"
+      ],
+      "symbols": [
+        {
+          "name": "StringsParityTest",
+          "kind": "class",
+          "line": 13
+        },
+        {
+          "name": "keysOf",
+          "kind": "fun",
+          "line": 18,
+          "container": "StringsParityTest",
+          "modifiers": [
+            "private"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "app/src/test/kotlin/com/softyorch/stroopoverload/StroopStimulusTest.kt",
+      "language": "kotlin",
+      "lines": 29,
+      "imports": [
+        "com.softyorch.stroopoverload.core.StroopColor",
+        "com.softyorch.stroopoverload.domain.StroopStimulus",
+        "org.junit.Assert.assertEquals",
+        "org.junit.Assert.assertFalse",
+        "org.junit.Assert.assertTrue",
+        "org.junit.Test"
+      ],
+      "symbols": [
+        {
+          "name": "StroopStimulusTest",
+          "kind": "class",
+          "line": 10
+        }
+      ]
+    },
+    {
+      "path": "app/src/test/kotlin/com/softyorch/stroopoverload/XpSystemTest.kt",
+      "language": "kotlin",
+      "lines": 124,
+      "imports": [
+        "com.softyorch.stroopoverload.R",
+        "com.softyorch.stroopoverload.domain.GameMode",
+        "com.softyorch.stroopoverload.domain.GameResult",
+        "com.softyorch.stroopoverload.domain.Rarity",
+        "com.softyorch.stroopoverload.domain.XpSystem",
+        "org.junit.Assert.assertEquals",
+        "org.junit.Assert.assertTrue",
+        "org.junit.Test"
+      ],
+      "symbols": [
+        {
+          "name": "XpSystemTest",
+          "kind": "class",
+          "line": 12
+        }
+      ]
+    },
+    {
+      "path": "app/src/test/kotlin/com/softyorch/stroopoverload/core/NumberFormattingTest.kt",
+      "language": "kotlin",
+      "lines": 24,
+      "imports": [
+        "java.util.Locale",
+        "org.junit.Assert.assertEquals",
+        "org.junit.Test"
+      ],
+      "symbols": [
+        {
+          "name": "NumberFormattingTest",
+          "kind": "class",
+          "line": 7
+        }
+      ]
+    },
+    {
+      "path": "app/src/test/kotlin/com/softyorch/stroopoverload/core/RunCatchingCancellableTest.kt",
+      "language": "kotlin",
+      "lines": 25,
+      "imports": [
+        "kotlinx.coroutines.CancellationException",
+        "org.junit.Assert.assertEquals",
+        "org.junit.Assert.assertTrue",
+        "org.junit.Test"
+      ],
+      "symbols": [
+        {
+          "name": "RunCatchingCancellableTest",
+          "kind": "class",
+          "line": 8
+        }
+      ]
+    },
+    {
+      "path": "app/src/test/kotlin/com/softyorch/stroopoverload/data/AuthServiceTest.kt",
+      "language": "kotlin",
+      "lines": 53,
+      "imports": [
+        "org.junit.Assert.assertEquals",
+        "org.junit.Assert.assertNull",
+        "org.junit.Test"
+      ],
+      "symbols": [
+        {
+          "name": "AuthServiceTest",
+          "kind": "class",
+          "line": 7
+        }
+      ]
+    },
+    {
+      "path": "app/src/test/kotlin/com/softyorch/stroopoverload/data/FakeAuthRepository.kt",
+      "language": "kotlin",
+      "lines": 89,
+      "imports": [
+        "kotlinx.coroutines.CancellationException"
+      ],
+      "symbols": [
+        {
+          "name": "FakeAuthRepository",
+          "kind": "class",
+          "line": 10
+        },
+        {
+          "name": "consumePendingNickname",
+          "kind": "fun",
+          "line": 37,
+          "modifiers": [
+            "override"
+          ]
+        },
+        {
+          "name": "signInWithEmail",
+          "kind": "fun",
+          "line": 39,
+          "modifiers": [
+            "override",
+            "suspend"
+          ]
+        },
+        {
+          "name": "registerWithEmail",
+          "kind": "fun",
+          "line": 44,
+          "modifiers": [
+            "override",
+            "suspend"
+          ]
+        },
+        {
+          "name": "signInAnonymously",
+          "kind": "fun",
+          "line": 55,
+          "modifiers": [
+            "override",
+            "suspend"
+          ]
+        },
+        {
+          "name": "resendVerificationEmailWithCooldown",
+          "kind": "fun",
+          "line": 57,
+          "modifiers": [
+            "override",
+            "suspend"
+          ]
+        },
+        {
+          "name": "reloadUser",
+          "kind": "fun",
+          "line": 59,
+          "modifiers": [
+            "override",
+            "suspend"
+          ]
+        },
+        {
+          "name": "signOut",
+          "kind": "fun",
+          "line": 61,
+          "modifiers": [
+            "override"
+          ]
+        },
+        {
+          "name": "sendPasswordResetEmail",
+          "kind": "fun",
+          "line": 66,
+          "modifiers": [
+            "override",
+            "suspend"
+          ]
+        },
+        {
+          "name": "changePassword",
+          "kind": "fun",
+          "line": 71,
+          "modifiers": [
+            "override",
+            "suspend"
+          ]
+        },
+        {
+          "name": "deleteAccount",
+          "kind": "fun",
+          "line": 76,
+          "modifiers": [
+            "override",
+            "suspend"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "app/src/test/kotlin/com/softyorch/stroopoverload/data/FakeGameRepository.kt",
+      "language": "kotlin",
+      "lines": 65,
+      "imports": [
+        "com.softyorch.stroopoverload.domain.Achievement",
+        "com.softyorch.stroopoverload.domain.CareerStats",
+        "com.softyorch.stroopoverload.domain.GameResult",
+        "com.softyorch.stroopoverload.domain.UserProfile"
+      ],
+      "symbols": [
+        {
+          "name": "SyncCall",
+          "kind": "class",
+          "line": 9,
+          "modifiers": [
+            "data"
+          ]
+        },
+        {
+          "name": "FakeGameRepository",
+          "kind": "class",
+          "line": 12
+        },
+        {
+          "name": "getProfile",
+          "kind": "fun",
+          "line": 22,
+          "modifiers": [
+            "override"
+          ]
+        },
+        {
+          "name": "updateProfile",
+          "kind": "fun",
+          "line": 24,
+          "modifiers": [
+            "override",
+            "suspend"
+          ]
+        },
+        {
+          "name": "syncUserProfile",
+          "kind": "fun",
+          "line": 28,
+          "modifiers": [
+            "override",
+            "suspend"
+          ]
+        },
+        {
+          "name": "clearLocalProgress",
+          "kind": "fun",
+          "line": 38,
+          "modifiers": [
+            "override",
+            "suspend"
+          ]
+        },
+        {
+          "name": "deleteAllUserData",
+          "kind": "fun",
+          "line": 42,
+          "modifiers": [
+            "override",
+            "suspend"
+          ]
+        },
+        {
+          "name": "recordGameResult",
+          "kind": "fun",
+          "line": 48,
+          "modifiers": [
+            "override",
+            "suspend"
+          ]
+        },
+        {
+          "name": "refreshScoringFromCloud",
+          "kind": "fun",
+          "line": 51,
+          "modifiers": [
+            "override",
+            "suspend"
+          ]
+        },
+        {
+          "name": "flushPendingRuns",
+          "kind": "fun",
+          "line": 54,
+          "modifiers": [
+            "override"
+          ]
+        },
+        {
+          "name": "syncMatchResult",
+          "kind": "fun",
+          "line": 56,
+          "modifiers": [
+            "override",
+            "suspend"
+          ]
+        },
+        {
+          "name": "getLeaderboard",
+          "kind": "fun",
+          "line": 58,
+          "modifiers": [
+            "override",
+            "suspend"
+          ]
+        },
+        {
+          "name": "getUserRank",
+          "kind": "fun",
+          "line": 60,
+          "modifiers": [
+            "override",
+            "suspend"
+          ]
+        },
+        {
+          "name": "getCareerStats",
+          "kind": "fun",
+          "line": 62,
+          "modifiers": [
+            "override"
+          ]
+        },
+        {
+          "name": "getAllAchievements",
+          "kind": "fun",
+          "line": 64,
+          "modifiers": [
+            "override"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "app/src/test/kotlin/com/softyorch/stroopoverload/data/MultiplayerCallFailureTest.kt",
+      "language": "kotlin",
+      "lines": 44,
+      "imports": [
+        "org.junit.Assert.assertEquals",
+        "org.junit.Assert.assertNull",
+        "org.junit.Test"
+      ],
+      "symbols": [
+        {
+          "name": "MultiplayerCallFailureTest",
+          "kind": "class",
+          "line": 7
+        }
+      ]
+    },
+    {
+      "path": "app/src/test/kotlin/com/softyorch/stroopoverload/data/NoSwallowedCancellationTest.kt",
+      "language": "kotlin",
+      "lines": 48,
+      "imports": [
+        "java.io.File",
+        "org.junit.Assert.assertTrue",
+        "org.junit.Test"
+      ],
+      "symbols": [
+        {
+          "name": "NoSwallowedCancellationTest",
+          "kind": "class",
+          "line": 19
+        }
+      ]
+    },
+    {
+      "path": "app/src/test/kotlin/com/softyorch/stroopoverload/data/PendingRunSyncTest.kt",
+      "language": "kotlin",
+      "lines": 303,
+      "imports": [
+        "com.softyorch.stroopoverload.domain.ServerScoring",
+        "kotlinx.coroutines.CompletableDeferred",
+        "kotlinx.coroutines.ExperimentalCoroutinesApi",
+        "kotlinx.coroutines.launch",
+        "kotlinx.coroutines.test.advanceUntilIdle",
+        "kotlinx.coroutines.test.runTest",
+        "org.junit.Assert.assertEquals",
+        "org.junit.Assert.assertTrue",
+        "org.junit.Test"
+      ],
+      "symbols": [
+        {
+          "name": "PendingRunSyncTest",
+          "kind": "class",
+          "line": 14
+        },
+        {
+          "name": "FakeQueue",
+          "kind": "class",
+          "line": 16,
+          "container": "PendingRunSyncTest",
+          "modifiers": [
+            "private"
+          ]
+        },
+        {
+          "name": "all",
+          "kind": "fun",
+          "line": 18,
+          "container": "FakeQueue",
+          "modifiers": [
+            "override"
+          ]
+        },
+        {
+          "name": "add",
+          "kind": "fun",
+          "line": 19,
+          "container": "FakeQueue",
+          "modifiers": [
+            "override"
+          ]
+        },
+        {
+          "name": "remove",
+          "kind": "fun",
+          "line": 20,
+          "container": "FakeQueue",
+          "modifiers": [
+            "override"
+          ]
+        },
+        {
+          "name": "run",
+          "kind": "fun",
+          "line": 23,
+          "container": "PendingRunSyncTest",
+          "modifiers": [
+            "private"
+          ]
+        },
+        {
+          "name": "syncOf",
+          "kind": "fun",
+          "line": 29,
+          "container": "PendingRunSyncTest",
+          "modifiers": [
+            "private"
+          ]
+        },
+        {
+          "name": "staleRun",
+          "kind": "fun",
+          "line": 36,
+          "container": "PendingRunSyncTest",
+          "modifiers": [
+            "private"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "app/src/test/kotlin/com/softyorch/stroopoverload/data/PendingSoloRunTest.kt",
+      "language": "kotlin",
+      "lines": 49,
+      "imports": [
+        "org.junit.Assert.assertEquals",
+        "org.junit.Assert.assertNull",
+        "org.junit.Test"
+      ],
+      "symbols": [
+        {
+          "name": "PendingSoloRunTest",
+          "kind": "class",
+          "line": 7
+        }
+      ]
+    },
+    {
+      "path": "app/src/test/kotlin/com/softyorch/stroopoverload/data/ServerClockTest.kt",
+      "language": "kotlin",
+      "lines": 24,
+      "imports": [
+        "org.junit.Assert.assertEquals",
+        "org.junit.Test"
+      ],
+      "symbols": [
+        {
+          "name": "ServerClockTest",
+          "kind": "class",
+          "line": 6
+        }
+      ]
+    },
+    {
+      "path": "app/src/test/kotlin/com/softyorch/stroopoverload/data/SessionProfilesTest.kt",
+      "language": "kotlin",
+      "lines": 98,
+      "imports": [
+        "com.softyorch.stroopoverload.domain.UserProfile",
+        "org.junit.Assert.assertEquals",
+        "org.junit.Assert.assertFalse",
+        "org.junit.Assert.assertTrue",
+        "org.junit.Test"
+      ],
+      "symbols": [
+        {
+          "name": "SessionProfilesTest",
+          "kind": "class",
+          "line": 9
+        }
+      ]
+    },
+    {
+      "path": "app/src/test/kotlin/com/softyorch/stroopoverload/domain/LocalRunScoringTest.kt",
+      "language": "kotlin",
+      "lines": 90,
+      "imports": [
+        "org.junit.Assert.assertEquals",
+        "org.junit.Assert.assertFalse",
+        "org.junit.Assert.assertSame",
+        "org.junit.Assert.assertTrue",
+        "org.junit.Test"
+      ],
+      "symbols": [
+        {
+          "name": "LocalRunScoringTest",
+          "kind": "class",
+          "line": 9
+        },
+        {
+          "name": "run",
+          "kind": "fun",
+          "line": 13,
+          "container": "LocalRunScoringTest",
+          "modifiers": [
+            "private"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "app/src/test/kotlin/com/softyorch/stroopoverload/domain/ServerScoringTest.kt",
+      "language": "kotlin",
+      "lines": 92,
+      "imports": [
+        "org.junit.Assert.assertEquals",
+        "org.junit.Assert.assertNull",
+        "org.junit.Test"
+      ],
+      "symbols": [
+        {
+          "name": "ServerScoringTest",
+          "kind": "class",
+          "line": 7
+        }
+      ]
+    },
+    {
+      "path": "app/src/test/kotlin/com/softyorch/stroopoverload/domain/multiplayer/MultiplayerRoomTest.kt",
+      "language": "kotlin",
+      "lines": 93,
+      "imports": [
+        "com.softyorch.stroopoverload.core.StroopColor",
+        "org.junit.Assert.assertEquals",
+        "org.junit.Assert.assertFalse",
+        "org.junit.Assert.assertTrue",
+        "org.junit.Test"
+      ],
+      "symbols": [
+        {
+          "name": "MultiplayerRoomTest",
+          "kind": "class",
+          "line": 9
+        }
+      ]
+    },
+    {
+      "path": "app/src/test/kotlin/com/softyorch/stroopoverload/game/GameViewModelTest.kt",
+      "language": "kotlin",
+      "lines": 457,
+      "imports": [
+        "app.cash.turbine.test",
+        "com.softyorch.stroopoverload.core.GameConfig",
+        "com.softyorch.stroopoverload.core.StroopColor",
+        "com.softyorch.stroopoverload.domain.GameMode",
+        "com.softyorch.stroopoverload.domain.XpBreakdown",
+        "kotlinx.coroutines.Dispatchers",
+        "kotlinx.coroutines.ExperimentalCoroutinesApi",
+        "kotlinx.coroutines.test.StandardTestDispatcher",
+        "kotlinx.coroutines.test.resetMain",
+        "kotlinx.coroutines.test.runTest",
+        "kotlinx.coroutines.test.setMain",
+        "org.junit.After",
+        "org.junit.Assert.assertEquals",
+        "org.junit.Assert.assertFalse",
+        "org.junit.Assert.assertNull",
+        "org.junit.Assert.assertTrue",
+        "org.junit.Before",
+        "org.junit.Test"
+      ],
+      "symbols": [
+        {
+          "name": "GameViewModelTest",
+          "kind": "class",
+          "line": 23
+        },
+        {
+          "name": "setUp",
+          "kind": "fun",
+          "line": 28,
+          "container": "GameViewModelTest"
+        },
+        {
+          "name": "tearDown",
+          "kind": "fun",
+          "line": 31,
+          "container": "GameViewModelTest"
+        },
+        {
+          "name": "endedEndlessRun",
+          "kind": "fun",
+          "line": 155,
+          "container": "GameViewModelTest",
+          "modifiers": [
+            "private"
+          ]
+        },
+        {
+          "name": "viewModelOnTestClock",
+          "kind": "fun",
+          "line": 287,
+          "container": "GameViewModelTest",
+          "modifiers": [
+            "private"
+          ]
+        },
+        {
+          "name": "tapCorrect",
+          "kind": "fun",
+          "line": 290,
+          "container": "GameViewModelTest",
+          "modifiers": [
+            "private"
+          ]
+        },
+        {
+          "name": "tapWrong",
+          "kind": "fun",
+          "line": 293,
+          "container": "GameViewModelTest",
+          "modifiers": [
+            "private"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "app/src/test/kotlin/com/softyorch/stroopoverload/ui/screen/auth/AuthViewModelTest.kt",
+      "language": "kotlin",
+      "lines": 254,
+      "imports": [
+        "com.softyorch.stroopoverload.R",
+        "com.softyorch.stroopoverload.core.StringResolver",
+        "com.softyorch.stroopoverload.data.AuthUser",
+        "com.softyorch.stroopoverload.data.CooldownException",
+        "com.softyorch.stroopoverload.data.FakeAuthRepository",
+        "com.softyorch.stroopoverload.data.FakeGameRepository",
+        "com.softyorch.stroopoverload.data.SyncCall",
+        "com.softyorch.stroopoverload.domain.UserProfile",
+        "kotlinx.coroutines.Dispatchers",
+        "kotlinx.coroutines.ExperimentalCoroutinesApi",
+        "kotlinx.coroutines.test.StandardTestDispatcher",
+        "kotlinx.coroutines.test.resetMain",
+        "kotlinx.coroutines.test.runTest",
+        "kotlinx.coroutines.test.setMain",
+        "org.junit.After",
+        "org.junit.Assert.assertEquals",
+        "org.junit.Assert.assertFalse",
+        "org.junit.Assert.assertNull",
+        "org.junit.Assert.assertTrue",
+        "org.junit.Before",
+        "org.junit.Test"
+      ],
+      "symbols": [
+        {
+          "name": "AuthViewModelTest",
+          "kind": "class",
+          "line": 26
+        },
+        {
+          "name": "setUp",
+          "kind": "fun",
+          "line": 36,
+          "container": "AuthViewModelTest"
+        },
+        {
+          "name": "tearDown",
+          "kind": "fun",
+          "line": 39,
+          "container": "AuthViewModelTest"
+        },
+        {
+          "name": "s",
+          "kind": "fun",
+          "line": 41,
+          "container": "AuthViewModelTest",
+          "modifiers": [
+            "private"
+          ]
+        },
+        {
+          "name": "viewModel",
+          "kind": "fun",
+          "line": 43,
+          "container": "AuthViewModelTest",
+          "modifiers": [
+            "private"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "app/src/test/kotlin/com/softyorch/stroopoverload/ui/screen/multiplayer/FakeMultiplayerRepository.kt",
+      "language": "kotlin",
+      "lines": 88,
+      "imports": [
+        "com.softyorch.stroopoverload.core.StroopColor",
+        "com.softyorch.stroopoverload.data.MultiplayerRepository",
+        "com.softyorch.stroopoverload.domain.multiplayer.MultiplayerRoom",
+        "com.softyorch.stroopoverload.domain.multiplayer.RoomMode",
+        "kotlinx.coroutines.flow.Flow",
+        "kotlinx.coroutines.flow.MutableSharedFlow"
+      ],
+      "symbols": [
+        {
+          "name": "FakeMultiplayerRepository",
+          "kind": "class",
+          "line": 15
+        },
+        {
+          "name": "emitRoom",
+          "kind": "fun",
+          "line": 41,
+          "container": "FakeMultiplayerRepository",
+          "modifiers": [
+            "suspend"
+          ]
+        },
+        {
+          "name": "createRoom",
+          "kind": "fun",
+          "line": 43,
+          "container": "FakeMultiplayerRepository",
+          "modifiers": [
+            "override",
+            "suspend"
+          ]
+        },
+        {
+          "name": "joinRoom",
+          "kind": "fun",
+          "line": 48,
+          "container": "FakeMultiplayerRepository",
+          "modifiers": [
+            "override",
+            "suspend"
+          ]
+        },
+        {
+          "name": "startGame",
+          "kind": "fun",
+          "line": 50,
+          "container": "FakeMultiplayerRepository",
+          "modifiers": [
+            "override",
+            "suspend"
+          ]
+        },
+        {
+          "name": "submitAnswer",
+          "kind": "fun",
+          "line": 57,
+          "container": "FakeMultiplayerRepository",
+          "modifiers": [
+            "override",
+            "suspend"
+          ]
+        },
+        {
+          "name": "observeRoom",
+          "kind": "fun",
+          "line": 63,
+          "container": "FakeMultiplayerRepository",
+          "modifiers": [
+            "override"
+          ]
+        },
+        {
+          "name": "trackPresence",
+          "kind": "fun",
+          "line": 65,
+          "container": "FakeMultiplayerRepository",
+          "modifiers": [
+            "override"
+          ]
+        },
+        {
+          "name": "leaveRoom",
+          "kind": "fun",
+          "line": 72,
+          "container": "FakeMultiplayerRepository",
+          "modifiers": [
+            "override"
+          ]
+        },
+        {
+          "name": "leavePresence",
+          "kind": "fun",
+          "line": 76,
+          "container": "FakeMultiplayerRepository",
+          "modifiers": [
+            "override"
+          ]
+        },
+        {
+          "name": "deleteMyMultiplayerData",
+          "kind": "fun",
+          "line": 84,
+          "container": "FakeMultiplayerRepository",
+          "modifiers": [
+            "override",
+            "suspend"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "app/src/test/kotlin/com/softyorch/stroopoverload/ui/screen/multiplayer/MultiplayerViewModelTest.kt",
+      "language": "kotlin",
+      "lines": 764,
+      "imports": [
+        "androidx.lifecycle.SavedStateHandle",
+        "androidx.lifecycle.ViewModelStore",
+        "app.cash.turbine.test",
+        "com.softyorch.stroopoverload.core.StroopColor",
+        "com.softyorch.stroopoverload.data.MultiplayerCallException",
+        "com.softyorch.stroopoverload.data.MultiplayerCallFailure",
+        "com.softyorch.stroopoverload.domain.multiplayer.MultiplayerRoom",
+        "com.softyorch.stroopoverload.domain.multiplayer.RoomMode",
+        "com.softyorch.stroopoverload.domain.multiplayer.RoomPlayer",
+        "com.softyorch.stroopoverload.domain.multiplayer.RoomStatus",
+        "kotlinx.coroutines.Dispatchers",
+        "kotlinx.coroutines.ExperimentalCoroutinesApi",
+        "kotlinx.coroutines.flow.MutableSharedFlow",
+        "kotlinx.coroutines.flow.flow",
+        "kotlinx.coroutines.test.StandardTestDispatcher",
+        "kotlinx.coroutines.test.resetMain",
+        "kotlinx.coroutines.test.runTest",
+        "kotlinx.coroutines.test.setMain",
+        "org.junit.After",
+        "org.junit.Assert.assertEquals",
+        "org.junit.Assert.assertTrue",
+        "org.junit.Before",
+        "org.junit.Test"
+      ],
+      "symbols": [
+        {
+          "name": "MultiplayerViewModelTest",
+          "kind": "class",
+          "line": 28
+        },
+        {
+          "name": "setUp",
+          "kind": "fun",
+          "line": 33,
+          "container": "MultiplayerViewModelTest"
+        },
+        {
+          "name": "tearDown",
+          "kind": "fun",
+          "line": 36,
+          "container": "MultiplayerViewModelTest"
+        },
+        {
+          "name": "enterPlayingRoom",
+          "kind": "fun",
+          "line": 531,
+          "container": "MultiplayerViewModelTest",
+          "modifiers": [
+            "private",
+            "suspend"
+          ]
+        },
+        {
+          "name": "emitHotPotatoRound",
+          "kind": "fun",
+          "line": 585,
+          "container": "MultiplayerViewModelTest",
+          "modifiers": [
+            "private",
+            "suspend"
+          ]
+        },
+        {
+          "name": "emitRoomWithStatus",
+          "kind": "fun",
+          "line": 603,
+          "container": "MultiplayerViewModelTest",
+          "modifiers": [
+            "private",
+            "suspend"
+          ]
+        }
+      ]
+    },
+    {
+      "path": "app/src/test/kotlin/com/softyorch/stroopoverload/ui/screen/profile/ProfileUiStateTest.kt",
+      "language": "kotlin",
+      "lines": 21,
+      "imports": [
+        "com.softyorch.stroopoverload.domain.AchievementDefinitions",
+        "com.softyorch.stroopoverload.domain.AchievementProgress",
+        "com.softyorch.stroopoverload.domain.CareerStats",
+        "org.junit.Assert.assertEquals",
+        "org.junit.Test"
+      ],
+      "symbols": [
+        {
+          "name": "ProfileUiStateTest",
+          "kind": "class",
+          "line": 9
+        }
+      ]
+    },
+    {
+      "path": "app/src/test/kotlin/com/softyorch/stroopoverload/ui/screen/profile/ProfileViewModelTest.kt",
+      "language": "kotlin",
+      "lines": 283,
+      "imports": [
+        "com.softyorch.stroopoverload.R",
+        "com.softyorch.stroopoverload.core.StringResolver",
+        "com.softyorch.stroopoverload.data.ChangePasswordError",
+        "com.softyorch.stroopoverload.data.ChangePasswordException",
+        "com.softyorch.stroopoverload.data.DeleteAccountError",
+        "com.softyorch.stroopoverload.data.DeleteAccountException",
+        "com.softyorch.stroopoverload.data.FakeAuthRepository",
+        "com.softyorch.stroopoverload.data.FakeGameRepository",
+        "com.softyorch.stroopoverload.data.RegistrationError",
+        "com.softyorch.stroopoverload.domain.CareerStats",
+        "com.softyorch.stroopoverload.domain.UserProfile",
+        "com.softyorch.stroopoverload.domain.XpSystem",
+        "com.softyorch.stroopoverload.ui.screen.multiplayer.FakeMultiplayerRepository",
+        "kotlinx.coroutines.Dispatchers",
+        "kotlinx.coroutines.ExperimentalCoroutinesApi",
+        "kotlinx.coroutines.test.StandardTestDispatcher",
+        "kotlinx.coroutines.test.resetMain",
+        "kotlinx.coroutines.test.runTest",
+        "kotlinx.coroutines.test.setMain",
+        "org.junit.After",
+        "org.junit.Assert.assertEquals",
+        "org.junit.Assert.assertFalse",
+        "org.junit.Assert.assertNull",
+        "org.junit.Assert.assertTrue",
+        "org.junit.Before",
+        "org.junit.Test"
+      ],
+      "symbols": [
+        {
+          "name": "ProfileViewModelTest",
+          "kind": "class",
+          "line": 31
+        },
+        {
+          "name": "setUp",
+          "kind": "fun",
+          "line": 45,
+          "container": "ProfileViewModelTest"
+        },
+        {
+          "name": "tearDown",
+          "kind": "fun",
+          "line": 48,
+          "container": "ProfileViewModelTest"
+        },
+        {
+          "name": "s",
+          "kind": "fun",
+          "line": 50,
+          "container": "ProfileViewModelTest",
+          "modifiers": [
+            "private"
+          ]
+        },
+        {
+          "name": "viewModel",
+          "kind": "fun",
+          "line": 52,
+          "container": "ProfileViewModelTest",
+          "modifiers": [
+            "private"
+          ]
+        },
+        {
+          "name": "guestViewModel",
+          "kind": "fun",
+          "line": 224,
+          "container": "ProfileViewModelTest",
+          "modifiers": [
+            "private"
+          ]
+        }
+      ]
+    }
+  ]
+}

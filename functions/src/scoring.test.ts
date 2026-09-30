@@ -1,6 +1,7 @@
 import {
   applyCorrectAnswer,
   finalScoreForPlacement,
+  finishedMatchUpdate,
   placementMultiplier,
   rankMistakeOrHotPotatoPlayers,
   rankSoloSurvivalPlayers,
@@ -107,6 +108,31 @@ describe("rankMistakeOrHotPotatoPlayers", () => {
   });
 });
 
+describe("finishedMatchUpdate", () => {
+  test("finishes the room with the survivor, clears the board and ranks everyone", () => {
+    const players = {
+      a: player({ uid: "a", order: 0, matchScore: 300 }),
+      b: player({ uid: "b", order: 1, matchScore: 500, alive: false, eliminatedAtMs: 2000 }),
+      c: player({ uid: "c", order: 2, matchScore: 100, alive: false, eliminatedAtMs: 1000 }),
+    };
+
+    const update = finishedMatchUpdate(players, "a", 9_000);
+
+    expect(update).toMatchObject({ status: "finished", winnerUid: "a", stimulus: null, deadlineAtMs: null, finishedAtMs: 9_000 });
+    const ranked = rankMistakeOrHotPotatoPlayers(players, "a");
+    for (const r of ranked) {
+      expect(update.players[r.uid]).toMatchObject({ placement: r.placement, finalScore: r.finalScore });
+    }
+    expect(update.players.b.matchScore).toBe(500); // everything else kept
+  });
+
+  test("does not mutate the players it was given", () => {
+    const players = { a: player({ uid: "a" }), b: player({ uid: "b", alive: false, eliminatedAtMs: 1 }) };
+    finishedMatchUpdate(players, "a");
+    expect(players.a.placement).toBeUndefined();
+  });
+});
+
 describe("rankSoloSurvivalPlayers", () => {
   test("ranks by soloScore descending", () => {
     const players = {
@@ -118,6 +144,16 @@ describe("rankSoloSurvivalPlayers", () => {
     expect(ranked.find((r) => r.uid === "b")?.placement).toBe(1);
     expect(ranked.find((r) => r.uid === "c")?.placement).toBe(2);
     expect(ranked.find((r) => r.uid === "a")?.placement).toBe(3);
+  });
+
+  test("a given winner is ranked first regardless of score, the rest by score", () => {
+    const players = {
+      a: player({ uid: "a", order: 0, soloScore: 900 }),
+      b: player({ uid: "b", order: 1, soloScore: 100 }),
+      c: player({ uid: "c", order: 2, soloScore: 500 }),
+    };
+    const ranked = rankSoloSurvivalPlayers(players, "b");
+    expect(ranked.map((r) => [r.uid, r.placement])).toEqual([["b", 1], ["a", 2], ["c", 3]]);
   });
 
   test("ties break toward whoever joined first (lowest order)", () => {

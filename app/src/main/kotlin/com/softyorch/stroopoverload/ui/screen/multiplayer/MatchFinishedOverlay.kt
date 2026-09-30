@@ -21,6 +21,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.softyorch.stroopoverload.R
+import com.softyorch.stroopoverload.data.ServerClock
+import com.softyorch.stroopoverload.core.formatMultiplier
 import com.softyorch.stroopoverload.audio.AudioPlayer
 import com.softyorch.stroopoverload.audio.GameSfx
 import com.softyorch.stroopoverload.domain.multiplayer.MultiplayerRoom
@@ -53,9 +55,11 @@ fun MatchFinishedOverlay(room: MultiplayerRoom, myUid: String, onExit: () -> Uni
     LaunchedEffect(room.roomId) {
         audioPlayer.play(if (iWon) GameSfx.RESULT_VICTORY else GameSfx.RESULT_DEFEAT)
     }
-    // Captured once, the instant this dialog first composes -- a fine enough
-    // approximation of "when the match ended" since FINISHED just arrived.
-    val finishedAtMs = remember(room.roomId) { System.currentTimeMillis() }
+    // The server's finish time. Only rooms finished by an older backend lack it; for those,
+    // the moment this dialog first composes (on the server clock) is close enough, since
+    // FINISHED usually just arrived -- though not after reattaching to the room later.
+    val firstShownAtMs = remember(room.roomId) { ServerClock.shared.nowMs() }
+    val finishedAtMs = room.finishedAtMs ?: firstShownAtMs
     val durationSeconds = if (matchStartMs > 0) ((finishedAtMs - matchStartMs).coerceAtLeast(0L) / 1000).toInt() else null
 
     Dialog(
@@ -182,7 +186,7 @@ private fun PlayerBreakdownCard(
                     fontWeight = FontWeight.Black,
                 )
                 Text(
-                    text = player.displayName + if (isMe) " (${stringResource(R.string.mp_solo_you_tag)})" else "",
+                    text = if (isMe) stringResource(R.string.mp_finish_name_you, player.displayName) else player.displayName,
                     style = MaterialTheme.typography.bodyLarge,
                     color = if (isWinner) MaterialTheme.colorScheme.tertiary else MaterialTheme.colorScheme.onSurface,
                     fontWeight = if (isWinner) FontWeight.Bold else FontWeight.Normal,
@@ -239,12 +243,14 @@ private fun movesDetailText(player: RoomPlayer, mode: RoomMode, matchStartMs: Lo
     else -> stringResource(R.string.mp_finish_survived_full)
 }
 
-private fun placementMultiplierLabel(placement: Int?): String = when (placement) {
-    1 -> "2.0"
-    2 -> "1.5"
-    3 -> "1.0"
-    else -> "0.5"
-}
+private fun placementMultiplierLabel(placement: Int?): String = formatMultiplier(
+    when (placement) {
+        1 -> 2.0
+        2 -> 1.5
+        3 -> 1.0
+        else -> 0.5
+    }
+)
 
 private fun formatDuration(totalSeconds: Int): String {
     val minutes = totalSeconds / 60

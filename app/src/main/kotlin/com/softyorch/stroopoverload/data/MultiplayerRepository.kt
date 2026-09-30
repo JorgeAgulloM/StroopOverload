@@ -9,8 +9,22 @@ interface MultiplayerRepository {
     suspend fun createRoom(displayName: String, mode: RoomMode = RoomMode.MISTAKE): Result<Pair<String, String>>
     suspend fun joinRoom(code: String, displayName: String): Result<String>
     suspend fun startGame(roomId: String): Result<Unit>
-    suspend fun submitAnswer(roomId: String, selectedColor: StroopColor): Result<Unit>
+    suspend fun submitAnswer(roomId: String, selectedColor: StroopColor, round: Int): Result<Unit>
     fun observeRoom(roomId: String): Flow<MultiplayerRoom>
     fun trackPresence(roomId: String, uid: String)
+
+    /**
+     * Marks [uid] offline in [roomId] right away. Leaving a room inside the app does
+     * not drop the realtime connection, so the onDisconnect hook registered by
+     * [trackPresence] would never fire and the backend would keep treating the player
+     * as present.
+     */
+    fun leavePresence(roomId: String, uid: String)
+
+    /**
+     * Gives up the caller's slot in a room whose match hasn't started (the host role passes
+     * on; an empty room is deleted). Fire-and-forget: it runs on the way out of the screen.
+     */
+    fun leaveRoom(roomId: String)
     suspend fun deleteMyMultiplayerData(): Result<Unit>
 }

@@ -1,17 +1,19 @@
 package com.softyorch.stroopoverload.ui.screen.auth
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.softyorch.stroopoverload.R
+import com.softyorch.stroopoverload.core.StringResolver
+import com.softyorch.stroopoverload.data.AuthRepository
 import com.softyorch.stroopoverload.data.AuthService
 import com.softyorch.stroopoverload.data.CooldownException
-import com.softyorch.stroopoverload.data.FirebaseGameRepository
+import com.softyorch.stroopoverload.data.GameRepository
 import com.softyorch.stroopoverload.data.LoginError
 import com.softyorch.stroopoverload.data.RegistrationError
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
 data class AuthUiState(
@@ -25,15 +27,17 @@ data class AuthUiState(
     val cooldownRemainingSec: Int = 0,
 )
 
-class AuthViewModel(application: Application) : AndroidViewModel(application) {
-    private val authService = AuthService()
-    private val repository = FirebaseGameRepository.getInstance(application)
+class AuthViewModel(
+    private val authService: AuthRepository,
+    private val repository: GameRepository,
+    private val strings: StringResolver,
+    private val clock: () -> Long = System::currentTimeMillis,
+) : ViewModel() {
 
     private val _state = MutableStateFlow(AuthUiState())
     val state: StateFlow<AuthUiState> = _state.asStateFlow()
 
-    private fun string(resId: Int): String = getApplication<Application>().getString(resId)
-    private fun string(resId: Int, vararg args: Any): String = getApplication<Application>().getString(resId, *args)
+    private fun string(resId: Int, vararg args: Any): String = strings.get(resId, *args)
 
     init {
         checkCurrentSession()
@@ -43,12 +47,13 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         val uid = authService.currentUid
         if (uid != null) {
             viewModelScope.launch {
-                repository.syncUserProfile(uid, authService.consumePendingNickname())
-                val verified = authService.isEmailVerified || authService.currentUser?.isAnonymous == true
+                val isAnonymous = authService.isAnonymousSession ?: true
+                repository.syncUserProfile(uid, authService.consumePendingNickname(), isAnonymous)
+                val verified = authService.isEmailVerified || isAnonymous
                 _state.value = _state.value.copy(
                     isLoggedIn = true,
                     userUid = uid,
-                    isAnonymous = authService.currentUser?.isAnonymous ?: true,
+                    isAnonymous = isAnonymous,
                     needsEmailVerification = !verified
                 )
             }
@@ -65,7 +70,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             val res = authService.signInWithEmail(trimmedEmail, pass)
             res.onSuccess { user ->
-                repository.syncUserProfile(user.uid, authService.consumePendingNickname())
+                repository.syncUserProfile(user.uid, authService.consumePendingNickname(), isAnonymous = false)
                 _state.value = _state.value.copy(
                     isLoading = false,
                     isLoggedIn = true,
@@ -98,8 +103,8 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             val res = authService.registerWithEmail(trimmedEmail, trimmedEmailConfirm, pass, passConfirm, nickname)
             res.onSuccess { user ->
-                repository.syncUserProfile(user.uid, nickname)
-                repository.updateProfile(repository.getProfile().copy(lastVerificationEmailSentAtEpochMs = System.currentTimeMillis()))
+                repository.syncUserProfile(user.uid, nickname, isAnonymous = false)
+                repository.updateProfile(repository.getProfile().copy(lastVerificationEmailSentAtEpochMs = clock()))
                 _state.value = _state.value.copy(
                     isLoading = false,
                     isLoggedIn = true,
@@ -126,7 +131,7 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             val uid = authService.signInAnonymously()
             if (uid != null) {
-                repository.syncUserProfile(uid, "Guest_${uid.takeLast(4).uppercase()}")
+                repository.syncUserProfile(uid, "Guest_${uid.takeLast(4).uppercase()}", isAnonymous = true)
                 _state.value = _state.value.copy(
                     isLoading = false,
                     isLoggedIn = true,
@@ -154,6 +159,8 @@ class AuthViewModel(application: Application) : AndroidViewModel(application) {
                 _state.value = _state.value.copy(
                     errorMessage = string(R.string.auth_resend_cooldown, e.remainingCooldownSeconds)
                 )
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 _state.value = _state.value.copy(errorMessage = string(R.string.auth_resend_failed))
             }

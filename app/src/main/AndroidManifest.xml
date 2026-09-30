@@ -1,6 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!--
+      allowBackup stays on, with Android's default rules, on purpose. A guest's
+      progress exists only on the device, tied to their anonymous Firebase
+      session: backing up everything (that session included) is what lets a
+      guest keep it on a new phone (not verified on a real restore). An include-list would have to name Firebase
+      Auth's own prefs file, whose name is internal and hashed, and turning
+      backup off loses guest progress outright. Registered players lose nothing
+      either way: their profile is re-synced from Firestore on sign-in.
+    -->
     <application
         android:name=".StroopApplication"
         android:allowBackup="true"

@@ -2,7 +2,9 @@ package com.softyorch.stroopoverload.game
 
 import com.softyorch.stroopoverload.core.StroopColor
 import com.softyorch.stroopoverload.domain.GameMode
+import com.softyorch.stroopoverload.domain.Achievement
 import com.softyorch.stroopoverload.domain.GameResult
+import com.softyorch.stroopoverload.domain.XpBreakdown
 
 sealed interface GameState {
     data object Menu : GameState
@@ -15,10 +17,31 @@ sealed interface GameState {
         val totalRounds: Int = 0,
         val survivalMs: Long = 0L,
         val currentStreak: Int = 0,
+        val bestStreak: Int = 0,
         val livesRemaining: Int = 0,
         val timeRemainingMs: Long = 0L,
         val missFlashColor: StroopColor? = null,
         val isFrozen: Boolean = false,
+        val lastTap: TapFeedback? = null,
     ) : GameState
-    data class GameOver(val result: GameResult) : GameState
+    /**
+     * [bestStreak] is the run's longest streak of correct answers (the XP streak bonus). Not the
+     * streak it ended on: a miss resets that, so ENDLESS always ended on 0.
+     * [finalBoard] is the board as the run ended, kept on screen for a moment before the
+     * game-over screen.
+     */
+    data class GameOver(
+        val result: GameResult,
+        val bestStreak: Int = 0,
+        val finalBoard: Playing? = null,
+    ) : GameState
 }
+
+/** What recording a finished run produced, shown on the game-over screen. */
+data class RecordedRun(val xpBreakdown: XpBreakdown, val newAchievements: List<Achievement>)
+
+/**
+ * One answer tap, for the board's per-tap flash. [seq] changes with every tap so two taps on
+ * the same quadrant both flash (local play uses the run's round number).
+ */
+data class TapFeedback(val color: StroopColor, val isCorrect: Boolean, val seq: Int)

@@ -2,8 +2,8 @@ package com.softyorch.stroopoverload.ui.screen.profile
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -17,20 +17,19 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.softyorch.stroopoverload.R
+import com.softyorch.stroopoverload.ui.components.pilotHandleFallback
 import com.softyorch.stroopoverload.audio.AudioSettingsStore
 import com.softyorch.stroopoverload.domain.Achievement
 import com.softyorch.stroopoverload.domain.XpSystem
-import com.softyorch.stroopoverload.ui.screen.auth.PasswordVisibilityToggle
 import com.softyorch.stroopoverload.ui.theme.*
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,15 +38,16 @@ fun ProfileScreen(
     onBack: () -> Unit,
     onSignedOut: () -> Unit,
 ) {
-    val state by viewModel.state.collectAsState()
+    val state by viewModel.state.collectAsStateWithLifecycle()
     val rarity = remember(state.profile.level) { XpSystem.levelRarity(state.profile.level) }
     val achievementPairs = remember(state.achievements) { state.achievements.chunked(2) }
+    var selectedAchievement by remember { mutableStateOf<Achievement?>(null) }
     var showChangePasswordDialog by remember { mutableStateOf(false) }
     var showDeleteAccountDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val audioSettingsStore = remember { AudioSettingsStore(context) }
-    val musicEnabled by audioSettingsStore.musicEnabled.collectAsState()
-    val sfxEnabled by audioSettingsStore.sfxEnabled.collectAsState()
+    val musicEnabled by audioSettingsStore.musicEnabled.collectAsStateWithLifecycle()
+    val sfxEnabled by audioSettingsStore.sfxEnabled.collectAsStateWithLifecycle()
 
     Scaffold(
         topBar = {
@@ -121,7 +121,7 @@ fun ProfileScreen(
                                     overflow = TextOverflow.Ellipsis,
                                 )
                                 Text(
-                                    text = state.profile.uniqueName.ifBlank { "@pilot-${state.profile.userId.takeLast(4)}" },
+                                    text = state.profile.uniqueName.ifBlank { pilotHandleFallback(state.profile.userId) },
                                     style = MaterialTheme.typography.labelMedium,
                                     color = TechAccent
                                 )
@@ -271,16 +271,15 @@ fun ProfileScreen(
 
             // Achievements Header
             item {
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+                // Title and counter stacked: side by side the title was cut ("TROFEOS SINÁPTI…",
+                // and in fr/de) on narrow screens.
+                Column(modifier = Modifier.fillMaxWidth()) {
                     Text(
                         text = stringResource(R.string.profile_trophies_header),
-                        style = MaterialTheme.typography.titleMedium,
+                        style = MaterialTheme.typography.titleSmall,
                         color = MaterialTheme.colorScheme.secondary,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f, fill = false),
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.height(6.dp))
                     val unlockedCount = state.achievements.count { it.isUnlocked }
                     Box(
                         modifier = Modifier
@@ -300,9 +299,9 @@ fun ProfileScreen(
             // Achievement Cards
             items(achievementPairs) { pair ->
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp), modifier = Modifier.fillMaxWidth()) {
-                    AchievementCard(pair[0], Modifier.weight(1f))
+                    AchievementCard(pair[0], Modifier.weight(1f)) { selectedAchievement = pair[0] }
                     if (pair.size > 1) {
-                        AchievementCard(pair[1], Modifier.weight(1f))
+                        AchievementCard(pair[1], Modifier.weight(1f)) { selectedAchievement = pair[1] }
                     } else {
                         Spacer(modifier = Modifier.weight(1f))
                     }
@@ -327,7 +326,7 @@ fun ProfileScreen(
                     }
                     Spacer(modifier = Modifier.height(12.dp))
                 }
-                if (!state.profile.isAnonymous) {
+                if (!state.isGuest) {
                     OutlinedButton(
                         onClick = { showChangePasswordDialog = true },
                         colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.secondary),
@@ -339,7 +338,7 @@ fun ProfileScreen(
                     }
                     Spacer(modifier = Modifier.height(12.dp))
                 }
-                if (!state.profile.isAnonymous) {
+                if (!state.isGuest) {
                     Spacer(modifier = Modifier.height(12.dp))
                     OutlinedButton(
                         onClick = { showDeleteAccountDialog = true },
@@ -386,136 +385,21 @@ fun ProfileScreen(
             onConfirm = { password -> viewModel.deleteAccount(password, onDeleted = onSignedOut) },
         )
     }
-}
 
-@Composable
-private fun ChangePasswordDialog(
-    state: ProfileUiState,
-    onDismiss: () -> Unit,
-    onSubmit: (current: String, new: String, confirm: String) -> Unit,
-) {
-    var currentPassword by remember { mutableStateOf("") }
-    var newPassword by remember { mutableStateOf("") }
-    var confirmPassword by remember { mutableStateOf("") }
-    var currentPasswordVisible by remember { mutableStateOf(false) }
-    var newPasswordVisible by remember { mutableStateOf(false) }
-    var confirmPasswordVisible by remember { mutableStateOf(false) }
-
-    LaunchedEffect(state.changePasswordSuccess) {
-        if (state.changePasswordSuccess) onDismiss()
+    selectedAchievement?.let { achievement ->
+        AchievementDetailDialog(
+            achievement = achievement,
+            progress = state.progressOf(achievement),
+            onDismiss = { selectedAchievement = null },
+        )
     }
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.profile_change_password_title), color = MaterialTheme.colorScheme.primary) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                OutlinedTextField(
-                    value = currentPassword,
-                    onValueChange = { currentPassword = it },
-                    label = { Text(stringResource(R.string.profile_change_password_current_label)) },
-                    singleLine = true,
-                    visualTransformation = if (currentPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                    trailingIcon = {
-                        PasswordVisibilityToggle(visible = currentPasswordVisible, onToggle = { currentPasswordVisible = !currentPasswordVisible })
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                OutlinedTextField(
-                    value = newPassword,
-                    onValueChange = { newPassword = it },
-                    label = { Text(stringResource(R.string.profile_change_password_new_label)) },
-                    singleLine = true,
-                    visualTransformation = if (newPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                    trailingIcon = {
-                        PasswordVisibilityToggle(visible = newPasswordVisible, onToggle = { newPasswordVisible = !newPasswordVisible })
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                OutlinedTextField(
-                    value = confirmPassword,
-                    onValueChange = { confirmPassword = it },
-                    label = { Text(stringResource(R.string.profile_change_password_confirm_label)) },
-                    singleLine = true,
-                    visualTransformation = if (confirmPasswordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                    trailingIcon = {
-                        PasswordVisibilityToggle(visible = confirmPasswordVisible, onToggle = { confirmPasswordVisible = !confirmPasswordVisible })
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                state.changePasswordError?.let {
-                    Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-                }
-                if (state.isProcessingAccountAction) {
-                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = { onSubmit(currentPassword, newPassword, confirmPassword) },
-                enabled = !state.isProcessingAccountAction && currentPassword.isNotBlank() && newPassword.isNotBlank() && confirmPassword.isNotBlank(),
-            ) {
-                Text(stringResource(R.string.profile_change_password_button))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_cancel)) }
-        },
-    )
-}
-
-@Composable
-private fun DeleteAccountDialog(
-    state: ProfileUiState,
-    onDismiss: () -> Unit,
-    onConfirm: (password: String) -> Unit,
-) {
-    var password by remember { mutableStateOf("") }
-    var passwordVisible by remember { mutableStateOf(false) }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.profile_delete_account_title), color = MaterialTheme.colorScheme.error) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Text(stringResource(R.string.profile_delete_account_warning), style = MaterialTheme.typography.bodyMedium)
-                OutlinedTextField(
-                    value = password,
-                    onValueChange = { password = it },
-                    label = { Text(stringResource(R.string.profile_delete_account_password_label)) },
-                    singleLine = true,
-                    visualTransformation = if (passwordVisible) VisualTransformation.None else PasswordVisualTransformation(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
-                    trailingIcon = {
-                        PasswordVisibilityToggle(visible = passwordVisible, onToggle = { passwordVisible = !passwordVisible })
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                state.deleteAccountError?.let {
-                    Text(it, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
-                }
-                if (state.isProcessingAccountAction) {
-                    LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
-                }
-            }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = { onConfirm(password) },
-                enabled = !state.isProcessingAccountAction && password.isNotBlank(),
-                colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error),
-            ) {
-                Text(stringResource(R.string.profile_delete_account_confirm_button))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text(stringResource(R.string.common_cancel)) }
-        },
-    )
+    if (state.showGuestSignOutConfirmation) {
+        GuestSignOutDialog(
+            onConfirm = { viewModel.confirmGuestSignOut(onSignedOut) },
+            onDismiss = viewModel::dismissGuestSignOut,
+        )
+    }
 }
 
 @Composable
@@ -574,13 +458,19 @@ private fun StatBox(label: String, value: String, color: Color, modifier: Modifi
 }
 
 @Composable
-private fun AchievementCard(achievement: Achievement, modifier: Modifier = Modifier) {
+private fun AchievementCard(achievement: Achievement, modifier: Modifier = Modifier, onClick: () -> Unit) {
     val unlocked = achievement.isUnlocked
     val borderColor = if (unlocked) Color(achievement.rarity.composeColorArgb) else MaterialTheme.colorScheme.outline
     val bgColor = if (unlocked) Surface else CyberDark
 
     Column(
         modifier = modifier
+            .clickable(
+                onClickLabel = stringResource(R.string.achievement_detail_open),
+                role = Role.Button,
+                onClick = onClick,
+            )
+            .lockedLook(!unlocked)
             .border(1.dp, borderColor, RoundedCornerShape(6.dp))
             .background(bgColor)
             .padding(12.dp)
@@ -590,7 +480,7 @@ private fun AchievementCard(achievement: Achievement, modifier: Modifier = Modif
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
             Text(text = achievement.iconEmoji, fontSize = 24.sp)
             Text(
-                text = if (unlocked) achievement.rarity.name else stringResource(R.string.common_locked),
+                text = stringResource(if (unlocked) achievement.rarity.labelRes else R.string.common_locked),
                 style = MaterialTheme.typography.bodySmall,
                 color = if (unlocked) Color(achievement.rarity.composeColorArgb) else Muted,
                 fontSize = 9.sp,

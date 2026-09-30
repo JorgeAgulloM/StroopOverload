@@ -11,8 +11,9 @@ siblings in `values-es`, `values-ja`, `values-fr`, `values-de`, `values-pt-rBR`.
 **Never hardcode user-visible text in Kotlin source.** This includes:
 - Composable `Text(...)`, labels, `contentDescription`, button text — use `stringResource(R.string.xxx)`.
 - ViewModels and other non-Composable classes that produce user-facing messages (errors, success
-  messages) — resolve via `context.getString(R.string.xxx)` (ViewModels needing this must be
-  `AndroidViewModel` so they have a `Context`; see `AuthViewModel`).
+  messages) — resolve through an injected `core.StringResolver` (`AndroidStringResolver` in the
+  factory), not `AndroidViewModel`/`getApplication()`: a ViewModel that needs an `Application`
+  cannot be built under plain JUnit. See `AuthViewModel` and its test.
 - Domain models that carry display text (e.g. achievement titles, color names) — store a
   `@StringRes Int` field instead of a `String`, resolved at the point of display. See
   `Achievement.titleRes`/`descriptionRes`, `StroopColor.displayNameRes`, `XpBreakdown.baseLabelRes`.

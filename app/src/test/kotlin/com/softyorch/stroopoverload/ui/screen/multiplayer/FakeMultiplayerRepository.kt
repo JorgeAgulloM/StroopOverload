@@ -23,6 +23,8 @@ class FakeMultiplayerRepository : MultiplayerRepository {
         private set
     var lastCreateRoomMode: RoomMode? = null
         private set
+    var lastSubmittedRound: Int? = null
+        private set
 
     var createRoomResult: Result<Pair<String, String>> = Result.success("room-1" to "ABCDE")
     var joinRoomResult: Result<String> = Result.success("room-1")
@@ -50,9 +52,12 @@ class FakeMultiplayerRepository : MultiplayerRepository {
         return startGameResult
     }
 
-    override suspend fun submitAnswer(roomId: String, selectedColor: StroopColor): Result<Unit> {
+    var submitAnswerResult: Result<Unit> = Result.success(Unit)
+
+    override suspend fun submitAnswer(roomId: String, selectedColor: StroopColor, round: Int): Result<Unit> {
         submitAnswerCallCount++
-        return Result.success(Unit)
+        lastSubmittedRound = round
+        return submitAnswerResult
     }
 
     override fun observeRoom(roomId: String): Flow<MultiplayerRoom> = observeRoomFlow ?: roomFlow
@@ -61,5 +66,23 @@ class FakeMultiplayerRepository : MultiplayerRepository {
         presenceTracked = true
     }
 
-    override suspend fun deleteMyMultiplayerData(): Result<Unit> = Result.success(Unit)
+    val leftPresence = mutableListOf<Pair<String, String>>()
+    val leftRooms = mutableListOf<String>()
+
+    override fun leaveRoom(roomId: String) {
+        leftRooms += roomId
+    }
+
+    override fun leavePresence(roomId: String, uid: String) {
+        leftPresence += roomId to uid
+    }
+
+    var deleteMyMultiplayerDataResult: Result<Unit> = Result.success(Unit)
+    var deleteMyMultiplayerDataCallCount = 0
+        private set
+
+    override suspend fun deleteMyMultiplayerData(): Result<Unit> {
+        deleteMyMultiplayerDataCallCount++
+        return deleteMyMultiplayerDataResult
+    }
 }

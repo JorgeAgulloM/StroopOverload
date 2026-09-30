@@ -1,7 +1,8 @@
 import { initializeTestEnvironment, RulesTestEnvironment } from "@firebase/rules-unit-testing";
 import { readFileSync } from "fs";
 import * as path from "path";
-import * as admin from "firebase-admin";
+import { getApps, initializeApp } from "firebase-admin/app";
+import { DocumentData } from "firebase-admin/firestore";
 import {
   beginSoloSurvivalMatch,
   finishSoloSurvivalSession,
@@ -31,8 +32,8 @@ beforeAll(async () => {
     },
   });
 
-  if (admin.apps.length === 0) {
-    admin.initializeApp({ projectId: PROJECT_ID });
+  if (getApps().length === 0) {
+    initializeApp({ projectId: PROJECT_ID });
   }
 });
 
@@ -71,8 +72,8 @@ async function seedRoom(overrides: Record<string, unknown> = {}): Promise<void> 
   });
 }
 
-async function getRoom(): Promise<admin.firestore.DocumentData> {
-  let data: admin.firestore.DocumentData | undefined;
+async function getRoom(): Promise<DocumentData> {
+  let data: DocumentData | undefined;
   await testEnv.withSecurityRulesDisabled(async (context) => {
     const snap = await context.firestore().collection("rooms").doc("room-1").get();
     data = snap.data();
@@ -228,6 +229,23 @@ describe("resolveSoloAnswer", () => {
     expect(after.winnerUid).toBe("c");
     expect(after.players.c.alive).toBe(true); // the sole survivor, not busted themselves
     expect(after.deadlineAtMs).toBeNull();
+    expect(typeof after.finishedAtMs).toBe("number");
+  });
+
+  test("the sole survivor is ranked first even when a busted player scored more", async () => {
+    // The winner is whoever is still standing; ranking by score alone put them 2nd (x1.5)
+    // behind a busted player (x2.0) -- the loser was paid more than the winner.
+    await seedRoom();
+    await beginSoloSurvivalMatch("room-1");
+    await resolveSoloAnswer("room-1", "a", "correct", 0); // a leads on points...
+    await resolveSoloAnswer("room-1", "a", "wrong", 1); // ...then busts
+    await resolveSoloAnswer("room-1", "b", "wrong", 0); // b busts -> c survives with 0 points
+
+    const after = await getRoom();
+    expect(after.winnerUid).toBe("c");
+    expect(after.players.c.placement).toBe(1);
+    expect(after.players.a.placement).toBe(2);
+    expect(after.players.b.placement).toBe(3);
   });
 
   test("stale round numbers are ignored", async () => {
@@ -266,6 +284,7 @@ describe("finishSoloSurvivalSession", () => {
     expect(after.status).toBe("finished");
     expect(after.winnerUid).toBe("b"); // highest score wins even though busted earlier
     expect(after.deadlineAtMs).toBeNull();
+    expect(typeof after.finishedAtMs).toBe("number");
   });
 
   test("ties break toward whoever joined first (lowest order)", async () => {

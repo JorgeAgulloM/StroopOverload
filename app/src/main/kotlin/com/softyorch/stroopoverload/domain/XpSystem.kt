@@ -3,12 +3,12 @@ package com.softyorch.stroopoverload.domain
 import androidx.annotation.StringRes
 import com.softyorch.stroopoverload.R
 
-enum class Rarity(val colorArgb: Long, val baseXp: Int) {
-    COMMON(0xFFB0BAC5, 25),
-    UNCOMMON(0xFF00C853, 75),
-    RARE(0xFF4A9EFF, 100),
-    EPIC(0xFFC06EFF, 250),
-    LEGENDARY(0xFFFFD400, 750);
+enum class Rarity(val colorArgb: Long, val baseXp: Int, @StringRes val labelRes: Int) {
+    COMMON(0xFFB0BAC5, 25, R.string.rarity_common),
+    UNCOMMON(0xFF00C853, 75, R.string.rarity_uncommon),
+    RARE(0xFF4A9EFF, 100, R.string.rarity_rare),
+    EPIC(0xFFC06EFF, 250, R.string.rarity_epic),
+    LEGENDARY(0xFFFFD400, 750, R.string.rarity_legendary);
 
     val composeColorArgb: Long get() = colorArgb
 }
@@ -92,7 +92,7 @@ object XpSystem {
     fun calculateGameXp(
         result: GameResult,
         dailyStreak: Int,
-        currentWinStreak: Int = 0,
+        bestStreak: Int = 0,
     ): XpBreakdown {
         if (result.correctHits == 0 || result.finalScore <= 0) {
             return XpBreakdown(
@@ -115,15 +115,15 @@ object XpSystem {
         val baseLabelRes = if (result.won) R.string.xp_base_win else R.string.xp_base_loss
 
         val perfectBonus = if (result.isFlawless) 100 else 0
-        // TIME mode's survivalMs is just the fixed session clock counting down, not a skill
-        // signal -- nearly every completed run would trivially clear both thresholds regardless
-        // of performance, so the survival-time bonus only applies to ENDLESS/LIVES.
-        val timeBonus = if (result.mode == GameMode.TIME) 0 else when {
+        // In TIME and OVERTIME survivalMs is mostly the session clock handed out up front, not a
+        // skill signal -- nearly every run would trivially clear both thresholds regardless of
+        // performance, so the survival-time bonus only applies to ENDLESS/LIVES.
+        val timeBonus = if (result.mode.hasSessionClock) 0 else when {
             result.survivalMs >= 20_000L -> 100
             result.survivalMs >= 10_000L -> 50
             else -> 0
         }
-        val streakBonus = (currentWinStreak * 15).coerceAtMost(150)
+        val streakBonus = (bestStreak * 15).coerceAtMost(150)
         val dailyBonus = (dailyStreak * 20).coerceAtMost(200)
 
         val multiplier = if (result.isNewHighScore) 1.5 else 1.0

@@ -1,7 +1,8 @@
 import { initializeTestEnvironment, RulesTestEnvironment } from "@firebase/rules-unit-testing";
 import { readFileSync } from "fs";
 import * as path from "path";
-import * as admin from "firebase-admin";
+import { getApps, initializeApp } from "firebase-admin/app";
+import { DocumentData } from "firebase-admin/firestore";
 import { resolveRound } from "./resolveRound";
 import { scheduleTimeoutCheck } from "./taskQueue";
 
@@ -32,8 +33,8 @@ beforeAll(async () => {
   // separate client from the rules-unit-testing environment above. Point it
   // at the same emulator (FIRESTORE_EMULATOR_HOST is set by
   // `firebase emulators:exec`) so both sides observe the same data.
-  if (admin.apps.length === 0) {
-    admin.initializeApp({ projectId: PROJECT_ID });
+  if (getApps().length === 0) {
+    initializeApp({ projectId: PROJECT_ID });
   }
 });
 
@@ -75,8 +76,8 @@ async function seedRoom(overrides: Record<string, unknown> = {}): Promise<void> 
   });
 }
 
-async function getRoom(): Promise<admin.firestore.DocumentData> {
-  let data: admin.firestore.DocumentData | undefined;
+async function getRoom(): Promise<DocumentData> {
+  let data: DocumentData | undefined;
   await testEnv.withSecurityRulesDisabled(async (context) => {
     const snap = await context.firestore().collection("rooms").doc("room-1").get();
     data = snap.data();
@@ -110,6 +111,7 @@ test("eliminating the second-to-last player finishes the game with a winner", as
   const after = await getRoom();
   expect(after.status).toBe("finished");
   expect(after.winnerUid).toBe("c");
+  expect(typeof after.finishedAtMs).toBe("number"); // the result screen's match duration
 });
 
 test("stale round numbers are ignored (already resolved by a racing trigger)", async () => {
@@ -178,6 +180,21 @@ test("a bystander's disconnect does NOT advance the active player's turn", async
   });
   expect(after.deadlineAtMs).toBe(seededDeadlineAtMs); // untouched from seeded value
   expect(scheduleTimeoutCheck).not.toHaveBeenCalled();
+});
+
+test("a second disconnect for an already-eliminated bystander changes nothing", async () => {
+  // Two presence events racing for the same player both pass the outer alive check; the
+  // bystander path doesn't bump the round, so only an alive check here stops the second
+  // one from re-stamping eliminatedAtMs (and so the final placements).
+  await seedRoom();
+  await resolveRound("room-1", "c", "disconnect", 1);
+  const firstElimination = (await getRoom()).players.c.eliminatedAtMs;
+
+  await new Promise((r) => setTimeout(r, 5));
+  const applied = await resolveRound("room-1", "c", "disconnect", 1);
+
+  expect(applied).toBe(false);
+  expect((await getRoom()).players.c.eliminatedAtMs).toBe(firstElimination);
 });
 
 test("the actual turn-holder's own disconnect DOES advance the turn", async () => {
